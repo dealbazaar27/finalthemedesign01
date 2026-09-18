@@ -1,7 +1,11 @@
 {% liquid
-  assign products_per_page = section.settings.products_per_page | default: 24
-  assign search_products = search.results | where: 'object_type', 'product'
-  assign results_count = search_products.size
+  assign products_per_page = section.settings.products_per_page | default: 48
+  assign raw_terms = search.terms | default: '' | downcase
+  assign is_sale_search = false
+  if raw_terms contains 'sale' or raw_terms contains 'discount' or raw_terms contains 'deal' or raw_terms contains 'off'
+    assign is_sale_search = true
+  endif
+  assign results_count = search.results_count | default: search.results.size
 %}
 
 <style>
@@ -338,6 +342,8 @@
       <form action="{{ routes.search_url }}" method="get" role="search" class="boat-search-bar-form" id="BoatSearchForm">
         <input type="hidden" name="type" value="product">
         <input type="hidden" name="options[prefix]" value="last">
+        <input type="hidden" name="options[fields]" value="title,vendor,product_type,variants.title,tag,body">
+        <input type="hidden" name="options[unavailable_products]" value="last">
         
         <div class="boat-search-input-box">
           <svg class="boat-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -395,10 +401,12 @@
         </div>
         
         <div class="boat-search-grid">
-          {% for item in search_products %}
-            <div class="boat-search-grid-item">
-              {% render 'boat-product-card-item', product: item %}
-            </div>
+          {% for item in search.results %}
+            {% if item.object_type == 'product' %}
+              <div class="boat-search-grid-item">
+                {% render 'boat-product-card-item', product: item %}
+              </div>
+            {% endif %}
           {% endfor %}
         </div>
 
@@ -407,6 +415,21 @@
             {{ paginate | default_pagination: next: 'Next ›', previous: '‹ Prev' }}
           </div>
         {% endif %}
+
+      {% elsif search.performed and search.terms != blank and is_sale_search %}
+        <div class="boat-search-section-header">
+          <h2 class="boat-search-grid-heading">🔥 All Sale & Discounted Deals</h2>
+        </div>
+        
+        <div class="boat-search-grid">
+          {% for product in collections.all.products limit: 48 %}
+            {% if product.compare_at_price > product.price %}
+              <div class="boat-search-grid-item">
+                {% render 'boat-product-card-item', product: product %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
 
       {% elsif search.performed and search.terms != blank and results_count == 0 %}
         <div class="boat-search-empty-state">
@@ -512,7 +535,7 @@
       resultsArea.classList.add('is-loading');
 
       try {
-        const targetUrl = `${window.location.pathname}?type=product&options%5Bprefix%5D=last&q=${encodeURIComponent(query)}`;
+        const targetUrl = `${window.location.pathname}?type=product&options%5Bprefix%5D=last&options%5Bfields%5D=title,vendor,product_type,variants.title,tag,body&options%5Bunavailable_products%5D=last&q=${encodeURIComponent(query)}`;
         const res = await fetch(targetUrl, { signal: currentAbortController.signal });
 
         if (!res.ok) throw new Error('Search network error');

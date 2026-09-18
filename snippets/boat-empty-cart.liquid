@@ -82,46 +82,73 @@
         <div class="boat-empty-chips-list">
           {% assign c1_t = sec_st.empty_cart_chip_1_text | default: settings.empty_cart_chip_1_text | default: '🔥 Top Picks' %}
           {% assign c1_u = sec_st.empty_cart_chip_1_url | default: settings.empty_cart_chip_1_url | default: '/collections/all' %}
-          {% if c1_t != blank %}<a href="{{ c1_u }}" class="boat-empty-chip">{{ c1_t }}</a>{% endif %}
+          {% if c1_t != blank %}<a href="{{ c1_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c1_u }}')">{{ c1_t }}</a>{% endif %}
 
           {% assign c2_t = sec_st.empty_cart_chip_2_text | default: settings.empty_cart_chip_2_text | default: '🎧 Smart Earbuds' %}
           {% assign c2_u = sec_st.empty_cart_chip_2_url | default: settings.empty_cart_chip_2_url | default: '/collections/all' %}
-          {% if c2_t != blank %}<a href="{{ c2_u }}" class="boat-empty-chip">{{ c2_t }}</a>{% endif %}
+          {% if c2_t != blank %}<a href="{{ c2_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c2_u }}')">{{ c2_t }}</a>{% endif %}
 
           {% assign c3_t = sec_st.empty_cart_chip_3_text | default: settings.empty_cart_chip_3_text | default: '⌚ Smart Watches' %}
           {% assign c3_u = sec_st.empty_cart_chip_3_url | default: settings.empty_cart_chip_3_url | default: '/collections/all' %}
-          {% if c3_t != blank %}<a href="{{ c3_u }}" class="boat-empty-chip">{{ c3_t }}</a>{% endif %}
+          {% if c3_t != blank %}<a href="{{ c3_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c3_u }}')">{{ c3_t }}</a>{% endif %}
 
           {% assign c4_t = sec_st.empty_cart_chip_4_text | default: settings.empty_cart_chip_4_text | default: '🏷️ Flash Sale' %}
           {% assign c4_u = sec_st.empty_cart_chip_4_url | default: settings.empty_cart_chip_4_url | default: '/collections/all' %}
-          {% if c4_t != blank %}<a href="{{ c4_u }}" class="boat-empty-chip">{{ c4_t }}</a>{% endif %}
+          {% if c4_t != blank %}<a href="{{ c4_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c4_u }}')">{{ c4_t }}</a>{% endif %}
 
           {% assign c5_t = sec_st.empty_cart_chip_5_text | default: settings.empty_cart_chip_5_text | default: "👔 Men's Fashion" %}
           {% assign c5_u = sec_st.empty_cart_chip_5_url | default: settings.empty_cart_chip_5_url | default: '/collections/all' %}
-          {% if c5_t != blank %}<a href="{{ c5_u }}" class="boat-empty-chip">{{ c5_t }}</a>{% endif %}
+          {% if c5_t != blank %}<a href="{{ c5_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c5_u }}')">{{ c5_t }}</a>{% endif %}
 
           {% assign c6_t = sec_st.empty_cart_chip_6_text | default: settings.empty_cart_chip_6_text | default: '👗 Women Fashion' %}
           {% assign c6_u = sec_st.empty_cart_chip_6_url | default: settings.empty_cart_chip_6_url | default: '/collections/all' %}
-          {% if c6_t != blank %}<a href="{{ c6_u }}" class="boat-empty-chip">{{ c6_t }}</a>{% endif %}
+          {% if c6_t != blank %}<a href="{{ c6_u }}" class="boat-empty-chip" onclick="handleBoatEmptyNav(event, '{{ c6_u }}')">{{ c6_t }}</a>{% endif %}
         </div>
       </div>
     {% endif %}
 
     {% comment %} Primary CTA Button {% endcomment %}
     {% if empty_btn_text != blank %}
-      <a href="{{ empty_btn_url }}" class="boat-empty-shop-now-btn">
+      <a href="{{ empty_btn_url | default: '/collections/all' }}" class="boat-empty-shop-now-btn" onclick="handleBoatEmptyNav(event, '{{ empty_btn_url | default: '/collections/all' }}')">
         <span>{{ empty_btn_text }}</span>
         <span class="boat-btn-arrow">➔</span>
       </a>
     {% endif %}
 
-    {% if shop.customer_accounts_enabled and customer == null %}
+    {% if customer == null %}
       <div class="boat-empty-login-prompt">
         <span>Have an account?</span>
-        <a href="{{ routes.account_login_url }}" class="boat-empty-login-link">Log in</a>
+        <a href="{{ routes.account_login_url | default: '/account/login' }}" class="boat-empty-login-link" onclick="handleBoatEmptyLoginClick(event)">Log in</a>
         <span>to check out faster.</span>
       </div>
     {% endif %}
+
+    <script>
+      function handleBoatEmptyNav(event, url) {
+        if (event) event.preventDefault();
+        const drawer = document.getElementById('cart-drawer');
+        if (drawer && typeof drawer.close === 'function') {
+          drawer.close();
+        }
+        window.location.href = url || '/collections/all';
+      }
+
+      function handleBoatEmptyLoginClick(event) {
+        const drawer = document.getElementById('cart-drawer');
+        if (drawer && typeof drawer.close === 'function') {
+          drawer.close();
+        }
+        const acc = document.querySelector('shopify-account');
+        if (acc) {
+          const trigger = acc.shadowRoot?.querySelector('button, [part="trigger"]') || acc.querySelector('button');
+          if (trigger) {
+            if (event) event.preventDefault();
+            trigger.click();
+            return;
+          }
+        }
+      }
+    </script>
   </div>
 </div>
 
