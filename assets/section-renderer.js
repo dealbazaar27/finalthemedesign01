@@ -226,15 +226,53 @@ function containsShadowRoot(element) {
 export async function morphSection(sectionId, html, options = {}) {
   const { mode = 'full', injectStylesheet = false } = options;
   const fragment = new DOMParser().parseFromString(html, 'text/html');
-  const existingElement = document.getElementById(buildSectionSelector(sectionId));
-  const newElement = fragment.getElementById(buildSectionSelector(sectionId));
+  const normalizedId = normalizeSectionId(sectionId);
+  const selector = buildSectionSelector(normalizedId);
+
+  const existingElement =
+    document.getElementById(selector) ||
+    document.getElementById(normalizedId) ||
+    document.getElementById(sectionId);
+
+  let newElement =
+    fragment.getElementById(selector) ||
+    fragment.getElementById(normalizedId) ||
+    fragment.getElementById(sectionId);
+
+  if (!newElement) {
+    newElement =
+      fragment.querySelector(`[id="${selector}"]`) ||
+      fragment.querySelector(`[id="${normalizedId}"]`) ||
+      fragment.querySelector('.shopify-section') ||
+      fragment.querySelector('theme-drawer') ||
+      fragment.body.firstElementChild;
+  }
 
   if (!existingElement) {
-    throw new Error(`Section ${sectionId} not found`);
+    console.warn(`[morphSection] Section ${sectionId} not found in live DOM`);
+    return;
   }
 
   if (!newElement) {
-    throw new Error(`Section ${sectionId} not found in the section rendering response`);
+    console.warn(`[morphSection] Section ${sectionId} not found in response HTML`);
+    return;
+  }
+
+  // Handle drawer transition between empty and non-empty state
+  const liveInner = existingElement.querySelector('.cart-drawer__inner');
+  const newInner = newElement.querySelector('.cart-drawer__inner');
+
+  if (liveInner && newInner) {
+    const isLiveEmpty = liveInner.classList.contains('cart-drawer--empty') || liveInner.querySelector('[data-cart-drawer-empty]') !== null;
+    const isNewEmpty = newInner.classList.contains('cart-drawer--empty') || newInner.querySelector('[data-cart-drawer-empty]') !== null;
+
+    if (isLiveEmpty !== isNewEmpty || isLiveEmpty) {
+      liveInner.replaceWith(newInner.cloneNode(true));
+      if (injectStylesheet) {
+        injectSectionStylesheet(fragment, existingElement);
+      }
+      return;
+    }
   }
 
   morph(existingElement, newElement, {

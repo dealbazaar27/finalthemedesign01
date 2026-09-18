@@ -56,21 +56,30 @@
 
   // Global fresh cart drawer HTML fetcher with retry mechanism
   if (typeof window.getFreshCartDrawerHtml !== 'function') {
-    window.getFreshCartDrawerHtml = async function(retries = 5) {
+    window.getFreshCartDrawerHtml = async function(retries = 4) {
       const cartItemsComp = document.querySelector('cart-items-component');
       const sectionId = cartItemsComp?.dataset?.sectionId || 'cart-drawer-section';
       for (let i = 0; i < retries; i++) {
         try {
-          const res = await fetch(`/?sections=${sectionId}&_=${Date.now()}`);
+          const res = await fetch(`/?section_id=${sectionId}&_=${Date.now()}`);
           if (res.ok) {
-            const data = await res.json();
-            const html = data[sectionId];
-            if (html && !html.includes('boat-empty-cart-container') && !html.includes('cart-drawer--empty')) {
+            const html = await res.text();
+            if (html && (html.includes('cart-drawer__content') || html.includes('cart-products') || html.includes('cart-drawer__items'))) {
               return html;
             }
           }
         } catch(e) {}
-        await new Promise(r => setTimeout(r, 250));
+        try {
+          const res2 = await fetch(`/?sections=${sectionId}&_=${Date.now()}`);
+          if (res2.ok) {
+            const data = await res2.json();
+            const html = data[sectionId];
+            if (html && (html.includes('cart-drawer__content') || html.includes('cart-products') || html.includes('cart-drawer__items'))) {
+              return html;
+            }
+          }
+        } catch(e) {}
+        await new Promise(r => setTimeout(r, 120));
       }
       return null;
     };
@@ -111,6 +120,11 @@
 
       const variantId = String(formData.get('id') || '');
       const itemCount = Number(formData.get('quantity')) || 1;
+
+      // Cancel empty cart auto-close immediately
+      if (typeof window.cancelBoatEmptyAutoClose === 'function') {
+        window.cancelBoatEmptyAutoClose();
+      }
 
       // Create deferred promise for StandardEvents.cartLinesUpdate ('shopify:cart:lines-update')
       let resolveUpdate, rejectUpdate;
@@ -172,6 +186,20 @@
             const freshHTML = await window.getFreshCartDrawerHtml();
             if (freshHTML) {
               sectionsData[secId] = freshHTML;
+            }
+          }
+
+          // Direct live DOM replacement to guarantee 100% instant render without refresh
+          const directDrawerHtml = sectionsData[secId] || sectionsData['cart-drawer-section'];
+          if (directDrawerHtml) {
+            const liveDrawer = document.getElementById('shopify-section-cart-drawer-section') || document.getElementById('cart-drawer');
+            if (liveDrawer) {
+              const doc = new DOMParser().parseFromString(directDrawerHtml, 'text/html');
+              const newInner = doc.querySelector('.cart-drawer__inner');
+              const liveInner = liveDrawer.querySelector('.cart-drawer__inner');
+              if (liveInner && newInner) {
+                liveInner.replaceWith(newInner);
+              }
             }
           }
 
