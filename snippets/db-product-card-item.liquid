@@ -409,10 +409,14 @@
 
       {% if featured_img != blank %}
         <img 
-          src="{{ featured_img | image_url: width: 600 }}" 
+          src="{{ featured_img | image_url: width: 450, format: 'webp' }}" 
+          srcset="{{ featured_img | image_url: width: 300, format: 'webp' }} 300w, {{ featured_img | image_url: width: 450, format: 'webp' }} 450w, {{ featured_img | image_url: width: 600, format: 'webp' }} 600w"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 280px"
           alt="{{ product.title | escape }}" 
           class="boat-pick-card__image"
-          loading="lazy"
+          loading="{% if forloop.index <= 4 %}eager{% else %}lazy{% endif %}"
+          fetchpriority="{% if forloop.index <= 4 %}high{% else %}auto{% endif %}"
+          decoding="async"
           width="300"
           height="300"
         >
