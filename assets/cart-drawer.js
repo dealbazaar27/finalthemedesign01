@@ -67,7 +67,7 @@ class CartDrawerComponent extends Component {
    */
   #handleCartLinesUpdate = (event) => {
     const isAdd = event.action === 'add' || event.detail?.action === 'add';
-    const shouldAutoOpen = false; // Disabled auto-open as requested
+    const shouldAutoOpen = (this.hasAttribute('auto-open') || true) && isAdd;
 
     // When the event originates inside an open MODAL <dialog> (e.g. quick-add),
     // defer the auto-open until that dialog's native `close` fires so its focus
@@ -79,7 +79,18 @@ class CartDrawerComponent extends Component {
     );
 
     if (shouldAutoOpen && !sourceModal && !this.#isCartEmpty()) {
-      this.#themeDrawer?.open();
+      const drawer = this.#themeDrawer || /** @type {any} */ (document.getElementById('cart-drawer'));
+      if (drawer && !drawer.isOpen) {
+        if (typeof drawer.open === 'function') {
+          drawer.open();
+        } else {
+          const dialog = drawer.querySelector('dialog');
+          if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
+            dialog.showModal();
+          }
+          drawer.setAttribute('open', '');
+        }
+      }
     }
 
     event.promise
@@ -94,7 +105,15 @@ class CartDrawerComponent extends Component {
         const openAndSettle = () => {
           const drawer = this.#themeDrawer || /** @type {any} */ (document.getElementById('cart-drawer'));
           if (drawer && !drawer.isOpen) {
-            drawer.open();
+            if (typeof drawer.open === 'function') {
+              drawer.open();
+            } else {
+              const dialog = drawer.querySelector('dialog');
+              if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
+                dialog.showModal();
+              }
+              drawer.setAttribute('open', '');
+            }
           }
           settle();
         };

@@ -213,6 +213,20 @@
             });
           }
 
+          // Smoothly open cart drawer immediately
+          const drawer = document.getElementById('cart-drawer');
+          if (drawer) {
+            if (typeof drawer.open === 'function') {
+              drawer.open();
+            } else {
+              const dialog = drawer.querySelector('dialog');
+              if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
+                dialog.showModal();
+              }
+              drawer.setAttribute('open', '');
+            }
+          }
+
           (async () => {
             try {
               const cartRes = await fetch('/cart.js');
