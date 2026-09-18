@@ -73,7 +73,7 @@
       aria-live="polite"
       aria-label="{{ 'accessibility.quantity' | t }}"
       {% if line_index %}
-        data-cart-line="{{ line_index | plus: 1 }}"
+        data-cart-line="{{ line_index }}"
       {% endif %}
       {% if variant.quantity_rule.max %}
         max="{{ variant.quantity_rule.max }}"

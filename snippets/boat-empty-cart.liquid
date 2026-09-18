@@ -70,20 +70,6 @@
     --boat-empty-progress: {{ empty_progress_col }};
   "
 >
-  {% comment %} --- Top Auto-Close Countdown Bar (Only in Drawer Context) --- {% endcomment %}
-  {% if is_drawer and autoclose_enabled %}
-    <div class="boat-empty-autoclose-bar" id="BoatEmptyAutoCloseBar" data-duration="{{ autoclose_duration }}" data-desktop-only="{{ autoclose_desktop_only }}">
-      <div class="boat-empty-autoclose-text">
-        <span class="boat-empty-pulse-dot"></span>
-        <span>Auto-closing in <strong id="BoatEmptyCountdownSec">{{ autoclose_duration }}</strong>s...</span>
-      </div>
-      <button type="button" class="boat-empty-stay-btn" onclick="window.cancelBoatEmptyAutoClose(event)">STAY HERE</button>
-      <div class="boat-empty-progress-track">
-        <div class="boat-empty-progress-line" id="BoatEmptyProgressLine"></div>
-      </div>
-    </div>
-  {% endif %}
-
   <div class="boat-empty-cart-body">
     {% comment %} Animated Floating Bag Graphic {% endcomment %}
     <div class="boat-empty-cart-graphic-wrap">

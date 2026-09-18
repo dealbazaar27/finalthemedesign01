@@ -219,21 +219,7 @@
             }
           });
 
-          // Smoothly open cart drawer immediately
-          const drawer = document.getElementById('cart-drawer');
-          if (drawer) {
-            if (typeof drawer.open === 'function') {
-              drawer.open();
-            } else {
-              const dialog = drawer.querySelector('dialog');
-              if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
-                dialog.showModal();
-              }
-              drawer.setAttribute('open', '');
-            }
-          }
-
-          // Directly sync all header and mobile cart badges to guarantee exact count
+          // Direct background sync of all header and mobile cart badges to guarantee exact count
           document.querySelectorAll('[ref="cartBubbleCount"], .cart-bubble__text-count').forEach(el => {
             el.textContent = trueItemCount;
             el.classList.toggle('hidden', trueItemCount === 0);

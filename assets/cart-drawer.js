@@ -67,7 +67,7 @@ class CartDrawerComponent extends Component {
    */
   #handleCartLinesUpdate = (event) => {
     const isAdd = event.action === 'add' || event.detail?.action === 'add';
-    const shouldAutoOpen = (this.hasAttribute('auto-open') || true) && isAdd;
+    const shouldAutoOpen = false; // Disabled auto-open on add as requested
 
     // When the event originates inside an open MODAL <dialog> (e.g. quick-add),
     // defer the auto-open until that dialog's native `close` fires so its focus
@@ -77,21 +77,6 @@ class CartDrawerComponent extends Component {
     const sourceModal = /** @type {HTMLDialogElement | null} */ (
       event.target instanceof Element ? event.target.closest('dialog:modal') : null
     );
-
-    if (shouldAutoOpen && !sourceModal && !this.#isCartEmpty()) {
-      const drawer = this.#themeDrawer || /** @type {any} */ (document.getElementById('cart-drawer'));
-      if (drawer && !drawer.isOpen) {
-        if (typeof drawer.open === 'function') {
-          drawer.open();
-        } else {
-          const dialog = drawer.querySelector('dialog');
-          if (dialog && typeof dialog.showModal === 'function' && !dialog.open) {
-            dialog.showModal();
-          }
-          drawer.setAttribute('open', '');
-        }
-      }
-    }
 
     event.promise
       ?.then(({ detail }) => {
