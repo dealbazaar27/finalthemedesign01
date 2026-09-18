@@ -40,9 +40,21 @@ html {
   }
 }
 
-html[scroll-lock],
-html[scroll-lock] .page-wrapper {
-  overflow: hidden;
+@media (max-width: 989px) {
+  html[scroll-lock],
+  html[scroll-lock] .page-wrapper {
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 990px) {
+  html[scroll-lock] {
+    overflow: visible;
+  }
+  html[scroll-lock] .page-wrapper,
+  .page-wrapper {
+    overflow-y: auto !important;
+  }
 }
 
 .page-wrapper {

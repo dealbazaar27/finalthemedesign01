@@ -339,6 +339,8 @@
                     <button
                       class="button cart-items__remove"
                       type="button"
+                      data-line="{{ item.index }}"
+                      data-line-key="{{ item.key }}"
                       aria-label="{{ 'accessibility.remove_item' | t: title: item.title | escape }}"
                       on:click="/onLineItemRemove/{{ item.index }}"
                       {% assign can_remove = item.instructions.can_remove | default: true, allow_false: true %}
