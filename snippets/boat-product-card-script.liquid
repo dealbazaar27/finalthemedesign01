@@ -239,22 +239,6 @@
             sessionStorage.setItem('cart-count', JSON.stringify({ value: String(trueItemCount), timestamp: Date.now() }));
           } catch(e) {}
 
-          // Trigger toast notification if active
-          if (typeof window.showBoatCartToast === 'function') {
-            const cardElem = formElement.closest('.boat-pick-card');
-            const pdpTitle = document.querySelector('.boat-pdp-title')?.innerText?.trim();
-            const pdpImg = document.querySelector('.boat-pdp-main-img')?.src;
-            const toastTitle = responseData.product_title || responseData.title || pdpTitle || cardElem?.querySelector('.boat-pick-card__title')?.innerText?.trim() || 'Product';
-            const toastPrice = responseData.price ? ((typeof formatMoneyWithoutDecimals === 'function') ? formatMoneyWithoutDecimals(responseData.price) : 'Rs.' + (responseData.price/100)) : (cardElem?.querySelector('.boat-pick-card__price')?.innerText?.trim() || '');
-            const toastImg = responseData.image || responseData.featured_image?.url || pdpImg || cardElem?.querySelector('.boat-pick-card__image')?.src || '';
-
-            window.showBoatCartToast({
-              title: toastTitle,
-              price: toastPrice,
-              image: toastImg
-            });
-          }
-
           setTimeout(() => {
             btn.disabled = false;
             btn.style.background = '';

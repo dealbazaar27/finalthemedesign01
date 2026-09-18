@@ -97,20 +97,6 @@
             btn.innerHTML = '<span style="font-size:15px; font-weight:800; color:#fff;">✓</span>';
           }
 
-          // Trigger Toast Notification
-          if (typeof window.showBoatCartToast === 'function') {
-            const cardElem = formElement.closest('.boat-pick-card');
-            const toastTitle = responseData.product_title || responseData.title || cardElem?.querySelector('.boat-pick-card__title')?.innerText?.trim() || 'Product';
-            const toastPrice = responseData.price ? ((typeof formatMoneyWithoutDecimals === 'function') ? formatMoneyWithoutDecimals(responseData.price) : 'Rs.' + (responseData.price/100)) : (cardElem?.querySelector('.boat-pick-card__price')?.innerText?.trim() || '');
-            const toastImg = responseData.image || responseData.featured_image?.url || cardElem?.querySelector('.boat-pick-card__image')?.src || '';
-
-            window.showBoatCartToast({
-              title: toastTitle,
-              price: toastPrice,
-              image: toastImg
-            });
-          }
-
           let sections = responseData.sections || {};
           let drawerHtml = sections['cart-drawer-section'];
 
