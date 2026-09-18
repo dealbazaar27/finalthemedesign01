@@ -198,7 +198,23 @@
               const newInner = doc.querySelector('.cart-drawer__inner');
               const liveInner = liveDrawer.querySelector('.cart-drawer__inner');
               if (liveInner && newInner) {
-                liveInner.replaceWith(newInner);
+                if (liveInner.classList.contains('cart-drawer--empty')) {
+                  liveInner.replaceWith(newInner);
+                } else {
+                  const liveItems = liveDrawer.querySelector('.cart-drawer__items');
+                  const newItems = doc.querySelector('.cart-drawer__items');
+                  if (liveItems && newItems) {
+                    liveItems.innerHTML = newItems.innerHTML;
+                  }
+                  const liveSummary = liveDrawer.querySelector('.cart-drawer__summary');
+                  const newSummary = doc.querySelector('.cart-drawer__summary');
+                  if (liveSummary && newSummary) {
+                    liveSummary.innerHTML = newSummary.innerHTML;
+                  } else if (!liveSummary && newSummary) {
+                    const contentContainer = liveDrawer.querySelector('.cart-drawer__content');
+                    if (contentContainer) contentContainer.appendChild(newSummary);
+                  }
+                }
               }
             }
           }
