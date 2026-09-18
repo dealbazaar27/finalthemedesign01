@@ -1,0 +1,1349 @@
+{% doc %}
+  Renders reusable cart drawer markup for both initial page loads and Section Rendering API responses.
+
+  @param {boolean} [render_wrapper] - When true, wraps the drawer in the section wrapper that the Section Rendering API adds automatically.
+{% enddoc %}
+
+{%- liquid
+  assign render_wrapper = render_wrapper | default: true, allow_false: true
+-%}
+
+{%- if settings.cart_type == 'drawer' and template.name != 'cart' -%}
+  {% if render_wrapper %}
+    <div
+      id="shopify-section-cart-drawer-section"
+      class="shopify-section"
+    >
+  {% endif %}
+
+  <script
+    type="module"
+    src="{{ 'cart-drawer.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+
+  {% capture empty_cart_drawer_content %}
+    <div class="cart-items__wrapper cart-items__wrapper--drawer-empty" data-cart-drawer-empty>
+      {% render 'boat-empty-cart', is_drawer: true %}
+    </div>
+  {% endcapture %}
+
+  <theme-drawer
+    id="cart-drawer"
+    data-skip-node-update
+  >
+    <dialog
+      ref="panel"
+      class="theme-drawer__dialog color-custom-drawer"
+      aria-labelledby="cart-drawer-heading"
+      cart-summary-sticky="true"
+    >
+      <cart-drawer-component
+        {% if template.name != 'cart' %}
+          auto-open
+        {% endif %}
+      >
+        <template id="empty-cart-template">
+          {{ empty_cart_drawer_content }}
+        </template>
+
+        <div
+          class="cart-drawer__inner{% if cart.empty? %} cart-drawer--empty{% endif %}"
+          data-hydration-key="cart-drawer-inner"
+        >
+          {%- if cart.empty? -%}
+            <div class="theme-drawer__header">
+              <button
+                on:click="#cart-drawer/close"
+                class="theme-drawer__close-button cart-drawer__close-button--empty"
+                type="button"
+                aria-label="{{ 'actions.close' | t }}"
+              >
+                <span class="svg-wrapper">
+                  {{- 'icon-close.svg' | inline_asset_content -}}
+                </span>
+              </button>
+            </div>
+          {%- else -%}
+            {% capture cart_badge_html %}
+              <span
+                class="theme-drawer__badge{% if cart.item_count == 0 %} visually-hidden{% endif %}"
+                aria-hidden="true"
+                {% if cart.item_count <= 99 %}
+                  data-maintain-ratio
+                {% endif %}
+              >
+                {{- cart.item_count -}}
+              </span>
+              {% if cart.item_count > 0 %}
+                <span class="visually-hidden">
+                  {{ 'accessibility.cart_count' | t }}: {{ cart.item_count }}
+                </span>
+              {% endif %}
+            {% endcapture %}
+            {% assign cart_drawer_title = 'content.cart_title' | t %}
+            {% render 'theme-drawer-header',
+              title: cart_drawer_title,
+              drawer_id: 'cart-drawer',
+              heading_id: 'cart-drawer-heading',
+              title_append: cart_badge_html
+            %}
+          {%- endif -%}
+
+          {% capture cart_items_children %}
+            {%- if cart.empty? -%}
+              {{ empty_cart_drawer_content }}
+            {%- else -%}
+              {% liquid
+                assign total_compare_price = 0
+                for item in cart.items
+                  if item.variant.compare_at_price > item.variant.price
+                    assign item_comp = item.variant.compare_at_price | times: item.quantity
+                    assign total_compare_price = total_compare_price | plus: item_comp
+                  else
+                    assign item_orig = item.original_line_price
+                    assign total_compare_price = total_compare_price | plus: item_orig
+                  endif
+                endfor
+
+                # Tier quantity deals: 2+ items = 6%, 5+ items = 7%, 10+ items = 10%
+                assign total_cart_qty = 0
+                for item in cart.items
+                  assign total_cart_qty = total_cart_qty | plus: item.quantity
+                endfor
+
+                assign auto_tier_pct = 0
+                if total_cart_qty >= 10
+                  assign auto_tier_pct = 10
+                elsif total_cart_qty >= 5
+                  assign auto_tier_pct = 7
+                elsif total_cart_qty >= 2
+                  assign auto_tier_pct = 6
+                endif
+
+                assign tier_savings_cents = 0
+                if auto_tier_pct > 0
+                  assign tier_savings_cents = cart.items_subtotal_price | times: auto_tier_pct | divided_by: 100
+                endif
+
+                assign effective_cart_total = cart.total_price
+                if cart.total_discount == 0 and tier_savings_cents > 0
+                  assign effective_cart_total = cart.total_price | minus: tier_savings_cents
+                endif
+
+                assign total_savings = 0
+                if total_compare_price > effective_cart_total
+                  assign total_savings = total_compare_price | minus: effective_cart_total
+                endif
+              %}
+
+              <scroll-hint
+                class="cart-drawer__content"
+                aria-label="{{ 'accessibility.cart' | t }}"
+                style="--header-height: 60px;"
+              >
+                {% comment %} --- Savings Banner --- {% endcomment %}
+                {% if total_savings > 0 %}
+                  <div class="boat-cart-savings-banner">
+                    <span class="boat-savings-icon">🔥</span>
+                    <span class="boat-savings-text">Total Savings on this order: <strong>{{ total_savings | money_without_trailing_zeros }}</strong></span>
+                  </div>
+                {% endif %}
+
+                <scroll-hint class="cart-drawer__items">
+                  {% render 'cart-products', context: 'drawer' %}
+                </scroll-hint>
+
+                <div class="cart-drawer__summary">
+                  {% render 'cart-summary', section_id: 'cart-drawer-section', total_savings: total_savings, total_compare_price: total_compare_price %}
+                </div>
+              </scroll-hint>
+            {%- endif -%}
+          {% endcapture %}
+          {% render 'cart-items-component',
+            children: cart_items_children,
+            is_drawer: true,
+            section_id: 'cart-drawer-section'
+          %}
+        </div>
+      </cart-drawer-component>
+    </dialog>
+  </theme-drawer>
+
+  {% if render_wrapper %}
+    </div>
+  {% endif %}
+
+  <script>
+    (function () {
+      function syncCartScrollLock() {
+        var cartDrawer = document.getElementById('cart-drawer');
+        var dialog = cartDrawer ? cartDrawer.querySelector('dialog') : null;
+        var isOpen = Boolean(cartDrawer && (cartDrawer.hasAttribute('open') || (dialog && dialog.hasAttribute('open'))));
+        
+        if (isOpen) {
+          document.documentElement.classList.add('cart-drawer-open');
+          document.body.classList.add('cart-drawer-open');
+          document.documentElement.style.overflow = 'hidden';
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.documentElement.classList.remove('cart-drawer-open');
+          document.body.classList.remove('cart-drawer-open');
+          document.documentElement.style.overflow = '';
+          document.body.style.overflow = '';
+        }
+      }
+
+      document.addEventListener('theme-drawer:open', function (e) {
+        if (!e.target || e.target.id === 'cart-drawer' || e.target.closest('#cart-drawer')) {
+          syncCartScrollLock();
+        }
+      });
+
+      document.addEventListener('theme-drawer:close', function () {
+        setTimeout(syncCartScrollLock, 50);
+      });
+
+      var obs = new MutationObserver(syncCartScrollLock);
+      function bindCartObserver() {
+        var cartDrawer = document.getElementById('cart-drawer');
+        if (cartDrawer) {
+          obs.observe(cartDrawer, { attributes: true, attributeFilter: ['open'] });
+          var dialog = cartDrawer.querySelector('dialog');
+          if (dialog) {
+            obs.observe(dialog, { attributes: true, attributeFilter: ['open'] });
+          }
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bindCartObserver);
+      } else {
+        bindCartObserver();
+      }
+    })();
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  /* ── Strict Background Scroll Lock when Cart Drawer is Open ── */
+  html:has(#cart-drawer[open]),
+  body:has(#cart-drawer[open]),
+  html.cart-drawer-open,
+  body.cart-drawer-open {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none !important;
+  }
+
+  html:has(#cart-drawer[open]) .page-wrapper,
+  html.cart-drawer-open .page-wrapper {
+    overflow: hidden !important;
+  }
+
+  #cart-drawer dialog,
+  #cart-drawer .cart-drawer__inner {
+    overscroll-behavior: contain !important;
+  }
+
+  cart-drawer-component {
+    --cart-drawer-padding: 16px;
+    --font-paragraph--line-height: 1;
+    display: contents;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+
+  .cart-drawer__inner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: #f8fafc !important;
+  }
+
+  .theme-drawer__header {
+    padding: 14px 18px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .theme-drawer__title {
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .theme-drawer__badge {
+    background: #d8232a !important;
+    color: #ffffff !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    padding: 2px 7px !important;
+    border-radius: 12px !important;
+    margin-left: 6px !important;
+  }
+
+  .theme-drawer__close-button {
+    background: #f1f5f9 !important;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid #e2e8f0 !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .theme-drawer__close-button:hover {
+    background: #e2e8f0 !important;
+  }
+
+  .boat-cart-shipping-bar {
+    background: #ecfdf5 !important;
+    border-bottom: 1px solid #a7f3d0 !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .boat-cart-shipping-text {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: #065f46 !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+  }
+
+  .boat-cart-shipping-text.unlocked {
+    color: #047857 !important;
+  }
+
+  .boat-cart-progress-track {
+    width: 100% !important;
+    height: 7px !important;
+    background: #d1fae5 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+
+  .boat-cart-progress-fill {
+    height: 100% !important;
+    background: #10b981 !important;
+    border-radius: 10px !important;
+    transition: width 0.4s ease !important;
+  }
+
+  .boat-cart-progress-fill.unlocked {
+    background: linear-gradient(90deg, #10b981, #059669) !important;
+  }
+
+  .boat-cart-savings-banner {
+    background: #fefce8 !important;
+    border-bottom: 1px solid #fef08a !important;
+    padding: 8px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    font-size: 0.76rem !important;
+    font-weight: 700 !important;
+    color: #854d0e !important;
+  }
+
+  /* --- Collapsible Bill Breakdown Card (SS 3) --- */
+  .boat-bill-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 10px 14px 10px 14px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    margin-top: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    transition: all 0.25s ease !important;
+  }
+
+  .boat-bill-collapse-body {
+    display: grid !important;
+    grid-template-rows: 0fr !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    pointer-events: none !important;
+    transition: grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, margin 0.25s ease !important;
+  }
+
+  .boat-bill-card.is-open .boat-bill-collapse-body,
+  .boat-bill-collapse-body.is-open {
+    grid-template-rows: 1fr !important;
+    opacity: 1 !important;
+    margin-bottom: 8px !important;
+    pointer-events: auto !important;
+  }
+
+  .boat-bill-collapse-inner {
+    overflow: hidden !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .boat-bill-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    line-height: 1.3 !important;
+  }
+
+  .boat-bill-label {
+    color: #334155 !important;
+    font-weight: 700 !important;
+  }
+
+  .boat-bill-value {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+  }
+
+  .boat-bill-value.text-green {
+    color: #16a34a !important;
+    font-weight: 800 !important;
+  }
+
+  .boat-bill-dashed-divider {
+    border-bottom: 1px dashed #cbd5e1 !important;
+    margin: 6px 0 4px 0 !important;
+    width: 100% !important;
+  }
+
+  .boat-bill-main-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-top: 4px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+  }
+
+  .boat-bill-to-pay-left {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+  }
+
+  .boat-to-pay-label {
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+  }
+
+  .boat-to-pay-value {
+    font-size: 1.12rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+  }
+
+  .boat-bill-toggle-btn {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 50% !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+    transition: background 0.15s ease, transform 0.25s ease !important;
+    flex-shrink: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .boat-bill-main-row:hover .boat-bill-toggle-btn {
+    background: #e2e8f0 !important;
+  }
+
+  .boat-bill-arrow {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transform: rotate(0deg) !important; /* Default = Arrow Down */
+  }
+
+  .boat-bill-card.is-open .boat-bill-arrow,
+  .boat-bill-toggle-btn.is-open .boat-bill-arrow {
+    transform: rotate(180deg) !important; /* Open = Arrow Up */
+  }
+
+  .cart-drawer__content {
+    height: calc(100% - 60px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    background-color: #f8fafc !important;
+    flex-grow: 1;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
+  }
+
+  .cart-drawer__items {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 12px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
+    gap: 8px !important;
+  }
+
+  .cart-items__table {
+    display: block !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .cart-items__table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .cart-items__table-row,
+  .cart-items__table-row--full-width-variants {
+    display: grid !important;
+    grid-template-columns: 68px 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    grid-template-areas:
+      "media details details"
+      "media quantity price" !important;
+    column-gap: 12px !important;
+    row-gap: 8px !important;
+    align-items: center !important;
+    padding: 12px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+  }
+
+  .cart-items__media {
+    grid-area: media !important;
+    grid-row: 1 / span 2 !important;
+    width: 68px !important;
+    height: 68px !important;
+    min-width: 68px !important;
+    min-height: 68px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    padding: 0 !important;
+    align-self: start !important;
+  }
+
+  .cart-items__media-container {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+
+  .cart-items__media-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+  }
+
+  .cart-items__details,
+  .cart-items__table-row .cart-items__details,
+  .cart-items__table-row--full-width-variants .cart-items__details {
+    grid-area: details !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    padding: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .cart-items__product-info {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .cart-items__title-row {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  .cart-items__title {
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.3 !important;
+    text-decoration: none !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+  }
+
+  .cart-items__variants-wrapper {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .cart-items__variants {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  .cart-items__unit-price-wrapper {
+    font-size: 0.78rem !important;
+    color: #475569 !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin-top: 1px !important;
+  }
+
+  .cart-items__unit-price-wrapper .compare-at-price {
+    color: #94a3b8 !important;
+    text-decoration: line-through !important;
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+    margin-left: 4px !important;
+  }
+
+  .cart-items__quantity {
+    grid-area: quantity !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    justify-self: start !important;
+  }
+
+  .cart-items__quantity-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .cart-items__quantity .quantity-selector-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .cart-items__quantity .quantity-selector {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    width: auto !important;
+    min-width: 86px !important;
+    max-width: 96px !important;
+    padding: 0 4px !important;
+    box-sizing: border-box !important;
+    flex: 0 0 auto !important;
+  }
+
+  .cart-items__quantity .quantity-selector button,
+  .cart-items__quantity .quantity-selector .quantity-minus,
+  .cart-items__quantity .quantity-selector .quantity-plus {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 800 !important;
+    font-size: 0.9rem !important;
+    color: #0f172a !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .cart-items__quantity .quantity-selector button:hover {
+    background: #e2e8f0 !important;
+  }
+
+  .cart-items__quantity .quantity-selector svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .cart-items__quantity .quantity-selector input[type='number'],
+  .cart-items__quantity .quantity-selector input {
+    width: 26px !important;
+    max-width: 26px !important;
+    text-align: center !important;
+    font-weight: 800 !important;
+    font-size: 0.84rem !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+    -moz-appearance: textfield !important;
+  }
+
+  .cart-items__remove {
+    color: #ef4444 !important;
+    background: #fef2f2 !important;
+    border: 1px solid #fee2e2 !important;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .cart-items__remove:hover {
+    background: #fee2e2 !important;
+    transform: scale(1.06) !important;
+  }
+
+  .cart-items__remove svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .cart-items__price {
+    grid-area: price !important;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    text-align: right !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap !important;
+    justify-self: end !important;
+    align-self: center !important;
+  }
+
+  .cart-items__error {
+    grid-area: error !important;
+    width: 100% !important;
+    margin: 4px 0 0 0 !important;
+    padding: 0 !important;
+  }
+
+  .boat-bill-view-tag {
+    font-size: 0.72rem !important;
+    color: #2563eb !important;
+    background: #eff6ff !important;
+    border: 1px solid #dbeafe !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    margin-left: 4px !important;
+  }
+
+  .cart-actions {
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .cart-actions__divider {
+    display: none !important;
+  }
+
+  .cart-discount__summary {
+    padding: 4px 0 !important;
+    font-size: 0.82rem !important;
+    min-height: auto !important;
+  }
+
+  .cart-drawer__summary {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding: 8px 12px 10px 12px !important;
+    margin-top: auto !important;
+    background: #ffffff !important;
+    border-top: 1px solid #e2e8f0 !important;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06) !important;
+    mask-image: none !important;
+  }
+
+  .cart-totals {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .cart__checkout-button {
+    background: #00b853 !important;
+    color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px !important;
+    height: 44px !important;
+    border-radius: 22px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-shadow: 0 4px 14px rgba(0, 184, 83, 0.35) !important;
+    transition: transform 0.15s ease, background 0.15s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+    text-transform: uppercase !important;
+  }
+
+  .cart__checkout-button:hover {
+    background: #009844 !important;
+    transform: scale(1.01) !important;
+  }
+
+  .cart-drawer--empty .cart-drawer__content {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px !important;
+  }
+
+  
+  /* --- Modern Premium Empty Cart UI --- */
+  .boat-empty-cart-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px 20px 24px 20px !important;
+    text-align: center !important;
+    background: var(--boat-empty-bg, #ffffff) !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    overflow-y: auto !important;
+  }
+
+  /* Auto-close top bar */
+  .boat-empty-autoclose-bar {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    right: 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .boat-empty-autoclose-bar.is-cancelled {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+  }
+
+  .boat-empty-autoclose-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .boat-empty-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--boat-empty-progress, #00b853);
+    animation: boatPulse 1.2s infinite;
+  }
+
+  @keyframes boatPulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+  }
+
+  .boat-empty-stay-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+
+  .boat-empty-stay-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-empty-progress-track {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+  }
+
+  .boat-empty-progress-line {
+    height: 100%;
+    width: 100%;
+    background: var(--boat-empty-progress, #00b853);
+    transform-origin: left;
+    transition: width 0.05s linear;
+  }
+
+  .boat-empty-cart-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 380px;
+    width: 100%;
+    margin: auto 0;
+    padding-top: 24px;
+  }
+
+  /* Animated floating shopping bag */
+  .boat-empty-cart-graphic-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .boat-empty-cart-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 184, 83, 0.18) 0%, rgba(0, 184, 83, 0) 70%);
+    animation: boatGlowPulse 2.5s infinite alternate ease-in-out;
+  }
+
+  @keyframes boatGlowPulse {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.2); opacity: 1; }
+  }
+
+  .boat-empty-cart-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    position: relative;
+    animation: boatFloat 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes boatFloat {
+    0% { transform: translateY(0px); }
+    100% { transform: translateY(-8px); }
+  }
+
+  .boat-empty-badge-sparkle {
+    position: absolute;
+    font-size: 16px;
+  }
+
+  .sparkle-top {
+    top: -4px;
+    right: -2px;
+    animation: sparkleSpin 2s infinite ease-in-out;
+  }
+
+  .sparkle-bottom {
+    bottom: 2px;
+    left: -4px;
+    animation: sparkleSpin 2.4s infinite ease-in-out reverse;
+  }
+
+  @keyframes sparkleSpin {
+    0% { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
+    50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+    100% { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
+  }
+
+  .boat-empty-cart-title {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    color: var(--boat-empty-title, #0f172a) !important;
+    margin: 0 0 8px 0 !important;
+    letter-spacing: -0.3px !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+  }
+
+  .boat-empty-cart-subtitle {
+    font-size: 0.85rem !important;
+    line-height: 1.45 !important;
+    color: var(--boat-empty-subtitle, #64748b) !important;
+    margin: 0 0 20px 0 !important;
+    font-weight: 500 !important;
+  }
+
+  .boat-empty-quick-nav {
+    width: 100%;
+    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .boat-empty-quick-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #475569;
+    letter-spacing: 0.5px;
+  }
+
+  .boat-empty-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .boat-empty-chip {
+    background: var(--boat-empty-chip-bg, #ffffff);
+    border: 1px solid var(--boat-empty-chip-border, #e2e8f0);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--boat-empty-chip-text, #1e293b);
+    text-decoration: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+  }
+
+  .boat-empty-chip:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .boat-empty-shop-now-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 48px !important;
+    background: var(--boat-empty-btn-bg, #000000) !important;
+    color: var(--boat-empty-btn-text, #ffffff) !important;
+    border-radius: 24px !important;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
+  }
+
+  .boat-empty-shop-now-btn:hover {
+    background: var(--boat-empty-btn-hover-bg, #00b853) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(0, 184, 83, 0.35) !important;
+  }
+
+  .boat-empty-login-prompt {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+
+  .boat-empty-login-link {
+    color: #0f172a;
+    font-weight: 800;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+  }
+
+  .boat-empty-login-link:hover {
+    color: var(--boat-empty-btn-hover-bg, #00b853);
+  }
+
+
+
+{% endstylesheet %}
+
+
+<script>
+  (function initGlobalBoatCartHelpers() {
+    // 1. Universal Cart Breakdown Toggle Handler (Works on First Click, Before & After Page Refresh)
+    window.toggleBoatBillBreakdown = function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const card = (event && event.target) ? event.target.closest('.boat-bill-card') : (document.querySelector('.cart-drawer .boat-bill-card') || document.querySelector('.boat-bill-card'));
+      if (!card) return;
+      card.classList.toggle('is-open');
+    };
+
+    // 2. Global Delegated Click Listener (Captures all clicks on bill main row or arrow instantly)
+    if (!window._boatBillGlobalDelegatedBound) {
+      window._boatBillGlobalDelegatedBound = true;
+      document.addEventListener('click', function(e) {
+        const row = e.target.closest('.boat-bill-main-row') || e.target.closest('.boat-bill-toggle-btn') || e.target.closest('.boat-bill-view-tag');
+        if (row) {
+          const card = row.closest('.boat-bill-card') || document.querySelector('.boat-bill-card');
+          if (card) {
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.toggle('is-open');
+          }
+        }
+      }, true);
+    }
+
+    // 3. Global Tier Discount Synchronizer
+    window.syncBoatTierDiscount = function() {
+      clearTimeout(window.boatTierSyncDebounceTimer);
+      window.boatTierSyncDebounceTimer = setTimeout(async function() {
+        if (window.isBoatSyncingTier) return;
+        try {
+          const res = await fetch('/cart.js', { headers: { 'Accept': 'application/json' } });
+          const cart = await res.json();
+          if (!cart) return;
+
+          let totalQty = 0;
+          if (cart.items && cart.items.length > 0) {
+            cart.items.forEach(function(item) {
+              totalQty += (item.quantity || 0);
+            });
+          }
+
+          let targetCode = '';
+          if (totalQty >= 10) {
+            targetCode = 'DEAL10';
+          } else if (totalQty >= 5) {
+            targetCode = 'DEAL7';
+          } else if (totalQty >= 2) {
+            targetCode = 'DEAL6';
+          }
+
+          const appliedCodes = (cart.discount_applications || [])
+            .filter(function(app) { return app.type === 'discount_code'; })
+            .map(function(app) { return app.title; });
+
+          const isTier = function(c) {
+            return c === 'DEAL6' || c === 'DEAL7' || c === 'DEAL10';
+          };
+
+          const hasCustom = appliedCodes.some(function(c) { return !isTier(c); });
+          if (hasCustom) return;
+
+          const currentTier = appliedCodes.find(isTier) || '';
+          if (targetCode && sessionStorage.getItem('boat_dismissed_tier_code') === targetCode) {
+            return;
+          }
+
+          if (currentTier === targetCode) {
+            window.activeCartTierCode = targetCode;
+            return;
+          }
+
+          window.isBoatSyncingTier = true;
+          window.activeCartTierCode = targetCode;
+
+          await fetch('/cart/update.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ discount: targetCode })
+          });
+        } catch(err) {
+          console.warn('Tier sync error:', err);
+        } finally {
+          window.isBoatSyncingTier = false;
+        }
+      }, 150);
+    };
+
+    // 4. Global Checkout Redirect Handler
+    window.handleBoatCheckoutRedirect = function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const btn = document.getElementById('checkout');
+      if (btn) {
+        btn.style.opacity = '0.85';
+        btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<span class="button-text" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;"><span class="boat-checkout-spinner"></span> SECURING ORDER...</span>';
+      }
+      const code = window.activeCartTierCode || '';
+      const checkoutUrl = code ? '/checkout?discount=' + encodeURIComponent(code) : '/checkout';
+      window.location.href = checkoutUrl;
+      return false;
+    };
+
+    // 5. Smart Dynamic Auto-Close Timer for Empty Cart Drawer
+    (function initEmptyCartAutoClose() {
+      let progressInterval = null;
+
+      function startAutoCloseTimer() {
+        return; // Auto-close removed as per request
+      }
+
+      function cancelTimer(permanent) {
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
+        if (permanent) {
+          const bar = document.getElementById('BoatEmptyAutoCloseBar');
+          if (bar) bar.classList.add('is-cancelled');
+        }
+      }
+
+      window.cancelBoatEmptyAutoClose = function(event) {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        cancelTimer(true);
+      };
+
+      window.startBoatEmptyAutoClose = startAutoCloseTimer;
+
+      // Pause timer when mouse is hovering inside empty cart
+      document.addEventListener('mouseenter', function(e) {
+        if (e.target && e.target.closest && e.target.closest('.boat-empty-cart-container')) {
+          cancelTimer(false);
+        }
+      }, true);
+
+      // Resume timer when mouse leaves empty cart
+      document.addEventListener('mouseleave', function(e) {
+        if (e.target && e.target.closest && e.target.closest('.boat-empty-cart-container')) {
+          startAutoCloseTimer();
+        }
+      }, true);
+
+      // Trigger when drawer opens
+      document.addEventListener('theme-drawer:open', function(e) {
+        if (e.target && (e.target.id === 'cart-drawer' || e.target.closest('#cart-drawer'))) {
+          const isCartEmpty = Boolean(document.querySelector('.cart-drawer--empty, .boat-empty-cart-container'));
+          if (isCartEmpty) {
+            setTimeout(startAutoCloseTimer, 200);
+          }
+        }
+      });
+
+      // Trigger when cart lines are updated or emptied dynamically
+      const emptyCheckEvents = ['cart:lines:update', 'cart:updated', 'cart:change', 'shopify:cart:lines-update', 'cart:empty-rendered'];
+      emptyCheckEvents.forEach(evt => {
+        document.addEventListener(evt, function(e) {
+          setTimeout(() => {
+            const drawer = document.getElementById('cart-drawer');
+            if (drawer && (drawer.hasAttribute('open') || drawer.querySelector('dialog[open]'))) {
+              const emptyContainer = document.querySelector('.boat-empty-cart-container');
+              if (emptyContainer) {
+                startAutoCloseTimer();
+              }
+            }
+          }, 250);
+        });
+      });
+
+      // Mutation observer on cart-drawer
+      const drawerElem = document.getElementById('cart-drawer');
+      if (drawerElem) {
+        const observer = new MutationObserver(function() {
+          const isOpen = drawerElem.hasAttribute('open') || Boolean(drawerElem.querySelector('dialog[open]'));
+          if (isOpen) {
+            const isCartEmpty = Boolean(drawerElem.querySelector('.cart-drawer--empty, .boat-empty-cart-container'));
+            if (isCartEmpty && !progressInterval) {
+              setTimeout(startAutoCloseTimer, 200);
+            }
+          } else {
+            cancelTimer(false);
+          }
+        });
+        observer.observe(drawerElem, { attributes: true, subtree: true, attributeFilter: ['open', 'class'] });
+      }
+    })();
+})();
+</script>

@@ -1,0 +1,23 @@
+{% if closest.product == blank %}
+  <product-price class="text-block">
+    <span class="price">$0.00</span>
+  </product-price>
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:names.price",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:content.resource_reference_price"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.price"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,135 @@
+{% liquid
+  assign selected_variant = product.selected_or_first_available_variant
+  assign price = selected_variant.price
+  assign compare_price = selected_variant.compare_at_price
+  
+  assign featured_img = selected_variant.featured_image
+  if featured_img == blank
+    assign featured_img = product.featured_media.preview_image
+  endif
+%}
+
+<style>
+  .predictive-search-product-card {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    border: 1px solid #f1f5f9 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .predictive-search-product-card:hover {
+    background: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .predictive-search-product-card__image-wrapper {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  .predictive-search-product-card__image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .predictive-search-product-card__placeholder {
+    font-size: 1.2rem !important;
+  }
+
+  .predictive-search-product-card__content {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    overflow: hidden !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .predictive-search-product-card__title {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    line-height: 1.25 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+
+  .predictive-search-product-card:hover .predictive-search-product-card__title {
+    color: #d8232a !important;
+  }
+
+  .predictive-search-product-card__price-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .predictive-search-product-card__price {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    color: #d8232a !important;
+    white-space: nowrap !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+  }
+
+  .predictive-search-product-card__compare-price {
+    font-size: 0.72rem !important;
+    text-decoration: line-through !important;
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    white-space: nowrap !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+  }
+</style>
+
+<a href="{{ product.url }}" class="predictive-search-product-card">
+  <div class="predictive-search-product-card__image-wrapper">
+    {% if featured_img != blank %}
+      <img
+        src="{{ featured_img | image_url: width: 140 }}"
+        alt="{{ product.title | escape }}"
+        class="predictive-search-product-card__image"
+        loading="lazy"
+        width="48"
+        height="48"
+      >
+    {% else %}
+      <div class="predictive-search-product-card__placeholder">📦</div>
+    {% endif %}
+  </div>
+
+  <div class="predictive-search-product-card__content">
+    <span class="predictive-search-product-card__title">{{ product.title }}</span>
+    <div class="predictive-search-product-card__price-row">
+      <span class="predictive-search-product-card__price">{{ price | money_without_trailing_zeros }}</span>
+      {% if compare_price > price %}
+        <span class="predictive-search-product-card__compare-price">{{ compare_price | money_without_trailing_zeros }}</span>
+      {% endif %}
+    </div>
+  </div>
+</a>

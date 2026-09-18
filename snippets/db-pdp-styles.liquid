@@ -1,0 +1,394 @@
+{% style %}
+/* boAt Product Detail Page (PDP) Custom Styles */
+
+.boat-rating-rewards-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-family: inherit;
+}
+
+.boat-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  background: transparent;
+  gap: 2px;
+}
+
+.boat-star-icon {
+  color: #ffb400;
+  font-size: 14px;
+}
+
+.boat-rating-score {
+  font-weight: 700;
+}
+
+.boat-rating-count {
+  color: #666;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.boat-reward-points-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e03131;
+  background: #fff5f5;
+  color: #e03131;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 20px;
+  line-height: 1.3;
+}
+
+/* Title & Subtitle Styling */
+.product-title h1,
+.product-title {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #111111 !important;
+  margin-bottom: 4px !important;
+  letter-spacing: -0.3px !important;
+}
+
+.boat-product-subtitle {
+  font-size: 13px;
+  color: #555555;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* Price Section Styling */
+.price {
+  display: flex !important;
+  align-items: baseline !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.price__regular,
+.price__sale {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #111111 !important;
+}
+
+.price-item--regular,
+.price-item--last {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+.price__compare,
+.price-item--compare {
+  font-size: 14px !important;
+  color: #888888 !important;
+  text-decoration: line-through !important;
+  font-weight: 500 !important;
+}
+
+.boat-discount-badge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #00a651;
+  background: #e6fcf5;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.boat-tax-text {
+  font-size: 11px;
+  color: #777777;
+  width: 100%;
+  margin-top: 2px;
+}
+
+/* Delivery Checker */
+.boat-delivery-checker-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 0;
+  border: 1px solid #f1f3f5;
+}
+
+.boat-delivery-heading,
+.boat-offers-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.2px;
+}
+
+.boat-pincode-input-group {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 40px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.boat-pincode-input {
+  flex: 1;
+  border: none;
+  padding: 0 12px;
+  font-size: 13px;
+  outline: none;
+  background: transparent;
+  font-weight: 500;
+  color: #222;
+}
+
+.boat-pincode-btn {
+  background: #121417;
+  color: #fff;
+  border: none;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 700;
+  height: 100%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 0;
+}
+
+.boat-pincode-btn:hover {
+  background: #2b3036;
+}
+
+.boat-delivery-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #00a651;
+  font-weight: 600;
+}
+
+.boat-truck-icon {
+  stroke: #00a651;
+  flex-shrink: 0;
+}
+
+/* Payment Rewards */
+.boat-payment-rewards-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 16px 0;
+  border: 1px solid #f1f3f5;
+}
+
+.boat-payment-reward-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #222;
+}
+
+.boat-gift-icon-wrapper {
+  background: #fff0f0;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Active Offers Grid */
+.boat-active-offers-card {
+  margin: 16px 0;
+}
+
+.boat-offers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media screen and (max-width: 600px) {
+  .boat-offers-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.boat-offer-box {
+  border-radius: 10px;
+  background: #d3f9e8;
+  border: 1px solid #b2f2bb;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.boat-offer-badge {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 6px;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.boat-offer-badge--green {
+  background: #00a651;
+}
+
+.boat-offer-badge--dark {
+  background: #121417;
+}
+
+.boat-offer-content {
+  padding: 10px 8px;
+  font-size: 11px;
+  color: #121417;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.boat-offer-title {
+  font-weight: 700;
+  font-size: 11px;
+  color: #111;
+}
+
+.boat-offer-discount {
+  font-weight: 600;
+  font-size: 11px;
+  color: #00875a;
+}
+
+.boat-offer-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  border: 1px dashed #00a651;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.boat-offer-code-row:hover {
+  background: #ffffff;
+}
+
+/* Buy Buttons Side-by-Side Flex Layout */
+.product-form-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  width: 100% !important;
+  align-items: center !important;
+}
+
+.product-form-buttons > * {
+  flex: 1 !important;
+  width: 50% !important;
+  margin: 0 !important;
+}
+
+.add-to-cart-button,
+.product-form__submit {
+  background-color: #121417 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  height: 48px !important;
+  font-size: 14px !important;
+  border: none !important;
+  width: 100% !important;
+  cursor: pointer !important;
+}
+
+.shopify-payment-button__button,
+.shopify-payment-button__button--unbranded,
+.boat-buy-now-btn {
+  background-color: #00c68c !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  height: 48px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-transform: none !important;
+}
+
+.shopify-payment-button__button:hover,
+.boat-buy-now-btn:hover {
+  background-color: #00a876 !important;
+}
+
+/* Variant Swatches Circular Styling */
+.variant-option legend {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #111 !important;
+  margin-bottom: 8px !important;
+}
+
+.variant-option__swatch-value {
+  font-weight: 700 !important;
+  color: #111 !important;
+}
+
+.variant-option--buttons fieldset,
+.variant-option--buttons {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.variant-option__button-label--has-swatch,
+.variant-option__button-label {
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 2px !important;
+  border: 2px solid transparent !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.variant-option__button-label input[type="radio"]:checked + span,
+.variant-option__button-label input[type="radio"]:checked ~ * {
+  border-color: #121417 !important;
+}
+
+.variant-option__button-label:hover {
+  border-color: #00c68c !important;
+}
+{% endstyle %}

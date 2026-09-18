@@ -1,0 +1,1217 @@
+{%- doc -%}
+  Renders the cart summary totals.
+
+  @param {string} [accelerated_checkout_buttons_layout] - { 'vertical' } Forced layout of the additional checkout buttons, instead of relying on platform's layout.
+  @param {string} [section_id] - The section ID for cart discount component.
+{%- enddoc -%}
+
+{% render 'text-component-shimmer-styles' %}
+{% render 'cart-typography-styles' %}
+
+{% liquid
+  # 1. Total cart quantity across items
+  assign total_cart_qty = 0
+  for item in cart.items
+    assign total_cart_qty = total_cart_qty | plus: item.quantity
+  endfor
+
+  # 2. Determine Expected Tier Code based on current cart quantity
+  # DEAL6: 2 to 4 items (6% OFF)
+  # DEAL7: 5 to 9 items (7% OFF)
+  # DEAL10: 10+ items (10% OFF)
+  assign expected_tier_code = ''
+  assign expected_tier_percent = 0
+  assign expected_tier_badge = ''
+
+  if total_cart_qty >= 10
+    assign expected_tier_code = 'DEAL10'
+    assign expected_tier_percent = 10
+    assign expected_tier_badge = 'MOST SAVINGS'
+  elsif total_cart_qty >= 5
+    assign expected_tier_code = 'DEAL7'
+    assign expected_tier_percent = 7
+    assign expected_tier_badge = 'BEST VALUE'
+  elsif total_cart_qty >= 2
+    assign expected_tier_code = 'DEAL6'
+    assign expected_tier_percent = 6
+    assign expected_tier_badge = 'MOST POPULAR'
+  endif
+
+  # 3. Check what discount codes are currently applied in Shopify
+  assign applied_discount_codes = cart.cart_level_discount_applications | where: 'type', 'discount_code' | map: 'title'
+  for item in cart.items
+    for allocation in item.line_level_discount_allocations
+      if allocation.discount_application.type == 'discount_code'
+        assign applied_discount_codes = item.line_level_discount_allocations | slice: forloop.index0 | map: 'discount_application' | map: 'title' | concat: applied_discount_codes
+      endif
+    endfor
+  endfor
+  assign applied_discount_codes = applied_discount_codes | uniq
+
+  # Check if customer has entered a custom coupon code (NOT DEAL6/DEAL7/DEAL10)
+  assign custom_code = ''
+  for code in applied_discount_codes
+    if code != 'DEAL6' and code != 'DEAL7' and code != 'DEAL10'
+      assign custom_code = code
+      break
+    endif
+  endfor
+
+  # 4. Resolve Active Voucher Code and Percent
+  assign active_voucher_code = ''
+  assign active_voucher_percent = 0
+
+  if custom_code != blank
+    assign active_voucher_code = custom_code
+  elsif expected_tier_code != blank
+    assign active_voucher_code = expected_tier_code
+    assign active_voucher_percent = expected_tier_percent
+  endif
+
+  # Ensure percentage is set correctly for all 3 tier codes
+  if active_voucher_code == 'DEAL10'
+    assign active_voucher_percent = 10
+  elsif active_voucher_code == 'DEAL7'
+    assign active_voucher_percent = 7
+  elsif active_voucher_code == 'DEAL6'
+    assign active_voucher_percent = 6
+  endif
+
+  # Calculate tier discount amount based on active_voucher_percent
+  assign tier_calculated_discount = 0
+  if active_voucher_percent > 0
+    assign tier_calculated_discount = cart.items_subtotal_price | times: active_voucher_percent | divided_by: 100
+  endif
+
+  # Calculate voucher discount from Shopify backend if available
+  assign voucher_discount = 0
+  for discount in cart.cart_level_discount_applications
+    assign voucher_discount = voucher_discount | plus: discount.total_allocated_amount
+  endfor
+  for item in cart.items
+    for allocation in item.line_level_discount_allocations
+      assign voucher_discount = voucher_discount | plus: allocation.amount
+    endfor
+  endfor
+
+  # Effective Voucher Discount
+  assign effective_voucher_discount = 0
+  if custom_code != blank
+    assign effective_voucher_discount = voucher_discount
+  elsif active_voucher_code != blank
+    if voucher_discount > 0 and applied_discount_codes contains active_voucher_code
+      assign effective_voucher_discount = voucher_discount
+    else
+      assign effective_voucher_discount = tier_calculated_discount
+    endif
+  endif
+
+  # 5. Calculate Effective Total Price
+  assign effective_total_cents = cart.items_subtotal_price
+  if effective_voucher_discount > 0
+    assign effective_total_cents = cart.items_subtotal_price | minus: effective_voucher_discount
+  endif
+
+  if effective_total_cents < 0
+    assign effective_total_cents = 0
+  endif
+
+  if settings.currency_code_enabled_cart_total
+    assign total_price = effective_total_cents | money_with_currency
+  else
+    assign total_price = effective_total_cents | money
+  endif
+
+  # 6. Calculate MRP compare total if not passed from parent
+  if total_compare_price == blank or total_compare_price == 0
+    assign total_compare_price = 0
+    for item in cart.items
+      if item.variant.compare_at_price > item.variant.price
+        assign item_comp = item.variant.compare_at_price | times: item.quantity
+        assign total_compare_price = total_compare_price | plus: item_comp
+      else
+        assign item_orig = item.original_line_price
+        assign total_compare_price = total_compare_price | plus: item_orig
+      endif
+    endfor
+  endif
+
+  # 7. Special Discount (MRP Discount)
+  assign mrp_discount = 0
+  if total_compare_price > cart.items_subtotal_price
+    assign mrp_discount = total_compare_price | minus: cart.items_subtotal_price
+  endif
+%}
+
+<div class="cart-totals">
+  {% comment %} Morphing container hidden placeholder {% endcomment %}
+  <div class="cart-totals__original-container visually-hidden" aria-hidden="true" style="display:none;">
+    <span class="cart-totals__original-value" data-testid="cart-subtotal-value">{{ cart.items_subtotal_price | money }}</span>
+  </div>
+
+  {% if settings.show_cart_note or settings.show_add_discount_code %}
+    <div class="cart-actions">
+      {% if settings.show_cart_note %}
+        <script type="module" src="{{ 'cart-note.js' | asset_url }}"></script>
+        <cart-note style="display: flex;">
+          {% capture cart_note_accordion_children %}
+            <details {% if settings.cart_note_open_by_default %}open{% endif %}>
+              <summary class="cart-note__summary">
+                <span class="cart-note__label cart-primary-typography">{{ 'content.seller_note' | t }}</span>
+                <span class="cart-totals__icon">{{- 'icon-plus.svg' | inline_asset_content -}}</span>
+              </summary>
+              <div class="details-content cart-note__inner">
+                <textarea form="cart-form" on:input="/updateCartNote" id="cart-note" class="cart-note__instructions" name="note" data-skip-node-update>{{ cart.note }}</textarea>
+              </div>
+            </details>
+          {% endcapture %}
+          {% render 'accordion-custom-component', children: cart_note_accordion_children, class: 'cart-note' %}
+        </cart-note>
+      {% endif %}
+
+      {% if settings.show_add_discount_code %}
+        {% capture cart_discount_accordion_children %}
+          <details {% if active_voucher_code != blank or custom_code != blank or cart.discount_applications.size > 0 %}open{% endif %}>
+            <summary class="cart-discount__summary">
+              <span class="cart-discount__label cart-primary-typography">Discount / Voucher Code</span>
+              <span class="cart-totals__icon">{{- 'icon-plus.svg' | inline_asset_content -}}</span>
+            </summary>
+            <div class="details-content">
+              <div id="cart-discount-disclosure">
+                <cart-discount-component {% if section_id != blank %}data-section-id="{{ section_id }}"{% endif %}>
+                  <div class="cart-discount__content">
+                    <form class="cart-discount__form" onsubmit="window.handleManualDiscountApply(event, this); return false;">
+                      <input id="cart-discount" class="cart-discount__input" type="text" name="discount" size="8" placeholder="Enter coupon code" value="{% if custom_code != blank %}{{ custom_code }}{% elsif active_voucher_code != blank %}{{ active_voucher_code }}{% endif %}" data-skip-node-update>
+                      <button type="submit" class="button cart-discount__button">{{ 'actions.apply' | t }}</button>
+                    </form>
+                  </div>
+
+                  <div
+                    class="cart-discount__error hidden"
+                    role="alert"
+                    ref="cartDiscountError"
+                  >
+                    <span class="svg-wrapper">
+                      {{- 'icon-error.svg' | inline_asset_content -}}
+                    </span>
+                    <small
+                      class="cart-discount__error-text cart-primary-typography hidden"
+                      ref="cartDiscountErrorDiscountCode"
+                    >
+                      Invalid coupon code
+                    </small>
+                    <small
+                      class="cart-discount__error-text cart-primary-typography hidden"
+                      ref="cartDiscountErrorShipping"
+                    >
+                      {{ 'content.shipping_discount_error' | t | default: 'Discount not applicable for shipping' }}
+                    </small>
+                  </div>
+
+                  <ul class="cart-discount__codes" id="BoatCartDiscountCodesList">
+                    {% for app in cart.discount_applications %}
+                      {% if app.type == 'automatic' %}
+                        <li class="cart-discount__pill cart-discount__pill--auto" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 10px; margin-bottom: 6px;">
+                          <p class="cart-discount__pill-code" style="color: #065f46; font-weight: 800; font-size: 0.8rem; margin: 0;">
+                            ✨ Auto Applied: {{ app.title }} (-{{ app.total_allocated_amount | money }})
+                          </p>
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+
+                    {% if custom_code != blank %}
+                      <li class="cart-discount__pill" data-discount-code="{{ custom_code }}" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <p class="cart-discount__pill-code" style="font-weight: 800; font-size: 0.82rem; margin: 0;">🏷️ {{ custom_code }}</p>
+                        <button type="button" onclick="window.handleManualDiscountRemove(event, '{{ custom_code }}')" class="cart-discount__pill-remove svg-wrapper svg-wrapper--smaller button-unstyled" aria-label="Remove {{ custom_code }}" style="cursor: pointer;">
+                          {{- 'icon-filters-close.svg' | inline_asset_content -}}
+                        </button>
+                      </li>
+                    {% elsif active_voucher_code != blank %}
+                      <li class="cart-discount__pill cart-discount__pill--auto-tier" data-discount-code="{{ active_voucher_code }}" style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 7px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <p class="cart-discount__pill-code" style="color: #065f46; font-weight: 800; font-size: 0.82rem; margin: 0; display: flex; align-items: center; gap: 6px;">
+                          <span>🏷️</span>
+                          <span><strong>{{ active_voucher_code }}</strong> ({{ active_voucher_percent }}% OFF Applied)</span>
+                        </p>
+                        <button type="button" onclick="window.removeAutoTierDiscount(event, '{{ active_voucher_code }}')" class="cart-discount__pill-remove svg-wrapper svg-wrapper--smaller button-unstyled" aria-label="Remove {{ active_voucher_code }}" style="cursor: pointer; color: #065f46; padding: 2px;">
+                          {{- 'icon-filters-close.svg' | inline_asset_content -}}
+                        </button>
+                      </li>
+                    {% endif %}
+                  </ul>
+                </cart-discount-component>
+              </div>
+            </div>
+          </details>
+        {% endcapture %}
+        {% render 'accordion-custom-component', children: cart_discount_accordion_children, class: 'cart-discount' %}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% comment %} --- Real Shopify Automatic Discount / Tier Discount Celebration Banner --- {% endcomment %}
+  {% assign auto_discounts = cart.discount_applications | where: 'type', 'automatic' %}
+  {% if auto_discounts.size > 0 %}
+    {% for discount in auto_discounts %}
+      <div class="db-auto-discount-banner" style="display: flex;">
+        <div class="db-auto-banner-left">
+          <span class="db-auto-banner-icon">🎉</span>
+          <span class="db-auto-banner-text">
+            <strong>{{ discount.title }}</strong> auto-applied!
+          </span>
+        </div>
+        <span class="db-auto-banner-code">- {{ discount.total_allocated_amount | money }}</span>
+      </div>
+    {% endfor %}
+  {% elsif active_voucher_code != blank and effective_voucher_discount > 0 %}
+    <div class="db-auto-discount-banner" style="display: flex;">
+      <div class="db-auto-banner-left">
+        <span class="db-auto-banner-icon">🎉</span>
+        <span class="db-auto-banner-text">
+          <strong>{{ active_voucher_code }}</strong> Applied!{% if active_voucher_percent > 0 %} {{ active_voucher_percent }}% Discount added to your order{% endif %}
+        </span>
+      </div>
+      <span class="db-auto-banner-code">- {{ effective_voucher_discount | money }}</span>
+    </div>
+  {% elsif cart.total_discount > 0 %}
+    <div class="db-auto-discount-banner" style="display: flex;">
+      <div class="db-auto-banner-left">
+        <span class="db-auto-banner-icon">🎉</span>
+        <span class="db-auto-banner-text">
+          Automatic Savings applied to your order!
+        </span>
+      </div>
+      <span class="db-auto-banner-code">- {{ cart.total_discount | money }}</span>
+    </div>
+  {% endif %}
+
+  {% comment %} --- Dedicated Collapsible Bill Breakdown (SS 3) --- {% endcomment %}
+  <div class="boat-bill-card" id="BoatBillCard">
+    <div class="boat-bill-collapse-body" id="BoatBillCollapseBody">
+      <div class="boat-bill-collapse-inner">
+        <div class="boat-bill-row">
+          <span class="boat-bill-label">MRP Total:</span>
+          <span class="boat-bill-value">{{ total_compare_price | money }}</span>
+        </div>
+
+        {% if mrp_discount > 0 %}
+          <div class="boat-bill-row">
+            <span class="boat-bill-label">MRP Discount:</span>
+            <span class="boat-bill-value text-green">- {{ mrp_discount | money }}</span>
+          </div>
+        {% endif %}
+
+        <div class="boat-bill-row">
+          <span class="boat-bill-label">Cart Subtotal:</span>
+          <span class="boat-bill-value">{{ cart.items_subtotal_price | money }}</span>
+        </div>
+
+        {% comment %} Show all applied Automatic Discounts & Coupon Codes {% endcomment %}
+        {% if cart.discount_applications.size > 0 %}
+          {% for discount in cart.discount_applications %}
+            {% if discount.type == 'automatic' %}
+              <div class="boat-bill-row">
+                <span class="boat-bill-label">✨ Auto Discount ({{ discount.title }}):</span>
+                <span class="boat-bill-value text-green">- {{ discount.total_allocated_amount | money }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% if effective_voucher_discount > 0 and active_voucher_code != blank %}
+          <div class="boat-bill-row" id="BoatVoucherBreakdownRow">
+            <span class="boat-bill-label">
+              🏷️ Voucher ({{ active_voucher_code }}{% if active_voucher_percent > 0 %} - {{ active_voucher_percent }}% OFF{% endif %}):
+            </span>
+            <span class="boat-bill-value text-green">- {{ effective_voucher_discount | money }}</span>
+          </div>
+        {% endif %}
+
+        <div class="boat-bill-row">
+          <span class="boat-bill-label">Delivery Charges:</span>
+          <span class="boat-bill-value" id="BoatDeliveryFeeValue" style="font-weight: 700; color: #0f172a;">
+            Calculated at checkout
+          </span>
+        </div>
+
+        <div class="boat-bill-dashed-divider"></div>
+      </div>
+    </div>
+
+    {% comment %} --- Main To Pay Row + Arrow Toggle --- {% endcomment %}
+    <div class="boat-bill-main-row" onclick="window.toggleBoatBillBreakdown(event)" role="button" tabindex="0" aria-expanded="false">
+      <div class="boat-bill-to-pay-left">
+        <span class="boat-to-pay-label">To Pay:</span>
+        <text-component
+          ref="cartTotal"
+          value="{{ total_price | strip_html }}"
+          class="boat-to-pay-value"
+          data-testid="cart-total-value"
+          data-cart-subtotal
+        >
+          {{ total_price }}
+        </text-component>
+        <span class="boat-bill-view-tag">Check Bill Details</span>
+      </div>
+
+      <div class="boat-bill-toggle-btn" id="BoatBillToggleBtn" aria-label="Toggle bill breakdown">
+        <svg class="boat-bill-arrow" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.activeCartTierCode = '{{ active_voucher_code }}';
+
+  window.toggleBoatBillBreakdown = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const card = (event && event.target) ? event.target.closest('.boat-bill-card') : (document.querySelector('.cart-drawer .boat-bill-card') || document.querySelector('.boat-bill-card'));
+    if (!card) return;
+    card.classList.toggle('is-open');
+  };
+
+  // Delegated click listener to guarantee 100% 1-click open anywhere on the main row or card
+  if (!window._boatBillClickBound) {
+    window._boatBillClickBound = true;
+    document.addEventListener('click', function(e) {
+      const row = e.target.closest('.boat-bill-main-row');
+      if (row) {
+        const card = row.closest('.boat-bill-card');
+        if (card) {
+          e.preventDefault();
+          card.classList.toggle('is-open');
+        }
+      }
+    });
+  }
+
+  // Live Fetch Shopify Backend Shipping Rates
+  window.fetchBackendShippingRate = function() {
+    const deliveryEl = document.getElementById('BoatDeliveryFeeValue');
+    const toPayEl = document.querySelector('.boat-to-pay-value');
+    if (!deliveryEl) return;
+
+    const cartSubtotalCents = {{ effective_total_cents }};
+    const country = '{{ localization.country.name | default: "Pakistan" }}';
+    const url = `/cart/shipping_rates.json?shipping_address%5Bcountry%5D=${encodeURIComponent(country)}`;
+
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('Not available');
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.shipping_rates && data.shipping_rates.length > 0) {
+          const rate = data.shipping_rates[0];
+          const shippingPrice = parseFloat(rate.price);
+
+          if (shippingPrice === 0) {
+            deliveryEl.innerHTML = '<span class="text-green" style="font-weight:800; color:#00b853;">FREE</span>';
+          } else {
+            const formattedPrice = 'Rs.' + Math.round(shippingPrice).toLocaleString();
+            deliveryEl.innerHTML = '<span style="font-weight:700; color:#0f172a;">+ ' + formattedPrice + '</span>';
+
+            if (toPayEl) {
+              const subtotalNum = cartSubtotalCents / 100;
+              const finalTotal = subtotalNum + shippingPrice;
+              toPayEl.textContent = 'Rs.' + Math.round(finalTotal).toLocaleString();
+            }
+          }
+        }
+      })
+      .catch(() => {
+        if (deliveryEl) deliveryEl.textContent = 'Calculated at checkout';
+      });
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.fetchBackendShippingRate);
+  } else {
+    window.fetchBackendShippingRate();
+  }
+
+  // Clear any leftover fake voucher sessions
+  try {
+    sessionStorage.removeItem('dealbazaar_applied_coupon');
+    sessionStorage.removeItem('dealbazaar_auto_discount');
+  } catch(e) {}
+
+  // 100% Dynamic & Seamless Background Synchronization of the 3 Tier Codes: DEAL6 (2+), DEAL7 (5+), DEAL10 (10+)
+  window.syncBoatTierDiscount = function() {
+    clearTimeout(window.boatTierSyncDebounceTimer);
+    window.boatTierSyncDebounceTimer = setTimeout(async function() {
+      if (window.isBoatSyncingTier) return;
+      try {
+        const res = await fetch('/cart.js', { headers: { 'Accept': 'application/json' } });
+        const cart = await res.json();
+        if (!cart) return;
+
+        let totalQty = 0;
+        if (cart.items && cart.items.length > 0) {
+          cart.items.forEach(function(item) {
+            totalQty += (item.quantity || 0);
+          });
+        }
+
+        // Determine required tier code based on cart quantity
+        let targetCode = '';
+        if (totalQty >= 10) {
+          targetCode = 'DEAL10';
+        } else if (totalQty >= 5) {
+          targetCode = 'DEAL7';
+        } else if (totalQty >= 2) {
+          targetCode = 'DEAL6';
+        }
+
+        // Check applied discount codes
+        const appliedCodes = (cart.discount_applications || [])
+          .filter(function(app) { return app.type === 'discount_code'; })
+          .map(function(app) { return app.title; });
+
+        const isTier = function(c) {
+          return c === 'DEAL6' || c === 'DEAL7' || c === 'DEAL10';
+        };
+
+        const hasCustom = appliedCodes.some(function(c) { return !isTier(c); });
+        // If customer has entered a custom promo code, preserve it
+        if (hasCustom) return;
+
+        const currentTier = appliedCodes.find(isTier) || '';
+
+        // Check if user dismissed this specific tier code manually
+        if (targetCode && sessionStorage.getItem('boat_dismissed_tier_code') === targetCode) {
+          return;
+        }
+
+        // If already matching, no sync needed
+        if (currentTier === targetCode) {
+          window.activeCartTierCode = targetCode;
+          return;
+        }
+
+        window.isBoatSyncingTier = true;
+        window.activeCartTierCode = targetCode;
+
+        // Silent background update to Shopify cart session without destructive innerHTML overwrites
+        await fetch('/cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            discount: targetCode
+          })
+        });
+
+        if (typeof window.fetchBackendShippingRate === 'function') {
+          window.fetchBackendShippingRate();
+        }
+      } catch(err) {
+        console.warn('Boat tier sync error:', err);
+      } finally {
+        window.isBoatSyncingTier = false;
+      }
+    }, 150);
+  };
+
+  // Run tier sync seamlessly
+  window.syncBoatTierDiscount();
+
+  // Attach global event listeners for instant and smooth discount tracking
+  if (!window.hasBoatCartUpdateListener) {
+    window.hasBoatCartUpdateListener = true;
+
+    document.addEventListener('shopify:cart:lines-update', function() {
+      window.syncBoatTierDiscount();
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target && (e.target.matches('.quantity-selector__input') || e.target.name === 'updates[]')) {
+        window.syncBoatTierDiscount();
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.closest('.quantity-selector__button, [name="minus"], [name="plus"]')) {
+        window.syncBoatTierDiscount();
+      }
+    });
+  }
+
+  // Checkout Redirect with Instant Tactile Feedback & Active Discount Code
+  window.handleBoatCheckoutRedirect = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const btn = document.getElementById('checkout');
+    if (btn) {
+      btn.style.opacity = '0.85';
+      btn.style.pointerEvents = 'none';
+      btn.innerHTML = '<span class="button-text" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;"><span class="boat-checkout-spinner"></span> SECURING ORDER...</span>';
+    }
+    const code = window.activeCartTierCode || '{{ active_voucher_code }}';
+    const checkoutUrl = code ? '/checkout?discount=' + encodeURIComponent(code) : '/checkout';
+    window.location.href = checkoutUrl;
+    return false;
+  };
+
+  // Remove Auto-Tier Voucher Handler
+  window.removeAutoTierDiscount = async function(event, code) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    try {
+      sessionStorage.setItem('boat_dismissed_tier_code', code);
+    } catch(e) {}
+
+    window.activeCartTierCode = '';
+
+    const pill = document.querySelector('.cart-discount__pill--auto-tier');
+    if (pill) {
+      pill.style.opacity = '0';
+      pill.style.transform = 'scale(0.95)';
+      setTimeout(() => pill.remove(), 150);
+    }
+
+    const banner = document.querySelector('.db-auto-discount-banner');
+    if (banner) {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-4px)';
+      setTimeout(() => banner.style.display = 'none', 150);
+    }
+
+    const voucherRow = document.getElementById('BoatVoucherBreakdownRow');
+    if (voucherRow) voucherRow.style.display = 'none';
+
+    const input = document.getElementById('cart-discount');
+    if (input && input.value === code) input.value = '';
+
+    const toPayEl = document.querySelector('.boat-to-pay-value');
+    if (toPayEl) {
+      toPayEl.textContent = '{{ cart.items_subtotal_price | money }}';
+    }
+
+    try {
+      await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          discount: ''
+        })
+      });
+    } catch(e) {}
+
+    if (typeof window.fetchBackendShippingRate === 'function') {
+      window.fetchBackendShippingRate();
+    }
+  };
+
+  // Direct Manual Discount Apply & Remove Handlers
+  window.handleManualDiscountApply = async function(event, form, directCode) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const input = form ? form.querySelector('input[name="discount"]') : document.getElementById('cart-discount');
+    const code = (directCode || (input ? input.value : '') || '').trim();
+    if (!code) return;
+
+    try {
+      sessionStorage.removeItem('boat_dismissed_tier_code');
+    } catch(e) {}
+    window.activeCartTierCode = code;
+
+    const btn = form ? form.querySelector('button[type="submit"]') : document.querySelector('.cart-discount__button');
+    const origText = btn ? btn.innerHTML : 'Apply';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span style="font-size:12px;display:inline-flex;align-items:center;gap:4px;"><span class="boat-checkout-spinner" style="width:10px;height:10px;border-width:1.5px;"></span> Applying...</span>';
+    }
+
+    const errBox = document.querySelector('.cart-discount__error');
+    if (errBox) errBox.classList.add('hidden');
+
+    try {
+      const res = await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          discount: code,
+          sections: ['cart-drawer-section']
+        })
+      });
+      const data = await res.json();
+
+      if (data.sections && data.sections['cart-drawer-section']) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.sections['cart-drawer-section'], 'text/html');
+        const newSummary = doc.querySelector('.cart-drawer__summary');
+        const liveSummary = document.querySelector('.cart-drawer__summary');
+        if (liveSummary && newSummary) {
+          liveSummary.innerHTML = newSummary.innerHTML;
+        }
+      }
+
+      if (typeof window.fetchBackendShippingRate === 'function') {
+        window.fetchBackendShippingRate();
+      }
+
+      if (input) input.value = '';
+    } catch (err) {
+      console.warn('Discount apply error:', err);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+  };
+
+  window.handleManualDiscountRemove = async function(event, code) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    try {
+      sessionStorage.setItem('boat_dismissed_tier_code', code);
+    } catch(e) {}
+    window.activeCartTierCode = '';
+
+    try {
+      const res = await fetch('/cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          discount: '',
+          sections: ['cart-drawer-section']
+        })
+      });
+      const data = await res.json();
+      if (data.sections && data.sections['cart-drawer-section']) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.sections['cart-drawer-section'], 'text/html');
+        const newSummary = doc.querySelector('.cart-drawer__summary');
+        const liveSummary = document.querySelector('.cart-drawer__summary');
+        if (liveSummary && newSummary) {
+          liveSummary.innerHTML = newSummary.innerHTML;
+        }
+      }
+
+      if (typeof window.fetchBackendShippingRate === 'function') {
+        window.fetchBackendShippingRate();
+      }
+    } catch(e) {
+      console.warn('Discount remove error:', e);
+    }
+  };
+</script>
+
+<style>
+  /* --- Real Shopify Auto-Discount Celebration Banner --- */
+  .db-auto-discount-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #6ee7b7;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+    box-sizing: border-box;
+    width: 100%;
+    animation: dbSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
+  }
+
+  .db-auto-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .db-auto-banner-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .db-auto-banner-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #065f46;
+    line-height: 1.35;
+    white-space: normal;
+  }
+
+  .db-auto-banner-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 800;
+    background: #059669;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .cart-discount__pill--auto-tier {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    will-change: transform, opacity;
+  }
+
+  .cart__checkout-button {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cart__checkout-button:active {
+    transform: scale(0.985) !important;
+  }
+
+  .boat-checkout-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: boatSpin 0.6s linear infinite;
+  }
+
+  @keyframes boatSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes dbSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<div class="cart__ctas" style="width: 100%;">
+  <button
+    type="submit"
+    id="checkout"
+    class="cart__checkout-button button"
+    name="checkout"
+    {% if cart == empty %}
+      disabled
+    {% endif %}
+    form="cart-form"
+    onclick="window.handleBoatCheckoutRedirect(event)"
+  >
+    <span class="button-text">
+      PROCEED TO CHECKOUT ➔
+    </span>
+  </button>
+
+  {% if additional_checkout_buttons and settings.show_accelerated_checkout_buttons %}
+    <div
+      class="
+        additional-checkout-buttons
+        {% if accelerated_checkout_buttons_layout == 'vertical' %}additional-checkout-buttons--vertical{% endif %}
+      "
+    >
+      {{ content_for_additional_checkout_buttons }}
+    </div>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .cart-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-block: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+    padding-block: 0;
+    margin-block-start: var(--margin-3xs);
+  }
+
+  .cart-actions__divider {
+    border-block-start: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+  }
+
+  .cart-totals:not(:has(.cart-actions)) {
+    margin-block-start: var(--margin-3xs);
+    border-block-start: 1px solid rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+    padding-block-start: var(--margin-xl);
+  }
+
+  .cart-totals__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-totals__tax-note {
+    color: var(--color-foreground-subdued);
+  }
+
+  .cart-totals__tax-note a {
+    color: var(--color-foreground-subdued);
+    text-decoration-line: underline;
+    text-decoration-color: currentColor;
+
+    &:hover {
+      text-decoration-color: transparent;
+    }
+  }
+
+  .cart-totals__tax-note small {
+    font-size: var(--font-size--2xs);
+  }
+
+  .cart-discounts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .cart-discounts__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-discounts__label {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-2xs);
+  }
+
+  .cart-discounts__label svg {
+    width: var(--icon-size-sm);
+    height: var(--icon-size-sm);
+    display: inline-block;
+  }
+
+  .cart-totals__original-container,
+  .cart-totals__container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cart-totals__container {
+    row-gap: var(--gap-2xs);
+
+    &.cart-totals__container--has-installments {
+      row-gap: var(--gap-xs);
+    }
+  }
+
+  .cart-totals__original-container:empty {
+    display: none;
+  }
+
+  .cart-totals {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xl);
+    width: 100%;
+    border-block-start: none;
+
+    &:has(> :first-child:not(.cart-totals__original-container, .cart-totals__container)) {
+      padding-block-start: 0;
+      border-block-start: none;
+    }
+
+    @media screen and (min-width: 750px) {
+      padding-block-start: 0;
+    }
+  }
+
+  .cart-totals__original-container,
+  .cart-totals__original-container * {
+    font-size: var(--cart-font-size--sm);
+  }
+
+  .cart-totals__total {
+    align-items: baseline;
+    font-weight: var(--font-weight-bold);
+  }
+
+  .cart-totals__total-label {
+    font-size: var(--cart-font-size--sm);
+  }
+
+  .cart-totals__total-value {
+    font-size: var(--cart-font-size--xl);
+
+    @media screen and (max-width: 749px) {
+      font-size: var(--font-size--lg);
+    }
+  }
+
+  .cart-totals__installments {
+    color: var(--color-foreground);
+    font-size: var(--font-size--2xs);
+  }
+
+  .cart-note {
+    width: 100%;
+  }
+
+  @starting-style {
+    .cart-note[open-by-default-on-desktop][open-by-default-on-mobile] .details-content {
+      block-size: auto;
+      opacity: 1;
+      overflow-y: visible;
+    }
+  }
+
+  .cart-note__inner {
+    padding-block: var(--padding-2xs) var(--padding-sm);
+  }
+
+  .cart-note__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-note__summary:hover {
+    color: rgb(var(--color-rgb, var(--color-foreground-rgb)) / var(--opacity-subdued-text));
+  }
+
+  .cart-note__label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-2xs);
+    font-size: var(--font-size--2xs);
+    font-weight: 500;
+  }
+
+  .cart-note__instructions {
+    color: var(--color-input-text);
+    background-color: var(--color-input-background);
+    border-width: var(--style-border-width-inputs);
+    border-color: var(--color-input-border);
+    transition: box-shadow var(--animation-speed) ease;
+    box-shadow: var(--input-box-shadow);
+    min-height: 5.5rem;
+    min-width: 100%;
+    max-width: 100%;
+    font-size: var(--font-size--sm);
+    padding: max(4px, calc(var(--style-border-radius-inputs) * (1 - cos(45deg))));
+  }
+
+  .cart-totals__icon {
+    height: var(--icon-size-xs);
+    width: var(--icon-size-xs);
+    margin: 0;
+  }
+
+  .cart__ctas {
+    width: 100%;
+    display: grid;
+    gap: var(--checkout-button-gap);
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+  }
+
+  .cart__ctas .cart__checkout-button {
+    width: 100%;
+    height: clamp(25px, var(--height-buy-buttons), 55px);
+    padding-inline: var(--padding-4xl);
+  }
+
+  .cart-drawer__summary .cart-totals:not(:has(.cart-totals__original-container:empty)) {
+    border-block-start: var(--style-border-width) solid rgb(var(--color-foreground-rgb) / var(--opacity-10-25));
+    padding-block-start: var(--padding-2xl);
+  }
+
+  .cart-drawer__summary .cart-note {
+    @media screen and (min-width: 750px) {
+      margin-block-start: var(--margin-3xs);
+    }
+  }
+
+  .cart-discount__input {
+    background-color: var(--color-input-background);
+    color: var(--color-input-text);
+    border-width: var(--style-border-width-inputs);
+    border-color: var(--color-input-border);
+    border-style: solid;
+    border-radius: var(--style-border-radius-inputs);
+    padding: var(--padding-sm) var(--padding-md);
+    height: 100%;
+    flex-grow: 1;
+    min-width: 0;
+    font-size: var(--font-size--sm);
+  }
+
+  .cart-discount__input::placeholder {
+    color: rgb(var(--color-input-text-rgb) / var(--opacity-subdued-text));
+  }
+
+  .cart-discount__pill-code {
+    overflow: hidden;
+    max-width: 100px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  .cart-discount {
+    width: 100%;
+  }
+
+  .cart-discount__codes {
+    display: none;
+    gap: var(--padding-xs);
+    flex-wrap: wrap;
+    list-style: none;
+    padding-inline: 0;
+    margin: 0;
+  }
+
+  .cart-discount__codes:has(.cart-discount__pill) {
+    display: flex;
+  }
+
+  .cart-discount__button {
+    height: 100%;
+  }
+
+  .cart-discount__content {
+    height: calc(var(--button-size) + var(--padding-2xs) + var(--padding-sm));
+  }
+
+  .cart-discount__pill {
+    display: flex;
+    color: var(--color-foreground);
+    gap: var(--padding-xs);
+    align-items: center;
+    padding: var(--padding-xs) var(--padding-sm);
+    border-radius: var(--style-border-radius-pills);
+    background-color: var(--color-input-background);
+    text-transform: uppercase;
+  }
+
+  .cart-discount__form {
+    display: flex;
+    gap: var(--padding-md);
+    align-items: center;
+    height: 100%;
+    padding-block: var(--padding-2xs) var(--padding-sm);
+  }
+
+  :is(.cart-discount__pill-remove, .cart-discount__pill-remove:hover) {
+    --close-icon-opacity: 0.4;
+
+    color: var(--color-foreground);
+    background-color: transparent;
+    pointer-events: all;
+    cursor: pointer;
+    height: 100%;
+  }
+
+  .cart-discount__error {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-block: var(--padding-2xs) var(--padding-sm);
+  }
+
+  .cart-discount__error .svg-wrapper {
+    flex-shrink: 0;
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+    margin-inline: var(--margin-3xs) var(--margin-xs);
+  }
+
+  .cart-discount__error-text {
+    margin-block-start: var(--margin-3xs);
+  }
+
+  .cart-discount__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-discount__summary:hover {
+    color: rgb(var(--color-rgb, var(--color-foreground-rgb)) / var(--opacity-subdued-text));
+  }
+
+  .cart-discount__label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-2xs);
+    font-size: var(--font-size--2xs);
+    font-weight: 500;
+  }
+
+  @media screen and (min-width: 750px) {
+    .cart-summary--extend {
+      height: 100%;
+    }
+  }
+
+  /* --- Real Shopify Auto-Discount Celebration Banner --- */
+  .db-auto-discount-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #6ee7b7;
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12);
+    box-sizing: border-box;
+    width: 100%;
+    animation: dbSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .db-auto-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .db-auto-banner-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .db-auto-banner-text {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #065f46;
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  .db-auto-banner-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 800;
+    background: #059669;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+{% endstylesheet %}

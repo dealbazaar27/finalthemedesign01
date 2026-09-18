@@ -1,0 +1,467 @@
+{% doc %}
+  Renders the modern, dynamic Empty Cart state for both Cart Drawer and Cart Page (Desktop & Mobile).
+  @param {boolean} [is_drawer] - Whether it is inside the cart drawer
+{% enddoc %}
+
+{%- liquid
+  assign sec_st = section.settings
+  
+  # Content Settings
+  assign empty_heading = sec_st.empty_cart_heading | default: settings.empty_cart_heading | default: 'Your Cart is Empty!'
+  assign empty_subtitle = sec_st.empty_cart_subtitle | default: settings.empty_cart_subtitle | default: "Looks like you haven't added anything to your cart yet. Discover trending deals & bestselling products below!"
+  assign empty_btn_text = sec_st.empty_cart_btn_text | default: settings.empty_cart_btn_text | default: 'START SHOPPING NOW'
+  assign empty_btn_url = sec_st.empty_cart_btn_url | default: settings.empty_cart_btn_url | default: routes.all_products_collection_url
+  if empty_btn_url == blank
+    assign empty_btn_url = '/collections/all'
+  endif
+  
+  # Chips / Explore Trending Settings
+  assign show_chips = sec_st.empty_cart_show_chips
+  if show_chips == nil
+    assign show_chips = settings.empty_cart_show_chips
+  endif
+  if show_chips == nil
+    assign show_chips = true
+  endif
+  
+  assign chips_label = sec_st.empty_cart_chips_label | default: settings.empty_cart_chips_label | default: '⚡ Explore Trending:'
+  
+  # Auto-Close Settings
+  assign autoclose_enabled = sec_st.empty_cart_autoclose_enable
+  if autoclose_enabled == nil
+    assign autoclose_enabled = settings.empty_cart_autoclose_enable
+  endif
+  if autoclose_enabled == nil
+    assign autoclose_enabled = true
+  endif
+  
+  assign autoclose_duration = sec_st.empty_cart_autoclose_duration | default: settings.empty_cart_autoclose_duration | default: 4
+  assign autoclose_desktop_only = sec_st.empty_cart_autoclose_desktop_only
+  if autoclose_desktop_only == nil
+    assign autoclose_desktop_only = settings.empty_cart_autoclose_desktop_only | default: false
+  endif
+
+  # Color Settings
+  assign empty_bg = sec_st.empty_cart_bg_color | default: settings.empty_cart_bg_color | default: '#ffffff'
+  assign empty_title_col = sec_st.empty_cart_title_color | default: settings.empty_cart_title_color | default: '#0f172a'
+  assign empty_subtitle_col = sec_st.empty_cart_subtitle_color | default: settings.empty_cart_subtitle_color | default: '#64748b'
+  assign empty_btn_bg = sec_st.empty_cart_btn_bg | default: settings.empty_cart_btn_bg | default: '#000000'
+  assign empty_btn_hover = sec_st.empty_cart_btn_hover_bg | default: settings.empty_cart_btn_hover_bg | default: '#00b853'
+  assign empty_btn_txt = sec_st.empty_cart_btn_text_color | default: settings.empty_cart_btn_text_color | default: '#ffffff'
+  assign empty_chip_bg = sec_st.empty_cart_chip_bg | default: settings.empty_cart_chip_bg | default: '#ffffff'
+  assign empty_chip_txt = sec_st.empty_cart_chip_text_color | default: settings.empty_cart_chip_text_color | default: '#1e293b'
+  assign empty_chip_bdr = sec_st.empty_cart_chip_border | default: settings.empty_cart_chip_border | default: '#e2e8f0'
+  assign empty_progress_col = sec_st.empty_cart_progress_color | default: settings.empty_cart_progress_color | default: '#00b853'
+-%}
+
+<div
+  class="boat-empty-cart-container{% if is_drawer %} is-drawer-context{% else %} is-page-context{% endif %}"
+  aria-label="{{ 'accessibility.cart' | t }}"
+  style="
+    --boat-empty-bg: {{ empty_bg }};
+    --boat-empty-title: {{ empty_title_col }};
+    --boat-empty-subtitle: {{ empty_subtitle_col }};
+    --boat-empty-btn-bg: {{ empty_btn_bg }};
+    --boat-empty-btn-hover-bg: {{ empty_btn_hover }};
+    --boat-empty-btn-text: {{ empty_btn_txt }};
+    --boat-empty-chip-bg: {{ empty_chip_bg }};
+    --boat-empty-chip-text: {{ empty_chip_txt }};
+    --boat-empty-chip-border: {{ empty_chip_bdr }};
+    --boat-empty-progress: {{ empty_progress_col }};
+  "
+>
+  {% comment %} --- Top Auto-Close Countdown Bar (Only in Drawer Context) --- {% endcomment %}
+  {% if is_drawer and autoclose_enabled %}
+    <div class="boat-empty-autoclose-bar" id="BoatEmptyAutoCloseBar" data-duration="{{ autoclose_duration }}" data-desktop-only="{{ autoclose_desktop_only }}">
+      <div class="boat-empty-autoclose-text">
+        <span class="boat-empty-pulse-dot"></span>
+        <span>Auto-closing in <strong id="BoatEmptyCountdownSec">{{ autoclose_duration }}</strong>s...</span>
+      </div>
+      <button type="button" class="boat-empty-stay-btn" onclick="window.cancelBoatEmptyAutoClose(event)">STAY HERE</button>
+      <div class="boat-empty-progress-track">
+        <div class="boat-empty-progress-line" id="BoatEmptyProgressLine"></div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="boat-empty-cart-body">
+    {% comment %} Animated Floating Bag Graphic {% endcomment %}
+    <div class="boat-empty-cart-graphic-wrap">
+      <div class="boat-empty-cart-glow"></div>
+      <div class="boat-empty-cart-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span class="boat-empty-badge-sparkle sparkle-top">✨</span>
+        <span class="boat-empty-badge-sparkle sparkle-bottom">⚡</span>
+      </div>
+    </div>
+
+    <h2 class="boat-empty-cart-title">{{ empty_heading }}</h2>
+    <p class="boat-empty-cart-subtitle">
+      {{ empty_subtitle }}
+    </p>
+
+    {% comment %} Quick Category Shortcut Chips {% endcomment %}
+    {% if show_chips %}
+      <div class="boat-empty-quick-nav">
+        {% if chips_label != blank %}
+          <span class="boat-empty-quick-label">{{ chips_label }}</span>
+        {% endif %}
+        <div class="boat-empty-chips-list">
+          {% assign c1_t = sec_st.empty_cart_chip_1_text | default: settings.empty_cart_chip_1_text | default: '🔥 Top Picks' %}
+          {% assign c1_u = sec_st.empty_cart_chip_1_url | default: settings.empty_cart_chip_1_url | default: '/collections/all' %}
+          {% if c1_t != blank %}<a href="{{ c1_u }}" class="boat-empty-chip">{{ c1_t }}</a>{% endif %}
+
+          {% assign c2_t = sec_st.empty_cart_chip_2_text | default: settings.empty_cart_chip_2_text | default: '🎧 Smart Earbuds' %}
+          {% assign c2_u = sec_st.empty_cart_chip_2_url | default: settings.empty_cart_chip_2_url | default: '/collections/all' %}
+          {% if c2_t != blank %}<a href="{{ c2_u }}" class="boat-empty-chip">{{ c2_t }}</a>{% endif %}
+
+          {% assign c3_t = sec_st.empty_cart_chip_3_text | default: settings.empty_cart_chip_3_text | default: '⌚ Smart Watches' %}
+          {% assign c3_u = sec_st.empty_cart_chip_3_url | default: settings.empty_cart_chip_3_url | default: '/collections/all' %}
+          {% if c3_t != blank %}<a href="{{ c3_u }}" class="boat-empty-chip">{{ c3_t }}</a>{% endif %}
+
+          {% assign c4_t = sec_st.empty_cart_chip_4_text | default: settings.empty_cart_chip_4_text | default: '🏷️ Flash Sale' %}
+          {% assign c4_u = sec_st.empty_cart_chip_4_url | default: settings.empty_cart_chip_4_url | default: '/collections/all' %}
+          {% if c4_t != blank %}<a href="{{ c4_u }}" class="boat-empty-chip">{{ c4_t }}</a>{% endif %}
+
+          {% assign c5_t = sec_st.empty_cart_chip_5_text | default: settings.empty_cart_chip_5_text | default: "👔 Men's Fashion" %}
+          {% assign c5_u = sec_st.empty_cart_chip_5_url | default: settings.empty_cart_chip_5_url | default: '/collections/all' %}
+          {% if c5_t != blank %}<a href="{{ c5_u }}" class="boat-empty-chip">{{ c5_t }}</a>{% endif %}
+
+          {% assign c6_t = sec_st.empty_cart_chip_6_text | default: settings.empty_cart_chip_6_text | default: '👗 Women Fashion' %}
+          {% assign c6_u = sec_st.empty_cart_chip_6_url | default: settings.empty_cart_chip_6_url | default: '/collections/all' %}
+          {% if c6_t != blank %}<a href="{{ c6_u }}" class="boat-empty-chip">{{ c6_t }}</a>{% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% comment %} Primary CTA Button {% endcomment %}
+    {% if empty_btn_text != blank %}
+      <a href="{{ empty_btn_url }}" class="boat-empty-shop-now-btn">
+        <span>{{ empty_btn_text }}</span>
+        <span class="boat-btn-arrow">➔</span>
+      </a>
+    {% endif %}
+
+    {% if shop.customer_accounts_enabled and customer == null %}
+      <div class="boat-empty-login-prompt">
+        <span>Have an account?</span>
+        <a href="{{ routes.account_login_url }}" class="boat-empty-login-link">Log in</a>
+        <span>to check out faster.</span>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+  .boat-empty-cart-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px 20px 24px 20px !important;
+    text-align: center !important;
+    background: var(--boat-empty-bg, #ffffff) !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    width: 100% !important;
+  }
+
+  .boat-empty-cart-container.is-drawer-context {
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  .boat-empty-cart-container.is-page-context {
+    min-height: 60vh !important;
+    padding: 48px 20px 80px 20px !important;
+    border-radius: 16px !important;
+    max-width: 600px !important;
+    margin: 0 auto !important;
+  }
+
+  /* Auto-close top bar */
+  .boat-empty-autoclose-bar {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    right: 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 12px 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .boat-empty-autoclose-bar.is-cancelled {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(-8px) !important;
+  }
+
+  .boat-empty-autoclose-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .boat-empty-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--boat-empty-progress, #00b853);
+    animation: boatPulse 1.2s infinite;
+  }
+
+  @keyframes boatPulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+  }
+
+  .boat-empty-stay-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+
+  .boat-empty-stay-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-empty-progress-track {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+  }
+
+  .boat-empty-progress-line {
+    height: 100%;
+    width: 100%;
+    background: var(--boat-empty-progress, #00b853);
+    transform-origin: left;
+    transition: width 0.05s linear;
+  }
+
+  .boat-empty-cart-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    max-width: 380px;
+    width: 100%;
+    margin: auto 0;
+    padding-top: 24px;
+  }
+
+  /* Animated floating shopping bag */
+  .boat-empty-cart-graphic-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .boat-empty-cart-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 184, 83, 0.18) 0%, rgba(0, 184, 83, 0) 70%);
+    animation: boatGlowPulse 2.5s infinite alternate ease-in-out;
+  }
+
+  @keyframes boatGlowPulse {
+    0% { transform: scale(0.9); opacity: 0.5; }
+    100% { transform: scale(1.2); opacity: 1; }
+  }
+
+  .boat-empty-cart-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    position: relative;
+    animation: boatFloat 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes boatFloat {
+    0% { transform: translateY(0px); }
+    100% { transform: translateY(-8px); }
+  }
+
+  .boat-empty-badge-sparkle {
+    position: absolute;
+    font-size: 16px;
+  }
+
+  .sparkle-top {
+    top: -4px;
+    right: -2px;
+    animation: sparkleSpin 2s infinite ease-in-out;
+  }
+
+  .sparkle-bottom {
+    bottom: 2px;
+    left: -4px;
+    animation: sparkleSpin 2.4s infinite ease-in-out reverse;
+  }
+
+  @keyframes sparkleSpin {
+    0% { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
+    50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+    100% { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
+  }
+
+  .boat-empty-cart-title {
+    font-size: 1.35rem !important;
+    font-weight: 900 !important;
+    color: var(--boat-empty-title, #0f172a) !important;
+    margin: 0 0 8px 0 !important;
+    letter-spacing: -0.3px !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+  }
+
+  .boat-empty-cart-subtitle {
+    font-size: 0.85rem !important;
+    line-height: 1.45 !important;
+    color: var(--boat-empty-subtitle, #64748b) !important;
+    margin: 0 0 20px 0 !important;
+    font-weight: 500 !important;
+  }
+
+  .boat-empty-quick-nav {
+    width: 100%;
+    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .boat-empty-quick-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #475569;
+    letter-spacing: 0.5px;
+  }
+
+  .boat-empty-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .boat-empty-chip {
+    background: var(--boat-empty-chip-bg, #ffffff);
+    border: 1px solid var(--boat-empty-chip-border, #e2e8f0);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--boat-empty-chip-text, #1e293b);
+    text-decoration: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+  }
+
+  .boat-empty-chip:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .boat-empty-shop-now-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: 48px !important;
+    background: var(--boat-empty-btn-bg, #000000) !important;
+    color: var(--boat-empty-btn-text, #ffffff) !important;
+    border-radius: 24px !important;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease !important;
+  }
+
+  .boat-empty-shop-now-btn:hover {
+    background: var(--boat-empty-btn-hover-bg, #00b853) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(0, 184, 83, 0.35) !important;
+  }
+
+  .boat-empty-login-prompt {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+
+  .boat-empty-login-link {
+    color: #0f172a;
+    font-weight: 800;
+    text-decoration: underline;
+    transition: color 0.15s ease;
+  }
+
+  .boat-empty-login-link:hover {
+    color: var(--boat-empty-btn-hover-bg, #00b853);
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-empty-cart-container.is-page-context {
+      padding: 30px 14px 70px 14px !important;
+      min-height: 50vh !important;
+    }
+    .boat-empty-cart-title {
+      font-size: 1.25rem !important;
+    }
+    .boat-empty-chip {
+      padding: 7px 12px !important;
+      font-size: 0.76rem !important;
+    }
+  }
+</style>

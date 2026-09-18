@@ -1,0 +1,28 @@
+{% liquid
+  assign product = block.settings.product | default: closest.product
+-%}
+
+{% if product != blank %}
+  {% render 'boat-product-card-item', product: product %}
+{% else %}
+  {% render 'boat-product-card-demo', index: 1 %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "t:names.product_card",
+  "tag": null,
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "t:settings.product"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.product_card"
+    }
+  ]
+}
+{% endschema %}

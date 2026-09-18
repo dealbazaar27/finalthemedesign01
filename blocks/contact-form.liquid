@@ -1,0 +1,491 @@
+
+
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+{% capture submit_button %}
+  {% content_for 'block', type: 'contact-form-submit-button', id: 'submit-button' %}
+{% endcapture %}
+
+<div
+  class="contact-form boat-enhanced-contact-card spacing-style size-style"
+  style="
+    {% render 'spacing-style', settings: block.settings %}
+    {% render 'size-style', settings: block.settings %}
+    {% if block.settings.background_color != blank %}background-color: {{ block.settings.background_color }};{% endif %}
+  "
+  {{ block.shopify_attributes }}
+>
+  {% comment %} --- Top Quick Help Strip --- {% endcomment %}
+  <div class="boat-contact-quick-strip">
+    <div class="boat-quick-strip-left">
+      <span class="boat-quick-dot"></span>
+      <span>WhatsApp Support Online</span>
+    </div>
+    <a href="https://wa.me/923102492119?text=Hello%20DealBazaar%20Support,%20I%20need%20assistance." target="_blank" class="boat-quick-wa-btn">
+      Chat on WhatsApp ➔
+    </a>
+  </div>
+
+  {% assign form_id = block.id | default: section.id | prepend: 'ContactForm-' %}
+  {%- form 'contact', id: form_id, class: 'contact-form__form' -%}
+    <input
+      name="contact[id]"
+      type="hidden"
+      value="{{ form_id }}"
+    >
+
+    {% liquid
+      assign form_matches = false
+      if form.id == form_id or form.id == blank
+        assign form_matches = true
+      endif
+    %}
+
+    {%- if form.errors and form_matches -%}
+      <div
+        class="contact-form__error"
+        tabindex="-1"
+        autofocus
+      >
+        {{- 'icon-error.svg' | inline_asset_content -}}
+
+        {{- form.errors.translated_fields.email | capitalize }}
+        {{ form.errors.messages.email -}}
+      </div>
+    {%- endif -%}
+
+    {%- if form.posted_successfully? and form_matches -%}
+      <div
+        class="contact-form__success"
+        tabindex="-1"
+        autofocus
+      >
+        {{- 'icon-checkmark.svg' | inline_asset_content -}}
+        {{- 'blocks.contact_form.post_success' | t -}}
+      </div>
+    {%- endif -%}
+
+    <div class="contact-form__form-row">
+      <div class="boat-contact-field-wrap">
+        <label for="ContactForm-name-{{ block.id }}" class="boat-field-label">
+          Full Name <span class="required">*</span>
+        </label>
+        <input
+          type="text"
+          id="ContactForm-name-{{ block.id }}"
+          class="contact-form__input"
+          autocomplete="name"
+          name="contact[name]"
+          value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}"
+          placeholder="e.g. Ali Ahmed"
+          required
+        >
+      </div>
+
+      <div class="boat-contact-field-wrap">
+        <label for="ContactForm-email-{{ block.id }}" class="boat-field-label">
+          Email Address <span class="required">*</span>
+        </label>
+        <input
+          type="email"
+          id="ContactForm-email-{{ block.id }}"
+          class="contact-form__input"
+          autocomplete="email"
+          name="contact[email]"
+          spellcheck="false"
+          autocapitalize="off"
+          value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
+          aria-required="true"
+          {% if form.errors contains 'email' and form_matches %}
+            aria-invalid="true"
+            aria-describedby="ContactForm-email-error"
+          {% endif %}
+          placeholder="e.g. you@example.com"
+          required
+        >
+      </div>
+    </div>
+
+    <div class="boat-contact-field-wrap">
+      <label for="ContactForm-phone-{{ block.id }}" class="boat-field-label">
+        Phone / WhatsApp Number <span class="required">*</span>
+      </label>
+      <input
+        type="tel"
+        id="ContactForm-phone-{{ block.id }}"
+        class="contact-form__input"
+        autocomplete="tel"
+        name="contact[phone]"
+        pattern="[0-9\-]*"
+        value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}"
+        placeholder="e.g. 0300 1234567"
+        required
+      >
+    </div>
+
+    <div class="boat-contact-field-wrap">
+      <label for="ContactForm-body-{{ block.id }}" class="boat-field-label">
+        Your Message <span class="required">*</span>
+      </label>
+      <textarea
+        rows="6"
+        id="ContactForm-body-{{ block.id }}"
+        class="contact-form__input contact-form__input--textarea"
+        name="contact[body]"
+        placeholder="How can we assist you with your order, tracking, or inquiry?"
+        required
+      >{{- form.body -}}</textarea>
+    </div>
+
+    <div class="boat-contact-submit-row">
+      {{ submit_button }}
+    </div>
+  {%- endform -%}
+</div>
+
+{% stylesheet %}
+  .boat-enhanced-contact-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    padding: 28px 24px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+    max-width: 680px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+
+  .boat-contact-quick-strip {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #f0fdf4 !important;
+    border: 1px solid #bbf7d0 !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    margin-bottom: 20px !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .boat-quick-strip-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #166534 !important;
+  }
+
+  .boat-quick-dot {
+    width: 8px !important;
+    height: 8px !important;
+    background: #22c55e !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+  }
+
+  .boat-quick-wa-btn {
+    background: #25d366 !important;
+    color: #ffffff !important;
+    font-size: 0.8rem !important;
+    font-weight: 800 !important;
+    padding: 6px 14px !important;
+    border-radius: 18px !important;
+    text-decoration: none !important;
+    transition: transform 0.15s ease !important;
+  }
+
+  .boat-quick-wa-btn:hover {
+    transform: scale(1.03) !important;
+  }
+
+  .boat-contact-field-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .boat-field-label {
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+  }
+
+  .boat-field-label .required {
+    color: #ef4444 !important;
+  }
+
+  .contact-form__form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .contact-form__form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px !important;
+  }
+
+  @media screen and (max-width: 600px) {
+    .contact-form__form-row {
+      grid-template-columns: 1fr !important;
+    }
+    .boat-enhanced-contact-card {
+      padding: 18px 14px !important;
+    }
+  }
+
+  .contact-form__input {
+    width: 100% !important;
+    background: #f8fafc !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 14px !important;
+    font-size: 0.92rem !important;
+    color: #0f172a !important;
+    font-family: inherit !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .contact-form__input:focus {
+    background: #ffffff !important;
+    border-color: #00b853 !important;
+    box-shadow: 0 0 0 3px rgba(0, 184, 83, 0.15) !important;
+  }
+
+  .contact-form__input--textarea {
+    resize: vertical !important;
+    min-height: 120px !important;
+  }
+
+  .boat-contact-submit-row {
+    margin-top: 6px !important;
+  }
+
+  .submit-button,
+  .contact-form .button {
+    background: #00b853 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 28px !important;
+    height: 48px !important;
+    padding: 0 32px !important;
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 14px rgba(0, 184, 83, 0.35) !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-transform: uppercase !important;
+  }
+
+  .submit-button:hover,
+  .contact-form .button:hover {
+    background: #009844 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(0, 184, 83, 0.45) !important;
+  }
+
+  .contact-form__error,
+  .contact-form__success {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.contact_form",
+  "tag": null,
+  "settings": [
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:settings.width_desktop",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "t:settings.width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "width_mobile",
+      "label": "t:settings.width_mobile",
+      "options": [
+        {
+          "value": "fit-content",
+          "label": "t:options.fit_content"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "fit-content"
+    },
+    {
+      "type": "range",
+      "id": "custom_width_mobile",
+      "label": "t:settings.width",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "default": 100,
+      "visible_if": "{{ block.settings.width_mobile == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "header",
+      "content": "t:content.input"
+    },
+    {
+      "type": "select",
+      "id": "input_style",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:options.default"
+        },
+        {
+          "value": "custom",
+          "label": "t:options.custom"
+        }
+      ],
+      "default": "default",
+      "info": "t:info.edit_input_field_in_theme_settings"
+    },
+    {
+      "type": "color",
+      "id": "input_background_color",
+      "label": "t:settings.background",
+      "default": "{{ settings.color_palette.background }}",
+      "visible_if": "{{ block.settings.input_style == \"custom\" }}"
+    },
+    {
+      "type": "color",
+      "id": "input_text_color",
+      "label": "t:settings.text",
+      "default": "{{ settings.color_palette.foreground }}",
+      "visible_if": "{{ block.settings.input_style == \"custom\" }}"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "t:settings.borders",
+      "default": "{{ settings.color_palette.foreground }}",
+      "visible_if": "{{ block.settings.input_style == \"custom\" }}"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "t:settings.border_width",
+      "min": 0,
+      "max": 4,
+      "step": 0.5,
+      "unit": "px",
+      "default": 1,
+      "visible_if": "{{ block.settings.input_style == \"custom\" }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.input_style == \"custom\" }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.contact_form",
+      "category": "t:categories.forms"
+    }
+  ]
+}
+{% endschema %}

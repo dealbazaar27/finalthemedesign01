@@ -1,0 +1,85 @@
+{%- doc -%}
+  Renders the collection breadcrumb navigation and collection title header.
+  @param {object} collection - The collection object
+{%- enddoc -%}
+
+<div class="boat-collection-header">
+  <nav class="boat-collection-breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ routes.root_url }}" class="boat-collection-breadcrumb__link">Home</a>
+    <span class="boat-collection-breadcrumb__separator">›</span>
+    <span class="boat-collection-breadcrumb__current">{{ collection.title | escape }}</span>
+  </nav>
+
+  <h1 class="boat-collection-title">{{ collection.title | escape }}</h1>
+</div>
+
+<style>
+  .boat-collection-header {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 16px 16px 8px 16px;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .boat-collection-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    line-height: 1.4;
+  }
+
+  .boat-collection-breadcrumb__link {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .boat-collection-breadcrumb__link:hover {
+    color: #0f172a;
+    text-decoration: underline;
+  }
+
+  .boat-collection-breadcrumb__separator {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+
+  .boat-collection-breadcrumb__current {
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  .boat-collection-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  @media screen and (max-width: 749px) {
+    .boat-collection-header {
+      padding: 12px 10px 4px 10px;
+    }
+
+    .boat-collection-breadcrumb {
+      font-size: 0.76rem;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .boat-collection-title {
+      font-size: 1.4rem;
+      letter-spacing: -0.3px;
+    }
+  }
+</style>

@@ -1,0 +1,580 @@
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+<div class="boat-contact-section section-{{ section.id }}">
+  <div class="boat-contact-container">
+    
+    {% comment %} --- Top Hero Header --- {% endcomment %}
+    <div class="boat-contact-header">
+      <span class="boat-contact-badge">👋 {{ section.settings.badge_text | default: "WE'RE HERE TO HELP" }}</span>
+      <h1 class="boat-contact-title">{{ section.settings.heading | default: 'Get In Touch With Us' }}</h1>
+      <p class="boat-contact-subtitle">
+        {{ section.settings.subheading | default: 'Have questions about your order, tracking, or products? Our dedicated support team is available 24/7 to assist you.' }}
+      </p>
+    </div>
+
+    <div class="boat-contact-grid">
+      
+      {% comment %} --- Left Column: Quick Contact & Helpline Cards --- {% endcomment %}
+      <div class="boat-contact-sidebar">
+        
+        <div class="boat-contact-card boat-contact-card--primary">
+          <div class="boat-contact-card-icon-wrap whatsapp-green">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.881 2.796.881 3.179 0 5.766-2.587 5.767-5.766.001-3.181-2.585-5.768-5.767-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 4.418-3.582 8-8 8-1.408 0-2.73-.367-3.875-1.009l-4.156 1.009 1.109-3.992c-.696-1.164-1.078-2.525-1.078-4.008 0-4.418 3.582-8 8-8z"/>
+            </svg>
+          </div>
+          <div class="boat-contact-card-content">
+            <div class="boat-contact-online-status">
+              <span class="status-dot"></span> Online 24/7
+            </div>
+            <h3>WhatsApp Support</h3>
+            <p>Fastest way to get answers for orders, returns, and delivery updates.</p>
+            <a href="https://wa.me/{{ section.settings.whatsapp_number | default: '923102492119' }}?text=Hello%20DealBazaar%20Support,%20I%20need%20assistance." target="_blank" class="boat-contact-action-btn whatsapp-btn">
+              Chat on WhatsApp ➔
+            </a>
+          </div>
+        </div>
+
+        <div class="boat-contact-card">
+          <div class="boat-contact-card-icon-wrap email-blue">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <div class="boat-contact-card-content">
+            <h3>Email Support</h3>
+            <p>{{ section.settings.email_text | default: 'support@dealbazaar.pk' }}</p>
+            <span class="boat-contact-meta">Response within 2 - 4 hours</span>
+          </div>
+        </div>
+
+        <div class="boat-contact-card">
+          <div class="boat-contact-card-icon-wrap clock-orange">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="boat-contact-card-content">
+            <h3>Operating Hours</h3>
+            <p>{{ section.settings.hours_text | default: 'Mon – Sat: 9:00 AM – 9:00 PM' }}</p>
+            <span class="boat-contact-meta">Sunday: Online WhatsApp Support</span>
+          </div>
+        </div>
+
+        <div class="boat-contact-guarantee-badge">
+          <span class="guarantee-icon">⚡</span>
+          <div>
+            <strong>Express 24-48h Delivery</strong>
+            <p>Cash on Delivery available all over Pakistan with 100% replacement warranty.</p>
+          </div>
+        </div>
+
+      </div>
+
+      {% comment %} --- Right Column: Modern Contact Form --- {% endcomment %}
+      <div class="boat-contact-form-container">
+        
+        <div class="boat-form-card">
+          <div class="boat-form-header">
+            <h2>Send Us a Message</h2>
+            <p>Fill in the form below and we will get back to you shortly.</p>
+          </div>
+
+          {%- form 'contact', id: 'MainContactPageForm', class: 'boat-main-contact-form' -%}
+            
+            {%- if form.posted_successfully? -%}
+              <div class="boat-contact-alert boat-contact-alert--success">
+                <span class="alert-icon">🎉</span>
+                <div>
+                  <strong>Thank You!</strong>
+                  <p>Your message has been received successfully. Our team will contact you very soon.</p>
+                </div>
+              </div>
+            {%- endif -%}
+
+            {%- if form.errors -%}
+              <div class="boat-contact-alert boat-contact-alert--error">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                  <strong>Please check the following errors:</strong>
+                  <p>{{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}</p>
+                </div>
+              </div>
+            {%- endif -%}
+
+            <div class="boat-form-row boat-form-row--two-col">
+              <div class="boat-form-group">
+                <label for="ContactName">Full Name <span class="required">*</span></label>
+                <input 
+                  type="text" 
+                  id="ContactName" 
+                  name="contact[name]" 
+                  value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}" 
+                  placeholder="e.g. Ali Ahmed" 
+                  required
+                >
+              </div>
+
+              <div class="boat-form-group">
+                <label for="ContactPhone">WhatsApp / Phone Number <span class="required">*</span></label>
+                <input 
+                  type="tel" 
+                  id="ContactPhone" 
+                  name="contact[phone]" 
+                  value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}" 
+                  placeholder="e.g. 0300 1234567" 
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="boat-form-row boat-form-row--two-col">
+              <div class="boat-form-group">
+                <label for="ContactEmail">Email Address <span class="required">*</span></label>
+                <input 
+                  type="email" 
+                  id="ContactEmail" 
+                  name="contact[email]" 
+                  value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}" 
+                  placeholder="e.g. you@example.com" 
+                  required
+                >
+              </div>
+
+              <div class="boat-form-group">
+                <label for="ContactOrderNumber">Order Number (Optional)</label>
+                <input 
+                  type="text" 
+                  id="ContactOrderNumber" 
+                  name="contact[order_number]" 
+                  placeholder="e.g. #1042"
+                >
+              </div>
+            </div>
+
+            <div class="boat-form-group">
+              <label for="ContactMessage">Your Message <span class="required">*</span></label>
+              <textarea 
+                id="ContactMessage" 
+                name="contact[body]" 
+                rows="5" 
+                placeholder="How can we help you with your order, product, or inquiry?" 
+                required
+              >{{ form.body }}</textarea>
+            </div>
+
+            <button type="submit" class="boat-contact-submit-btn">
+              <span>SEND MESSAGE ➔</span>
+            </button>
+
+          {%- endform -%}
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .boat-contact-section {
+    background: #f8fafc;
+    padding: 36px 16px 60px 16px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .boat-contact-container {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+
+  .boat-contact-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .boat-contact-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #d8232a;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .boat-contact-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin: 0 0 8px 0;
+    line-height: 1.2;
+  }
+
+  .boat-contact-subtitle {
+    font-size: 0.95rem;
+    color: #64748b;
+    max-width: 580px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  .boat-contact-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .boat-contact-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .boat-contact-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .boat-contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .boat-contact-card--primary {
+    border-color: #bbf7d0;
+    background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  }
+
+  .boat-contact-card-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .whatsapp-green {
+    background: #25d366;
+    color: #ffffff;
+  }
+
+  .email-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  .clock-orange {
+    background: #fff7ed;
+    color: #ea580c;
+  }
+
+  .boat-contact-card-content {
+    flex-grow: 1;
+  }
+
+  .boat-contact-online-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #16a34a;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  .boat-contact-card-content h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .boat-contact-card-content p {
+    font-size: 0.85rem;
+    color: #475569;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+  }
+
+  .boat-contact-meta {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+
+  .boat-contact-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-top: 4px;
+  }
+
+  .whatsapp-btn {
+    background: #25d366;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+  }
+
+  .whatsapp-btn:hover {
+    background: #20ba59;
+    transform: scale(1.02);
+  }
+
+  .boat-contact-guarantee-badge {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .guarantee-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .boat-contact-guarantee-badge strong {
+    font-size: 0.86rem;
+    color: #0f172a;
+    display: block;
+  }
+
+  .boat-contact-guarantee-badge p {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 2px 0 0 0;
+    line-height: 1.3;
+  }
+
+  /* Right Form Card */
+  .boat-form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  }
+
+  .boat-form-header {
+    margin-bottom: 24px;
+  }
+
+  .boat-form-header h2 {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+  }
+
+  .boat-form-header p {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  .boat-main-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .boat-form-row--two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .boat-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .boat-form-group label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #334155;
+  }
+
+  .boat-form-group label .required {
+    color: #ef4444;
+  }
+
+  .boat-form-group input,
+  .boat-form-group textarea {
+    width: 100%;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.92rem;
+    color: #0f172a;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .boat-form-group input:focus,
+  .boat-form-group textarea:focus {
+    background: #ffffff;
+    border-color: #00b853;
+    box-shadow: 0 0 0 3px rgba(0, 184, 83, 0.15);
+  }
+
+  .boat-contact-submit-btn {
+    background: #00b853;
+    color: #ffffff;
+    border: none;
+    border-radius: 30px;
+    height: 50px;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 184, 83, 0.35);
+    transition: all 0.2s ease;
+    margin-top: 6px;
+  }
+
+  .boat-contact-submit-btn:hover {
+    background: #009844;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 184, 83, 0.45);
+  }
+
+  .boat-contact-alert {
+    padding: 14px 18px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.88rem;
+    margin-bottom: 12px;
+  }
+
+  .boat-contact-alert--success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  }
+
+  .boat-contact-alert--error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+
+  /* Responsive for Mobile Devices */
+  @media screen and (max-width: 860px) {
+    .boat-contact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .boat-form-row--two-col {
+      grid-template-columns: 1fr;
+    }
+
+    .boat-form-card {
+      padding: 22px 18px;
+    }
+
+    .boat-contact-title {
+      font-size: 1.7rem;
+    }
+
+    .boat-contact-section {
+      padding: 24px 12px 40px 12px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Boat Contact Us",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge Text",
+      "default": "WE'RE HERE TO HELP"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Get In Touch With Us"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Have questions about your order, tracking, or products? Our dedicated support team is available 24/7 to assist you."
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_number",
+      "label": "WhatsApp Number (with country code, no + or spaces)",
+      "default": "923102492119"
+    },
+    {
+      "type": "text",
+      "id": "email_text",
+      "label": "Support Email",
+      "default": "support@dealbazaar.pk"
+    },
+    {
+      "type": "text",
+      "id": "hours_text",
+      "label": "Operating Hours",
+      "default": "Mon – Sat: 9:00 AM – 9:00 PM"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Boat Contact Us"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,673 @@
+{% liquid
+  assign selected_variant = product.selected_or_first_available_variant
+  assign price = selected_variant.price
+  assign compare_price = selected_variant.compare_at_price
+  
+  assign discount_percent = 0
+  if compare_price > price
+    assign discount_amount = compare_price | minus: price
+    assign discount_percent = discount_amount | times: 100 | divided_by: compare_price
+  endif
+
+  # 1. Collection / Product Category Name Display (Only show if real collection exists)
+  assign display_tag = product.collections.first.title
+  if display_tag == 'All' or display_tag == 'Home page' or display_tag == blank
+    assign display_tag = product.type
+  endif
+  if display_tag == blank
+    assign display_tag = 'Home & Living'
+  endif
+
+  # 2. Consistent Deterministic Product Rating (3.7 to 5.0) per product
+  assign id_num = product.id | modulo: 15
+  case id_num
+    when 0
+      assign calc_rating = '4.9'
+    when 1
+      assign calc_rating = '4.7'
+    when 2
+      assign calc_rating = '4.2'
+    when 3
+      assign calc_rating = '4.8'
+    when 4
+      assign calc_rating = '3.9'
+    when 5
+      assign calc_rating = '4.5'
+    when 6
+      assign calc_rating = '5.0'
+    when 7
+      assign calc_rating = '4.1'
+    when 8
+      assign calc_rating = '4.6'
+    when 9
+      assign calc_rating = '3.8'
+    when 10
+      assign calc_rating = '4.4'
+    when 11
+      assign calc_rating = '4.9'
+    when 12
+      assign calc_rating = '4.3'
+    when 13
+      assign calc_rating = '4.8'
+    else
+      assign calc_rating = '3.7'
+  endcase
+
+  # Determine featured image
+  assign featured_img = selected_variant.featured_image
+  if featured_img == blank
+    assign featured_img = product.featured_media.preview_image
+  endif
+
+    # Feature strip color settings (Customizable via Section or Theme Settings)
+  assign strip_bg = section.settings.card_strip_bg | default: settings.card_feature_strip_bg | default: '#ffc700'
+  assign strip_text = section.settings.card_strip_text | default: settings.card_feature_strip_text | default: '#000000'
+assign form_id = 'BoatProductCardForm-' | append: product.id | append: '-' | append: selected_variant.id
+%}
+
+<style>
+  .boat-pick-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    box-sizing: border-box !important;
+    text-decoration: none !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  }
+
+  .boat-pick-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08) !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .boat-pick-card__media-container {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    height: 0 !important;
+    padding-bottom: 100% !important;
+    overflow: hidden !important;
+    background: #f8fafc !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+  }
+
+  .boat-pick-card__image-link {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  .boat-pick-card__image {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+    transition: transform 0.35s ease !important;
+  }
+
+  .boat-pick-card:hover .boat-pick-card__image {
+    transform: scale(1.04) !important;
+  }
+
+  .boat-pick-card__badge {
+    position: absolute !important;
+    top: 8px !important;
+    left: 8px !important;
+    z-index: 5 !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .boat-pick-card__hover-form {
+    position: absolute !important;
+    bottom: 8px !important;
+    left: 8px !important;
+    z-index: 5 !important;
+    margin: 0 !important;
+  }
+
+  .boat-pick-card__hover-atc {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #e2e8f0 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    transition: transform 0.2s ease, background-color 0.2s ease !important;
+    padding: 0 !important;
+  }
+
+  .boat-pick-card__hover-atc:hover {
+    background: #f1f5f9 !important;
+    transform: scale(1.05) !important;
+  }
+
+  .boat-pick-card__yellow-bar {
+    background: #ffc700 !important;
+    color: #000000 !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    padding: 4px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .boat-pick-card__collection-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+  }
+
+  .boat-pick-card__rating {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    padding: 2px 7px !important;
+    border-radius: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+    white-space: nowrap !important;
+  }
+
+  .boat-pick-card__details {
+    padding: 8px 8px 10px 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  .boat-pick-card__title {
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    line-height: 1.25 !important;
+    text-decoration: none !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    height: 2.5em !important;
+    min-height: 2.5em !important;
+    max-height: 2.5em !important;
+    margin-bottom: 2px !important;
+  }
+
+  .boat-pick-card__title:hover {
+    color: #d8232a !important;
+  }
+
+  .boat-pick-card__divider {
+    display: none !important;
+  }
+
+  .boat-pick-card__footer {
+    margin-top: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+  }
+
+  .boat-pick-card__price-row {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    line-height: 1.2 !important;
+    padding-top: 2px !important;
+  }
+
+  .boat-pick-card__price-values {
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 3px !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+  }
+
+  .boat-pick-card__price {
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  .boat-pick-card__compare-price {
+    font-size: 0.65rem !important;
+    text-decoration: line-through !important;
+    color: #94a3b8 !important;
+    font-weight: 500 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    white-space: nowrap !important;
+  }
+
+  .boat-pick-card__discount {
+    font-size: 0.68rem !important;
+    font-weight: 800 !important;
+    color: #00b853 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    white-space: nowrap !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .boat-pick-card__swatches {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    min-height: 26px !important;
+    margin-top: 4px !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .boat-pick-card__swatches:empty {
+    display: none !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .boat-swatch-dot {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+    border-radius: 50% !important;
+    border: 1.5px solid #cbd5e1 !important;
+    cursor: pointer !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    outline: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    display: inline-block !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+    background-clip: padding-box !important;
+  }
+
+  .boat-swatch-dot:hover {
+    transform: scale(1.12) !important;
+    border-color: #00b853 !important;
+  }
+
+  .boat-swatch-dot.active {
+    border: 2px solid #00b853 !important;
+    box-shadow: none !important;
+    transform: scale(1.08) !important;
+  }
+
+  .boat-swatch-pill {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    padding: 2px 9px !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    border: 1.5px solid #cbd5e1 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    outline: none !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .boat-swatch-pill.active,
+  .boat-swatch-pill:hover {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+  }
+
+  .boat-swatch-more {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    color: #64748b !important;
+    margin-left: 2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  @media screen and (max-width: 400px) {
+    .boat-pick-card__price {
+      font-size: 0.76rem !important;
+    }
+    .boat-pick-card__compare-price {
+      font-size: 0.62rem !important;
+    }
+    .boat-pick-card__discount {
+      font-size: 0.64rem !important;
+    }
+  }
+</style>
+
+<div class="boat-pick-card" data-product-id="{{ product.id }}">
+  <div class="boat-pick-card__media-container">
+    <a href="{{ product.url }}" class="boat-pick-card__image-link" aria-label="{{ product.title | escape }}">
+      {% if compare_price > price %}
+        <div class="boat-pick-card__badge">
+          <span>⚡</span>
+          <span>SALE</span>
+        </div>
+      {% else %}
+        <div class="boat-pick-card__badge">
+          <span>✨</span>
+          <span>NEW LAUNCH</span>
+        </div>
+      {% endif %}
+
+      {% if featured_img != blank %}
+        <img 
+          src="{{ featured_img | image_url: width: 600 }}" 
+          alt="{{ product.title | escape }}" 
+          class="boat-pick-card__image"
+          loading="lazy"
+          width="300"
+          height="300"
+        >
+      {% else %}
+        <div style="width:100%; height:100%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:2rem;">📦</div>
+      {% endif %}
+    </a>
+
+    {% comment %} --- Floating Hover Add to Cart Icon Button --- {% endcomment %}
+    {% form 'product', product, id: form_id, class: 'boat-pick-card__hover-form', data-type: 'add-to-cart-form', onsubmit: 'handleBoatAddToCart(event, this)' %}
+      <input type="hidden" name="id" value="{{ selected_variant.id }}">
+      <button 
+        type="submit" 
+        name="add" 
+        class="boat-pick-card__hover-atc"
+        aria-label="Add to cart"
+        title="Add to Cart"
+        {% unless selected_variant.available %}disabled{% endunless %}
+      >
+        <span aria-hidden="true" class="svg-wrapper add-to-cart-icon">
+          {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
+        </span>
+      </button>
+    {% endform %}
+  </div>
+
+  {% comment %} --- Yellow Feature Banner Bar (Collection Name + Rating) --- {% endcomment %}
+  <div class="boat-pick-card__yellow-bar" style="background: {{ strip_bg }} !important; color: {{ strip_text }} !important; {% if display_tag == blank %}justify-content: flex-end;{% endif %}">
+    {% if display_tag != blank %}
+      <span class="boat-pick-card__collection-name" style="color: {{ strip_text }} !important;">{{ display_tag }}</span>
+    {% endif %}
+    <span class="boat-pick-card__rating">⭐ {{ calc_rating }}</span>
+  </div>
+
+  <div class="boat-pick-card__details">
+    <a href="{{ product.url }}" class="boat-pick-card__title">{{ product.title }}</a>
+
+    <div class="boat-pick-card__footer">
+      <div class="boat-pick-card__price-row">
+        <div class="boat-pick-card__price-values">
+          <span class="boat-pick-card__price">{{ price | money_without_trailing_zeros }}</span>
+          {% if compare_price > price %}
+            <span class="boat-pick-card__compare-price">{{ compare_price | money_without_trailing_zeros }}</span>
+          {% endif %}
+        </div>
+        {% if compare_price > price %}
+          <span class="boat-pick-card__discount">{{ discount_percent }}% off</span>
+        {% else %}
+          <span class="boat-pick-card__discount" style="visibility:hidden;">0% off</span>
+        {% endif %}
+      </div>
+
+      {% comment %} --- Dynamic Smart Swatches (Color Dots / Size Pills) --- {% endcomment %}
+      <div class="boat-pick-card__swatches">
+        {% if product.variants.size > 1 %}
+          {% assign swatch_count = 0 %}
+          {% for option in product.options_with_values %}
+            {% assign downcased_option = option.name | downcase %}
+            
+            {% if downcased_option contains 'color' or downcased_option contains 'colour' or downcased_option contains 'shade' or downcased_option contains 'finish' or downcased_option contains 'style' or downcased_option contains 'pattern' or forloop.first %}
+              {% for value in option.values limit: 4 %}
+                {% assign variant_match = product.variants | where: option.name, value | first %}
+                {% if variant_match == blank %}
+                  {% assign variant_match = product.variants[forloop.index0] %}
+                {% endif %}
+
+                {% assign var_img = variant_match.featured_image | default: featured_img | image_url: width: 600 %}
+                {% assign var_discount = 0 %}
+                {% if variant_match.compare_at_price > variant_match.price %}
+                  {% assign var_diff = variant_match.compare_at_price | minus: variant_match.price %}
+                  {% assign var_discount = var_diff | times: 100 | divided_by: variant_match.compare_at_price %}
+                {% endif %}
+
+                {% assign val_down = value | downcase | strip %}
+                {% assign swatch_bg = '#0f172a' %}
+                {% if value.swatch.color %}
+                  {% assign swatch_bg = value.swatch.color %}
+                {% elsif val_down contains 'white' %}
+                  {% assign swatch_bg = '#ffffff' %}
+                {% elsif val_down contains 'black' %}
+                  {% assign swatch_bg = '#111827' %}
+                {% elsif val_down contains 'pink' or val_down contains 'rose' %}
+                  {% assign swatch_bg = '#f472b6' %}
+                {% elsif val_down contains 'cyan' or val_down contains 'teal' or val_down contains 'mint' %}
+                  {% assign swatch_bg = '#2dd4bf' %}
+                {% elsif val_down contains 'blue' or val_down contains 'navy' or val_down contains 'sky' %}
+                  {% assign swatch_bg = '#38bdf8' %}
+                {% elsif val_down contains 'green' or val_down contains 'olive' %}
+                  {% assign swatch_bg = '#4ade80' %}
+                {% elsif val_down contains 'yellow' %}
+                  {% assign swatch_bg = '#facc15' %}
+                {% elsif val_down contains 'red' or val_down contains 'maroon' or val_down contains 'wine' %}
+                  {% assign swatch_bg = '#ef4444' %}
+                {% elsif val_down contains 'purple' or val_down contains 'violet' or val_down contains 'lavender' %}
+                  {% assign swatch_bg = '#c084fc' %}
+                {% elsif val_down contains 'grey' or val_down contains 'gray' or val_down contains 'silver' %}
+                  {% assign swatch_bg = '#94a3b8' %}
+                {% elsif val_down contains 'orange' %}
+                  {% assign swatch_bg = '#fb923c' %}
+                {% elsif val_down contains 'gold' %}
+                  {% assign swatch_bg = '#fbbf24' %}
+                {% elsif val_down contains 'brown' or val_down contains 'chocolate' %}
+                  {% assign swatch_bg = '#854d0e' %}
+                {% else %}
+                  {% assign swatch_bg = '#0284c7' %}
+                {% endif %}
+
+                {% if variant_match.featured_image != blank %}
+                  {% assign swatch_thumb = variant_match.featured_image | image_url: width: 120 %}
+                  {% assign swatch_style = "background-image: url('" | append: swatch_thumb | append: "'); background-size: cover; background-position: center;" %}
+                {% elsif value.swatch.image %}
+                  {% assign swatch_thumb = value.swatch.image | image_url: width: 120 %}
+                  {% assign swatch_style = "background-image: url('" | append: swatch_thumb | append: "'); background-size: cover; background-position: center;" %}
+                {% elsif value.swatch.color %}
+                  {% assign swatch_style = "background-color: " | append: value.swatch.color | append: ";" %}
+                {% else %}
+                  {% assign swatch_style = "background-color: " | append: swatch_bg | append: ";" %}
+                {% endif %}
+
+                <button 
+                  type="button"
+                  class="boat-swatch-dot{% if variant_match.id == selected_variant.id %} active{% endif %}"
+                  style="{{ swatch_style }}"
+                  title="{{ value }}"
+                  data-variant-id="{{ variant_match.id }}"
+                  data-variant-image="{{ var_img }}"
+                  data-variant-price="{{ variant_match.price | money_without_trailing_zeros }}"
+                  data-variant-compare="{% if variant_match.compare_at_price > variant_match.price %}{{ variant_match.compare_at_price | money_without_trailing_zeros }}{% endif %}"
+                  data-variant-discount="{% if variant_match.compare_at_price > variant_match.price %}{{ var_discount }}% off{% endif %}"
+                  data-variant-available="{{ variant_match.available }}"
+                  onclick="selectBoatVariant(this)"
+                ></button>
+                {% assign swatch_count = swatch_count | plus: 1 %}
+              {% endfor %}
+
+            {% elsif downcased_option contains 'size' or downcased_option contains 'storage' or downcased_option contains 'ram' %}
+              {% for value in option.values limit: 3 %}
+                {% assign variant_match = product.variants | where: option.name, value | first %}
+                {% if variant_match == blank %}
+                  {% assign variant_match = product.variants[forloop.index0] %}
+                {% endif %}
+
+                {% assign var_img = variant_match.featured_image | default: featured_img | image_url: width: 600 %}
+                {% assign var_discount = 0 %}
+                {% if variant_match.compare_at_price > variant_match.price %}
+                  {% assign var_diff = variant_match.compare_at_price | minus: variant_match.price %}
+                  {% assign var_discount = var_diff | times: 100 | divided_by: variant_match.compare_at_price %}
+                {% endif %}
+
+                <button 
+                  type="button"
+                  class="boat-swatch-pill{% if variant_match.id == selected_variant.id %} active{% endif %}"
+                  title="{{ value }}"
+                  data-variant-id="{{ variant_match.id }}"
+                  data-variant-image="{{ var_img }}"
+                  data-variant-price="{{ variant_match.price | money_without_trailing_zeros }}"
+                  data-variant-compare="{% if variant_match.compare_at_price > variant_match.price %}{{ variant_match.compare_at_price | money_without_trailing_zeros }}{% endif %}"
+                  data-variant-discount="{% if variant_match.compare_at_price > variant_match.price %}{{ var_discount }}% off{% endif %}"
+                  data-variant-available="{{ variant_match.available }}"
+                  onclick="selectBoatVariant(this)"
+                >
+                  {{ value }}
+                </button>
+                {% assign swatch_count = swatch_count | plus: 1 %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+
+          {% if product.variants.size > 4 %}
+            <span class="boat-swatch-more">+{{ product.variants.size | minus: 4 }}</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  if (typeof window.selectBoatVariant !== 'function') {
+    window.selectBoatVariant = function(dotBtn) {
+      const card = dotBtn.closest('.boat-pick-card');
+      if (!card) return;
+
+      const allSwatches = card.querySelectorAll('.boat-swatch-dot, .boat-swatch-pill');
+      allSwatches.forEach(d => d.classList.remove('active'));
+      dotBtn.classList.add('active');
+
+      const variantId = dotBtn.getAttribute('data-variant-id');
+      const variantImage = dotBtn.getAttribute('data-variant-image');
+      const variantPrice = dotBtn.getAttribute('data-variant-price');
+      const variantCompare = dotBtn.getAttribute('data-variant-compare');
+      const variantDiscount = dotBtn.getAttribute('data-variant-discount');
+      const isAvailable = dotBtn.getAttribute('data-variant-available') === 'true';
+
+      if (variantImage) {
+        const img = card.querySelector('.boat-pick-card__image');
+        if (img) img.src = variantImage;
+      }
+
+      const input = card.querySelector('input[name="id"]');
+      if (input && variantId) input.value = variantId;
+
+      const priceElem = card.querySelector('.boat-pick-card__price');
+      if (priceElem && variantPrice) priceElem.textContent = variantPrice;
+
+      const compareElem = card.querySelector('.boat-pick-card__compare-price');
+      if (compareElem) {
+        if (variantCompare) {
+          compareElem.textContent = variantCompare;
+          compareElem.style.display = 'inline';
+        } else {
+          compareElem.style.display = 'none';
+        }
+      }
+
+      const discountElem = card.querySelector('.boat-pick-card__discount');
+      if (discountElem) {
+        if (variantDiscount && variantDiscount !== '0% off') {
+          discountElem.textContent = variantDiscount;
+          discountElem.style.display = 'inline';
+        } else {
+          discountElem.style.display = 'none';
+        }
+      }
+
+      const submitBtn = card.querySelector('.boat-pick-card__hover-atc');
+      if (submitBtn) {
+        submitBtn.disabled = !isAvailable;
+      }
+    };
+  }
+</script>

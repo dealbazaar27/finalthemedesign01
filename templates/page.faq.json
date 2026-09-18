@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "faq": {
+      "type": "main-faq",
+      "settings": {
+        "badge_text": "DEALBAZAAR HELP CENTER",
+        "heading": "Frequently Asked Questions",
+        "subheading": "Find quick answers to common questions about ordering, Cash on Delivery, shipping, 7-day replacement warranty, and product quality at DealBazaar.",
+        "whatsapp_number": "923102492119"
+      }
+    }
+  },
+  "order": [
+    "faq"
+  ]
+}

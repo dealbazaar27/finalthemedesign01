@@ -1,0 +1,70 @@
+{% liquid
+  assign titles = 'boAt PartyPal 650,boAt Airdopes Plus 421 ANC,boAt Aavante Bar Prime B450,boAt Aavante Bar Prime DA600,boAt Stone 120,boAt Airdopes Prime 800D' | split: ','
+  assign collections_names = 'Speakers,Earbuds,Soundbars,Home Audio,Portable Audio,Wireless Earbuds' | split: ','
+  assign ratings = '4.9,4.7,4.2,4.8,3.9,4.5' | split: ','
+  assign prices = '19,999,1,399,9,999,15,999,799,1,499' | split: ','
+  assign compares = '49,990,4,999,35,990,44,990,2,990,4,590' | split: ','
+  assign discounts = '60% off,72% off,72% off,64% off,73% off,67% off' | split: ','
+  assign badges = '⚡ Free Spotify,⚡ Free Spotify,✨ New Launch,✨ New Launch,✨ New Launch,⚡ Free Spotify' | split: ','
+  
+  assign idx = index | minus: 1
+  assign item_title = titles[idx] | default: 'boAt Premium Audio'
+  assign item_collection = collections_names[idx] | default: 'Top Pick'
+  assign item_rating = ratings[idx] | default: '4.8'
+  assign item_price = prices[idx] | default: '1,499'
+  assign item_compare = compares[idx] | default: '4,999'
+  assign item_discount = discounts[idx] | default: '70% off'
+  assign item_badge = badges[idx] | default: '✨ New Launch'
+%}
+
+<div class="boat-pick-card">
+  <div class="boat-pick-card__media-container">
+    <a href="/collections/all" class="boat-pick-card__image-link">
+      <div class="boat-pick-card__badge">
+        {{ item_badge }}
+      </div>
+
+      <div style="width:100%; height:100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:10px;">
+        <span style="font-size:2.5rem; margin-bottom:4px;">🎧</span>
+        <span style="font-size:0.75rem; font-weight:700; opacity:0.8;">boAt Audio</span>
+      </div>
+    </a>
+
+    <form action="/cart/add" method="post" enctype="multipart/form-data" class="boat-pick-card__hover-form" onsubmit="handleBoatAddToCart(event, this)">
+      <input type="hidden" name="id" value="123456789">
+      <button 
+        type="submit" 
+        class="boat-pick-card__hover-atc" 
+        aria-label="Add to cart"
+        title="Add to Cart"
+      >
+        <span aria-hidden="true" class="svg-wrapper add-to-cart-icon">
+          {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
+        </span>
+      </button>
+    </form>
+  </div>
+
+  <div class="boat-pick-card__yellow-bar">
+    <span class="boat-pick-card__collection-name">{{ item_collection }}</span>
+    <span class="boat-pick-card__rating">⭐ {{ item_rating }}</span>
+  </div>
+
+  <div class="boat-pick-card__details">
+    <a href="/collections/all" class="boat-pick-card__title">{{ item_title }}</a>
+
+    <div class="boat-pick-card__price-row">
+      <div class="boat-pick-card__price-wrap">
+        <span class="boat-pick-card__price">Rs. {{ item_price }}</span>
+        <span class="boat-pick-card__compare-price">Rs. {{ item_compare }}</span>
+        <span class="boat-pick-card__discount">{{ item_discount }}</span>
+      </div>
+
+      <div class="boat-pick-card__swatch-dots">
+        <button type="button" class="boat-swatch-dot active" style="background:#0f172a;" title="Black"></button>
+        <button type="button" class="boat-swatch-dot" style="background:#0284c7;" title="Blue"></button>
+        <span>+1</span>
+      </div>
+    </div>
+  </div>
+</div>

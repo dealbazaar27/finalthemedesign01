@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "track_order": {
+      "type": "main-track-order",
+      "settings": {
+        "badge_text": "DEALBAZAAR LIVE ORDER TRACKING",
+        "heading": "Track Your DealBazaar Order",
+        "subheading": "Check real-time delivery status of your DealBazaar parcel across Pakistan. Enter your Order ID or Courier Tracking Number below.",
+        "whatsapp_number": "923102492119"
+      }
+    }
+  },
+  "order": [
+    "track_order"
+  ]
+}

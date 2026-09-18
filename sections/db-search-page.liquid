@@ -1,0 +1,589 @@
+{% liquid
+  assign products_per_page = section.settings.products_per_page | default: 24
+  assign search_products = search.results | where: 'object_type', 'product'
+  assign results_count = search_products.size
+%}
+
+<style>
+  /* Critical Instant CSS (Top of Section to Prevent FOUC) */
+  .boat-search-page-wrapper {
+    max-width: 1320px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 24px 16px 60px 16px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+
+  .boat-search-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+    gap: 12px;
+  }
+
+  .boat-search-title-row {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .boat-search-main-heading {
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .boat-search-highlight {
+    color: #0f172a;
+    position: relative;
+    display: inline-block;
+  }
+
+  .boat-search-red-line {
+    width: 60px;
+    height: 4px;
+    background: #d8232a;
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+
+  /* Search Form & Wrapper */
+  .boat-search-form-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 680px;
+    margin: 4px auto 0 auto;
+  }
+
+  .boat-search-bar-form {
+    width: 100%;
+  }
+
+  .boat-search-input-box {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 40px;
+    padding: 4px 6px 4px 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-search-input-box:focus-within {
+    border-color: #0f172a;
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+  }
+
+  .boat-search-icon {
+    color: #64748b;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  .boat-search-text-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: transparent;
+    padding: 8px 0;
+    min-width: 0;
+  }
+
+  .boat-search-text-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .boat-search-loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #d8232a;
+    border-radius: 50%;
+    animation: boatSpinnerRotate 0.6s linear infinite;
+    margin: 0 6px;
+    flex-shrink: 0;
+  }
+
+  @keyframes boatSpinnerRotate {
+    to { transform: rotate(360deg); }
+  }
+
+  .boat-search-clear-btn {
+    color: #94a3b8;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+  }
+
+  .boat-search-clear-btn:hover {
+    color: #0f172a;
+  }
+
+  .boat-search-btn-submit {
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .boat-search-btn-submit:hover {
+    background: #d8232a;
+    transform: scale(1.02);
+  }
+
+  .boat-search-meta-info {
+    font-size: 0.95rem;
+    color: #475569;
+    min-height: 20px;
+  }
+
+  .boat-search-section-header {
+    margin-bottom: 18px;
+  }
+
+  .boat-search-grid-heading {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  /* Product Grid */
+  .boat-search-results-area {
+    transition: opacity 0.2s ease;
+    width: 100%;
+  }
+
+  .boat-search-results-area.is-loading {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .boat-search-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-search-grid-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* Pagination */
+  .boat-search-pagination {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .boat-search-pagination span,
+  .boat-search-pagination a {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    color: #0f172a;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .boat-search-pagination .current {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-search-pagination a:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
+  /* Empty State */
+  .boat-search-empty-state {
+    text-align: center;
+    padding: 20px 0 40px 0;
+  }
+
+  .boat-search-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 12px;
+  }
+
+  .boat-search-empty-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+  }
+
+  .boat-search-empty-desc {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin: 0 0 32px 0;
+  }
+
+  .boat-search-trending-section {
+    margin-top: 10px;
+    text-align: left;
+  }
+
+  .boat-search-trending-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Responsive Breakpoints */
+  @media screen and (max-width: 1024px) {
+    .boat-search-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-search-page-wrapper {
+      padding: 16px 10px 48px 10px;
+    }
+
+    .boat-search-main-heading {
+      font-size: 1.5rem;
+    }
+
+    .boat-search-input-box {
+      padding: 3px 4px 3px 12px;
+    }
+
+    .boat-search-text-input {
+      font-size: 0.88rem;
+    }
+
+    .boat-search-btn-submit {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    /* Strict 2 Columns on Mobile matching Deal Bazaar layout */
+    .boat-search-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+
+    .boat-search-meta-info {
+      font-size: 0.85rem;
+    }
+
+    .boat-search-trending-title {
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+    }
+  }
+</style>
+
+<div class="boat-search-page-wrapper">
+  
+  <div class="boat-search-header-container">
+    <div class="boat-search-title-row">
+      <h1 class="boat-search-main-heading" id="BoatSearchHeading">
+        {% if search.performed and search.terms != blank %}
+          Search <span class="boat-search-highlight">Results</span>
+        {% else %}
+          Search <span class="boat-search-highlight">Products</span>
+        {% endif %}
+      </h1>
+      <div class="boat-search-red-line"></div>
+    </div>
+
+    {% comment %} Modern Search Bar Form with Instant Live Grid Filtering {% endcomment %}
+    <div class="boat-search-form-wrapper">
+      <form action="{{ routes.search_url }}" method="get" role="search" class="boat-search-bar-form" id="BoatSearchForm">
+        <input type="hidden" name="type" value="product">
+        <input type="hidden" name="options[prefix]" value="last">
+        
+        <div class="boat-search-input-box">
+          <svg class="boat-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+
+          <input 
+            type="search" 
+            name="q" 
+            id="BoatSearchInput"
+            value="{{ search.terms | escape }}" 
+            placeholder="{{ section.settings.placeholder_text | default: 'Search for products, brands and deals...' }}"
+            class="boat-search-text-input"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+          >
+
+          <span class="boat-search-loading-spinner" id="BoatSearchSpinner" style="display: none;"></span>
+
+          <button 
+            type="button" 
+            class="boat-search-clear-btn" 
+            id="BoatSearchClearBtn" 
+            aria-label="Clear search"
+            style="{% if search.terms == blank %}display: none;{% endif %}"
+          >✕</button>
+
+          <button type="submit" class="boat-search-btn-submit">
+            <span>Search</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="boat-search-meta-info" id="BoatSearchMetaInfo">
+      {% if search.performed and search.terms != blank %}
+        {% if results_count > 0 %}
+          Showing <strong>{{ results_count }}</strong> {% if results_count == 1 %}product{% else %}products{% endif %} for "<strong>{{ search.terms | escape }}</strong>"
+        {% else %}
+          No results found for "<strong>{{ search.terms | escape }}</strong>"
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  {% comment %} Live Results Grid / Empty State Area {% endcomment %}
+  <div class="boat-search-results-area" id="BoatSearchResultsArea">
+    {% paginate search.results by products_per_page %}
+      {% if search.performed and search.terms != blank and results_count > 0 %}
+        <div class="boat-search-section-header">
+          <h2 class="boat-search-grid-heading">Matching Products ({{ results_count }})</h2>
+        </div>
+        
+        <div class="boat-search-grid">
+          {% for item in search_products %}
+            <div class="boat-search-grid-item">
+              {% render 'db-product-card-item', product: item %}
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if paginate.pages > 1 %}
+          <div class="boat-search-pagination">
+            {{ paginate | default_pagination: next: 'Next ›', previous: '‹ Prev' }}
+          </div>
+        {% endif %}
+
+      {% elsif search.performed and search.terms != blank and results_count == 0 %}
+        <div class="boat-search-empty-state">
+          <div class="boat-search-empty-icon">🔍</div>
+          <h2 class="boat-search-empty-title">We couldn't find any matches</h2>
+          <p class="boat-search-empty-desc">Please check the spelling or try searching for something else.</p>
+          
+          {% assign fallback_collection = section.settings.fallback_collection | default: collections.all %}
+          {% if fallback_collection != blank and fallback_collection.products.size > 0 %}
+            <div class="boat-search-trending-section">
+              <h3 class="boat-search-trending-title">Popular Products You Might Like</h3>
+              <div class="boat-search-grid">
+                {% for product in fallback_collection.products limit: 12 %}
+                  <div class="boat-search-grid-item">
+                    {% render 'db-product-card-item', product: product %}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+      {% else %}
+        {% assign default_col = section.settings.fallback_collection | default: collections.all %}
+        {% if default_col != blank and default_col.products.size > 0 %}
+          <div class="boat-search-trending-section">
+            <h3 class="boat-search-trending-title">Explore Trending Products</h3>
+            <div class="boat-search-grid">
+              {% for product in default_col.products limit: 16 %}
+                <div class="boat-search-grid-item">
+                  {% render 'db-product-card-item', product: product %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    {% endpaginate %}
+  </div>
+
+</div>
+
+<script>
+  // Live Instant In-Page Grid Filtering on Search Page as User Types
+  (function initLiveInPageSearch() {
+    const searchInput = document.getElementById('BoatSearchInput');
+    const searchForm = document.getElementById('BoatSearchForm');
+    const resultsArea = document.getElementById('BoatSearchResultsArea');
+    const metaInfo = document.getElementById('BoatSearchMetaInfo');
+    const heading = document.getElementById('BoatSearchHeading');
+    const spinner = document.getElementById('BoatSearchSpinner');
+    const clearBtn = document.getElementById('BoatSearchClearBtn');
+
+    if (!searchInput || !resultsArea) return;
+
+    let debounceTimeout = null;
+    let currentAbortController = null;
+    const initialContent = resultsArea.innerHTML;
+    const initialMeta = metaInfo ? metaInfo.innerHTML : '';
+    const initialHeading = heading ? heading.innerHTML : '';
+
+    searchInput.addEventListener('input', function() {
+      const query = this.value.trim();
+
+      if (clearBtn) {
+        clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+      }
+
+      clearTimeout(debounceTimeout);
+
+      if (query.length === 0) {
+        if (currentAbortController) currentAbortController.abort();
+        if (spinner) spinner.style.display = 'none';
+        resultsArea.classList.remove('is-loading');
+        resultsArea.innerHTML = initialContent;
+        if (metaInfo) metaInfo.innerHTML = initialMeta;
+        if (heading) heading.innerHTML = initialHeading;
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      debounceTimeout = setTimeout(() => {
+        performLiveSearch(query);
+      }, 250);
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.focus();
+      });
+    }
+
+    async function performLiveSearch(query) {
+      if (currentAbortController) {
+        currentAbortController.abort();
+      }
+      currentAbortController = new AbortController();
+
+      if (spinner) spinner.style.display = 'inline-block';
+      resultsArea.classList.add('is-loading');
+
+      try {
+        const targetUrl = `${window.location.pathname}?type=product&options%5Bprefix%5D=last&q=${encodeURIComponent(query)}`;
+        const res = await fetch(targetUrl, { signal: currentAbortController.signal });
+
+        if (!res.ok) throw new Error('Search network error');
+
+        const htmlText = await res.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlText, 'text/html');
+
+        const newResultsArea = doc.getElementById('BoatSearchResultsArea');
+        const newMetaInfo = doc.getElementById('BoatSearchMetaInfo');
+        const newHeading = doc.getElementById('BoatSearchHeading');
+
+        if (newResultsArea) {
+          resultsArea.innerHTML = newResultsArea.innerHTML;
+        }
+
+        if (metaInfo && newMetaInfo) {
+          metaInfo.innerHTML = newMetaInfo.innerHTML;
+        }
+
+        if (heading && newHeading) {
+          heading.innerHTML = newHeading.innerHTML;
+        }
+
+        // Update URL cleanly without reloading page
+        window.history.replaceState({}, '', targetUrl);
+
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Live search error:', err);
+        }
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+        resultsArea.classList.remove('is-loading');
+      }
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Deal Bazaar Search Page",
+  "tag": "section",
+  "class": "section-boat-search-page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "placeholder_text",
+      "label": "Search Input Placeholder",
+      "default": "Search for products, brands and deals..."
+    },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "label": "Products Per Page",
+      "min": 12,
+      "max": 48,
+      "step": 4,
+      "default": 24
+    },
+    {
+      "type": "collection",
+      "id": "fallback_collection",
+      "label": "Trending / Fallback Collection",
+      "info": "Shown when no search results are found or before searching"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deal Bazaar Search Page"
+    }
+  ]
+}
+{% endschema %}

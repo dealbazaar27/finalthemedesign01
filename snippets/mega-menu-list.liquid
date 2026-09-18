@@ -1,0 +1,94 @@
+{% liquid
+  assign link_count = parent_link.links.size
+%}
+
+<div class="boat-megamenu-wrapper">
+  <div class="boat-megamenu-grid">
+    {% if link_count > 0 %}
+      {% assign seen_titles = '' %}
+      {% for link in parent_link.links %}
+        {% assign title_check = link.title | downcase | strip %}
+        {% assign check_tag = '|' | append: title_check | append: '|' %}
+        {% unless seen_titles contains check_tag %}
+          {% assign seen_titles = seen_titles | append: check_tag %}
+          <a href="{{ link.url }}" class="boat-megamenu-card">
+            <div class="boat-megamenu-avatar">
+              {% if link.type == 'collection_link' and link.object.featured_image != blank %}
+                <img src="{{ link.object.featured_image | image_url: width: 120 }}" alt="{{ link.title | escape }}" loading="lazy" width="44" height="44">
+              {% elsif link.type == 'product_link' and link.object.featured_image != blank %}
+                <img src="{{ link.object.featured_image | image_url: width: 120 }}" alt="{{ link.title | escape }}" loading="lazy" width="44" height="44">
+              {% else %}
+                <span style="font-size: 1.3rem;">📱</span>
+              {% endif %}
+            </div>
+            <span class="boat-megamenu-title">{{ link.title }}</span>
+          </a>
+        {% endunless %}
+      {% endfor %}
+    {% else %}
+      {% comment %} --- SAME TO SAME boAt Category Items (Matching Screenshot) --- {% endcomment %}
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🎧</span></div>
+        <span class="boat-megamenu-title">True Wireless Earbuds</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🎧</span></div>
+        <span class="boat-megamenu-title">Neckbands</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">⌚</span></div>
+        <span class="boat-megamenu-title">Smart Watches</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🎧</span></div>
+        <span class="boat-megamenu-title">Headphones</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🔊</span></div>
+        <span class="boat-megamenu-title">Wireless Speakers</span>
+      </a>
+
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🔈</span></div>
+        <span class="boat-megamenu-title">Soundbars</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">📻</span></div>
+        <span class="boat-megamenu-title">Party Speakers</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🔋</span></div>
+        <span class="boat-megamenu-title">Power Banks</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">📷</span></div>
+        <span class="boat-megamenu-title">Dashcams</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">📹</span></div>
+        <span class="boat-megamenu-title">Projectors</span>
+      </a>
+
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">✂️</span></div>
+        <span class="boat-megamenu-title">Trimmers</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🎮</span></div>
+        <span class="boat-megamenu-title">Gaming Series</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🔌</span></div>
+        <span class="boat-megamenu-title">Chargers & Cables</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">🎧</span></div>
+        <span class="boat-megamenu-title">Wired Earphones</span>
+      </a>
+      <a href="/collections/all" class="boat-megamenu-card">
+        <div class="boat-megamenu-avatar"><span style="font-size: 1.3rem;">⭐</span></div>
+        <span class="boat-megamenu-title">Limited Edition</span>
+      </a>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,83 @@
+{%- doc -%}
+  Renders the predictive search products list using the exact boAt Product Card Design.
+  @param {string} title - title of the result list
+  @param {object[]} products - array of products
+  @param {string[]} [order_ids] - array of product ids
+  @param {number} [limit] - limit of products to display
+{%- enddoc -%}
+
+{%- liquid
+  assign recently_viewed_title_text = 'content.recently_viewed_products' | t
+-%}
+<div
+  id="predictive-search-products"
+  class="predictive-search-results__products"
+>
+  {% if title == recently_viewed_title_text %}
+    <div
+      class="recently-viewed-wrapper"
+      ref="recentlyViewedWrapper"
+    >
+      <h4
+        class="predictive-search-results__title"
+        ref="recentlyViewedTitle[]"
+      >
+        {{ title }}
+        <button
+          class="predictive-search-results__clear button button-unstyled"
+          type="button"
+          on:click="/clearRecentlyViewedProducts"
+        >
+          {{ 'actions.clear' | t }}
+        </button>
+      </h4>
+      <ul
+        class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
+      >
+        {% liquid
+          assign limit = limit | default: 8
+        %}
+        {% if order_ids != blank %}
+          {% for _id in order_ids %}
+            {% assign int_id = _id | times: 1 %}
+            {% assign product = products | find: 'id', int_id %}
+            <li
+              class="predictive-search-results__card predictive-search-results__card--product"
+              ref="recentlyViewedItems[]"
+            >
+              {% render 'predictive-search-product-card-item', product: product %}
+            </li>
+          {% endfor %}
+        {% else %}
+          {% for product in products limit: limit %}
+            <li
+              class="predictive-search-results__card predictive-search-results__card--product"
+              ref="recentlyViewedItems[]"
+            >
+              {% render 'predictive-search-product-card-item', product: product %}
+            </li>
+          {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+  {% else %}
+    <h4 class="predictive-search-results__title">
+      {{ title }}
+    </h4>
+    <ul
+      class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
+    >
+      {% liquid
+        assign limit = limit | default: 8
+      %}
+      {% for product in products limit: limit %}
+        <li
+          class="predictive-search-results__card predictive-search-results__card--product"
+          ref="resultsItems[]"
+        >
+          {% render 'predictive-search-product-card-item', product: product %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>

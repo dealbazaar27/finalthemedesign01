@@ -1,0 +1,281 @@
+{% liquid
+  assign heading = section.settings.heading | default: 'Featured Products'
+  assign subheading = section.settings.subheading | default: 'Trending Now'
+  assign products_limit = section.settings.products_to_show | default: 8
+  assign columns_desktop = section.settings.columns_desktop | default: 4
+
+  assign target_collection = section.settings.collection
+  if target_collection == blank
+    assign target_collection = collections['all']
+  endif
+%}
+
+<div class="boat-featured-section" id="BoatFeaturedSection-{{ section.id }}">
+  <div class="boat-featured-container">
+    
+    {% comment %} Section Header {% endcomment %}
+    <div class="boat-featured-header">
+      <div class="boat-featured-header-left">
+        {% if subheading != blank %}
+          <span class="boat-featured-subheading">{{ subheading }}</span>
+        {% endif %}
+        <h2 class="boat-featured-title">{{ heading }}</h2>
+      </div>
+      {% if section.settings.show_view_all and target_collection != blank %}
+        <a href="{{ target_collection.url }}" class="boat-featured-view-all">
+          <span>View All</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      {% endif %}
+    </div>
+
+    {% comment %} Products Grid / Carousel {% endcomment %}
+    <div class="boat-featured-grid-wrapper">
+      <div class="boat-featured-grid" style="--boat-grid-cols: {{ columns_desktop }};">
+        {% liquid
+          assign count = 0
+          for prod in target_collection.products limit: products_limit
+            render 'boat-product-card-item', product: prod
+            assign count = count | plus: 1
+          endfor
+
+          if count == 0
+            for prod in collections['all'].products limit: products_limit
+              render 'boat-product-card-item', product: prod
+            endfor
+          endif
+        %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% render 'boat-product-card-script' %}
+
+<style>
+  #BoatFeaturedSection-{{ section.id }} {
+    background-color: {{ section.settings.background_color | default: '#ffffff' }} !important;
+  }
+  #BoatFeaturedSection-{{ section.id }} .boat-featured-title {
+    color: {{ section.settings.heading_color | default: '#0f172a' }} !important;
+  }
+  #BoatFeaturedSection-{{ section.id }} .boat-featured-subheading {
+    color: {{ section.settings.subheading_color | default: '#d8232a' }} !important;
+  }
+  #BoatFeaturedSection-{{ section.id }} .boat-featured-view-all {
+    color: {{ section.settings.view_all_color | default: '#0f172a' }} !important;
+  }
+  .boat-featured-section {
+    width: 100%;
+    padding: 48px 0;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .boat-featured-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+
+  .boat-featured-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+
+  .boat-featured-subheading {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #00b853;
+    margin-bottom: 4px;
+  }
+
+  .boat-featured-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.4px;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .boat-featured-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .boat-featured-view-all:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-featured-view-all svg {
+    transition: transform 0.2s ease;
+  }
+
+  .boat-featured-view-all:hover svg {
+    transform: translateX(3px);
+  }
+
+  .boat-featured-grid-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+
+  .boat-featured-grid-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .boat-featured-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--boat-grid-cols, 4), 1fr);
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 1024px) {
+    .boat-featured-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-featured-section {
+      padding: 32px 0;
+    }
+
+    .boat-featured-container {
+      padding: 0 16px;
+    }
+
+    .boat-featured-title {
+      font-size: 1.25rem;
+    }
+
+    .boat-featured-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 12px;
+    }
+
+    .boat-featured-grid .boat-pick-card {
+      flex: 0 0 240px;
+      max-width: 240px;
+      scroll-snap-align: start;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "boAt Featured Products",
+  "tag": "section",
+  "class": "boat-featured-products-section",
+  "settings": [
+        {
+      "type": "header",
+      "content": "🎨 Colors & Typography Settings"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Text Color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "subheading_color",
+      "label": "Subheading Text Color",
+      "default": "#d8232a"
+    },
+    {
+      "type": "color",
+      "id": "view_all_color",
+      "label": "View All Link Color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "Featured Products"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Section Subheading",
+      "default": "Trending Now"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Select Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "Products to Show",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Desktop Columns",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "label": "Show 'View All' Button",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "name": "boAt Featured Products"
+    }
+  ]
+}
+{% endschema %}

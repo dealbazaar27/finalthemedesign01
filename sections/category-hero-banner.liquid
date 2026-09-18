@@ -1,0 +1,1091 @@
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+{% liquid
+  assign sidebar_menu = section.settings.sidebar_menu
+  assign is_homepage = false
+  if template.name == 'index'
+    assign is_homepage = true
+  endif
+
+  assign show_only_on_homepage = section.settings.show_only_on_homepage
+
+  # Determine if Hero Slider & Promo Banners should be shown
+  assign show_hero_content = true
+  if show_only_on_homepage and is_homepage == false
+    assign show_hero_content = false
+  endif
+
+  # Categories visibility checks
+  assign show_categories_desktop = section.settings.show_categories_desktop
+  assign show_categories_mobile = section.settings.show_categories_mobile
+
+  if is_homepage == false
+    assign show_categories_desktop = section.settings.show_categories_on_collection_desktop
+    assign show_categories_mobile = section.settings.show_categories_on_collection_mobile
+  endif
+
+  assign show_promos_desktop = section.settings.show_promos_desktop
+  assign show_promos_mobile = section.settings.show_promos_mobile
+
+  if show_hero_content == false
+    assign show_promos_desktop = false
+    assign show_promos_mobile = false
+  endif
+
+  # Check if desktop or mobile have any visible content
+  assign has_desktop_content = false
+  if show_categories_desktop or show_hero_content or show_promos_desktop
+    assign has_desktop_content = true
+  endif
+
+  assign has_mobile_content = false
+  if show_categories_mobile or show_hero_content or show_promos_mobile
+    assign has_mobile_content = true
+  endif
+
+  # Determine dynamic container layout class
+  if show_categories_desktop and show_promos_desktop
+    assign container_class = 'category-hero__container--full'
+  elsif show_categories_desktop and show_promos_desktop == false
+    assign container_class = 'category-hero__container--no-promo'
+  elsif show_categories_desktop == false and show_promos_desktop
+    assign container_class = 'category-hero__container--no-sidebar'
+  else
+    assign container_class = 'category-hero__container--hero-only'
+  endif
+%}
+
+{% if has_desktop_content or has_mobile_content %}
+  <style>
+    .section-{{ section.id }} {
+      background-color: {{ section.settings.section_bg_color | default: '#f7f8fa' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__sidebar {
+      background-color: {{ section.settings.sidebar_bg_color | default: '#ffffff' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__sidebar-header {
+      color: {{ section.settings.sidebar_header_color | default: '#71778e' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__sidebar-link {
+      color: {{ section.settings.sidebar_text_color | default: '#2c3038' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__mobile-bar {
+      background-color: {{ section.settings.mobile_bar_bg | default: '#ffffff' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__mobile-link {
+      background-color: {{ section.settings.mobile_pill_bg | default: '#f3f5f9' }} !important;
+      color: {{ section.settings.mobile_pill_text | default: '#1a1a1a' }} !important;
+    }
+    .section-{{ section.id }} .category-hero__slide-title {
+      color: {{ section.settings.slide_title_color | default: '#ffffff' }};
+    }
+    .section-{{ section.id }} .category-hero__slide-subtitle {
+      color: {{ section.settings.slide_subtitle_color | default: '#ffffff' }};
+    }
+    .section-{{ section.id }} .category-hero__slide-btn {
+      background-color: {{ section.settings.slide_button_bg | default: '#ffffff' }};
+      color: {{ section.settings.slide_button_text | default: '#000000' }};
+    }
+    .section-{{ section.id }} .category-hero__promo-badge {
+      background-color: {{ section.settings.promo_badge_bg | default: 'rgba(0, 0, 0, 0.8)' }};
+      color: {{ section.settings.promo_badge_text | default: '#ffffff' }};
+    }
+    .section-{{ section.id }} .category-hero__main,
+    .section-{{ section.id }} .category-hero__slide {
+      min-height: {{ section.settings.hero_height_desktop }}px;
+    }
+    {% unless has_desktop_content %}
+      @media (min-width: 769px) {
+        .section-{{ section.id }} {
+          display: none !important;
+        }
+      }
+    {% endunless %}
+    {% unless has_mobile_content %}
+      @media (max-width: 768px) {
+        .section-{{ section.id }} {
+          display: none !important;
+        }
+      }
+    {% endunless %}
+    @media (max-width: 768px) {
+      .section-{{ section.id }} .category-hero__main,
+      .section-{{ section.id }} .category-hero__slide {
+        min-height: {{ section.settings.hero_height_mobile }}px;
+      }
+    }
+  </style>
+
+  <div class="category-hero-section section-{{ section.id }}">
+    
+    {% comment %} --- Mobile Top Categories Horizontal Carousel Pill Bar --- {% endcomment %}
+    {% if show_categories_mobile %}
+      <div class="category-hero__mobile-bar category-hero__mobile-bar--show" id="MobileCategoryBarContainer-{{ section.id }}">
+        <ul class="category-hero__mobile-list" role="list">
+          {% if sidebar_menu != blank and sidebar_menu.links.size > 0 %}
+            {% for link in sidebar_menu.links %}
+              <li class="category-hero__mobile-item">
+                <a href="{{ link.url }}" class="category-hero__mobile-link">
+                  {% if link.type == 'collection_link' and link.object.featured_image != blank %}
+                    <img src="{{ link.object.featured_image | image_url: width: 40 }}" alt="{{ link.title | escape }}" class="category-hero__mobile-icon" loading="lazy" width="18" height="18">
+                  {% else %}
+                    <span>🏷️</span>
+                  {% endif %}
+                  <span>{{ link.title }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          {% else %}
+            {% assign category_blocks = section.blocks | where: 'type', 'category_item' %}
+            {% if category_blocks.size > 0 %}
+              {% for block in category_blocks %}
+                <li class="category-hero__mobile-item" {{ block.shopify_attributes }}>
+                  <a href="{{ block.settings.url | default: '#' }}" class="category-hero__mobile-link">
+                    {% if block.settings.icon != blank %}
+                      <img src="{{ block.settings.icon | image_url: width: 40 }}" alt="{{ block.settings.title | escape }}" class="category-hero__mobile-icon" loading="lazy" width="18" height="18">
+                    {% endif %}
+                    <span>{{ block.settings.title }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            {% else %}
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">📱 Mobiles</a></li>
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">👔 Men's Fashion</a></li>
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">👗 Women Fashion</a></li>
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">🔌 Appliances</a></li>
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">📺 TV & Video</a></li>
+              <li class="category-hero__mobile-item"><a href="/collections/all" class="category-hero__mobile-link">🎧 Audio</a></li>
+            {% endif %}
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% comment %} Render Main Section Container only if desktop categories, hero content, or promos are active {% endcomment %}
+    {% if show_categories_desktop or show_hero_content or show_promos_desktop %}
+      <div class="category-hero__container {{ container_class }}">
+        
+        {% comment %} --- Left Sidebar: TOP CATEGORIES (Desktop) with Hover Flyout Mega Menu --- {% endcomment %}
+        {% if show_categories_desktop %}
+          <aside class="category-hero__sidebar hero-hide-mobile">
+            <div class="category-hero__sidebar-header">
+              <span>{{ section.settings.sidebar_heading | default: 'TOP CATEGORIES' }}</span>
+            </div>
+            <ul class="category-hero__sidebar-list" role="list">
+              {% if sidebar_menu != blank and sidebar_menu.links.size > 0 %}
+                {% for link in sidebar_menu.links %}
+                  <li class="category-hero__sidebar-item{% if link.links.size > 0 %} category-hero__sidebar-item--has-flyout{% endif %}">
+                    <a href="{{ link.url }}" class="category-hero__sidebar-link">
+                      <div class="category-hero__sidebar-left-info">
+                        {% if link.type == 'collection_link' and link.object.featured_image != blank %}
+                          <img src="{{ link.object.featured_image | image_url: width: 60 }}" alt="{{ link.title | escape }}" class="category-hero__sidebar-icon" loading="lazy" width="22" height="22">
+                        {% else %}
+                          <span class="category-hero__sidebar-icon-placeholder">🏷️</span>
+                        {% endif %}
+                        <span>{{ link.title }}</span>
+                      </div>
+                      {% if link.links.size > 0 %}
+                        <span class="category-hero__sidebar-chevron">›</span>
+                      {% endif %}
+                    </a>
+
+                    {% if link.links.size > 0 %}
+                      <div class="category-hero__flyout">
+                        <div class="category-hero__flyout-inner">
+                          {% for sub_link in link.links %}
+                            <div class="category-hero__flyout-column">
+                              <a href="{{ sub_link.url }}" class="category-hero__flyout-heading">{{ sub_link.title }}</a>
+                              {% if sub_link.links.size > 0 %}
+                                <ul class="category-hero__flyout-list" role="list">
+                                  {% for child_link in sub_link.links %}
+                                    <li>
+                                      <a href="{{ child_link.url }}">{{ child_link.title }}</a>
+                                    </li>
+                                  {% endfor %}
+                                </ul>
+                              {% endif %}
+                            </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              {% else %}
+                {% assign category_blocks = section.blocks | where: 'type', 'category_item' %}
+                {% if category_blocks.size > 0 %}
+                  {% for block in category_blocks %}
+                    <li class="category-hero__sidebar-item" {{ block.shopify_attributes }}>
+                      <a href="{{ block.settings.url | default: '#' }}" class="category-hero__sidebar-link">
+                        <div class="category-hero__sidebar-left-info">
+                          {% if block.settings.icon != blank %}
+                            <img src="{{ block.settings.icon | image_url: width: 60 }}" alt="{{ block.settings.title | escape }}" class="category-hero__sidebar-icon" loading="lazy" width="22" height="22">
+                          {% endif %}
+                          <span>{{ block.settings.title }}</span>
+                        </div>
+                      </a>
+                    </li>
+                  {% endfor %}
+                {% else %}
+                  {% comment %} Demo Fallback with Hover Flyout (Matching Screenshot) {% endcomment %}
+                  <li class="category-hero__sidebar-item category-hero__sidebar-item--has-flyout">
+                    <a href="/collections/all" class="category-hero__sidebar-link">
+                      <div class="category-hero__sidebar-left-info">
+                        <span class="category-hero__sidebar-icon">📱</span>
+                        <span>Mobiles & Tablets</span>
+                      </div>
+                      <span class="category-hero__sidebar-chevron">›</span>
+                    </a>
+                    <div class="category-hero__flyout">
+                      <div class="category-hero__flyout-inner">
+                        <div class="category-hero__flyout-column">
+                          <a href="/collections/all" class="category-hero__flyout-heading">Smartphones</a>
+                          <ul class="category-hero__flyout-list" role="list">
+                            <li><a href="/collections/all">Apple iPhones</a></li>
+                            <li><a href="/collections/all">Asus Mobiles</a></li>
+                            <li><a href="/collections/all">Gfive Mobiles</a></li>
+                            <li><a href="/collections/all">Huawei Mobiles</a></li>
+                            <li><a href="/collections/all">View more</a></li>
+                          </ul>
+                          <a href="/collections/all" class="category-hero__flyout-heading" style="margin-top: 16px;">Tablet Accessories</a>
+                        </div>
+                        <div class="category-hero__flyout-column">
+                          <a href="/collections/all" class="category-hero__flyout-heading">Mobile Accessories</a>
+                          <ul class="category-hero__flyout-list" role="list">
+                            <li><a href="/collections/all">Wireless Chargers</a></li>
+                            <li><a href="/collections/all">Gadgets & Accessories</a></li>
+                            <li><a href="/collections/all">Memory Cards</a></li>
+                            <li><a href="/collections/all">Customised Cases & Covers</a></li>
+                            <li><a href="/collections/all">View more</a></li>
+                          </ul>
+                          <a href="/collections/all" class="category-hero__flyout-heading" style="margin-top: 16px;">Feature Phones</a>
+                        </div>
+                        <div class="category-hero__flyout-column">
+                          <a href="/collections/all" class="category-hero__flyout-heading">Tablets</a>
+                          <ul class="category-hero__flyout-list" role="list">
+                            <li><a href="/collections/all">iOS Tablet</a></li>
+                            <li><a href="/collections/all">Windows Tablets</a></li>
+                            <li><a href="/collections/all">Android Tablets</a></li>
+                            <li><a href="/collections/all">Amazon Tablets</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">👔</span><span>Men's Fashion</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">👗</span><span>Women Fashion</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">🔌</span><span>Appliances</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">📺</span><span>TV & Video</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">🧸</span><span>Kidsmart</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">🏠</span><span>Home & Living</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">💻</span><span>Computer & Gaming</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">🚗</span><span>Automotive</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">❤️</span><span>Health & Care</span></div></a></li>
+                  <li class="category-hero__sidebar-item"><a href="/collections/all" class="category-hero__sidebar-link"><div class="category-hero__sidebar-left-info"><span class="category-hero__sidebar-icon">📷</span><span>Camera</span></div></a></li>
+                {% endif %}
+              {% endif %}
+            </ul>
+          </aside>
+        {% endif %}
+
+        {% comment %} --- Middle Column: Main Hero Banner Slider (Multi Banner Support) --- {% endcomment %}
+        {% if show_hero_content %}
+          <main class="category-hero__main">
+            {% assign slide_blocks = section.blocks | where: 'type', 'slide_item' %}
+            <div class="category-hero__slider" id="HeroSlider-{{ section.id }}">
+              {% if slide_blocks.size > 0 %}
+                {% for block in slide_blocks %}
+                  {% liquid
+                    assign s_title_color = block.settings.title_color | default: section.settings.slide_title_color | default: '#ffffff'
+                    assign s_subtitle_color = block.settings.subtitle_color | default: section.settings.slide_subtitle_color | default: '#ffffff'
+                    assign s_btn_bg = block.settings.button_bg_color | default: section.settings.slide_button_bg | default: '#ffffff'
+                    assign s_btn_text = block.settings.button_text_color | default: section.settings.slide_button_text | default: '#000000'
+                    
+                    # Vertical Position
+                    assign v_pos = block.settings.content_position_vertical
+                    if v_pos == blank or v_pos == 'default'
+                      assign v_pos = section.settings.content_position_vertical | default: 'bottom'
+                    endif
+
+                    # Horizontal Position
+                    assign h_pos = block.settings.content_position_horizontal
+                    if h_pos == blank or h_pos == 'default'
+                      assign h_pos = block.settings.text_alignment
+                    endif
+                    if h_pos == blank or h_pos == 'default'
+                      assign h_pos = section.settings.content_position_horizontal | default: 'left'
+                    endif
+
+                    # Vertical justify & gradient
+                    if v_pos == 'top'
+                      assign justify_css = 'flex-start'
+                      assign overlay_bg_css = 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%)'
+                    elsif v_pos == 'center'
+                      assign justify_css = 'center'
+                      assign overlay_bg_css = 'linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.45) 100%)'
+                    else
+                      assign justify_css = 'flex-end'
+                      assign overlay_bg_css = 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.75) 100%)'
+                    endif
+
+                    # Horizontal alignment
+                    if h_pos == 'center'
+                      assign align_css = 'center'
+                      assign text_align_css = 'center'
+                    elsif h_pos == 'right'
+                      assign align_css = 'flex-end'
+                      assign text_align_css = 'right'
+                    else
+                      assign align_css = 'flex-start'
+                      assign text_align_css = 'left'
+                    endif
+                  %}
+                  <div class="category-hero__slide" {{ block.shopify_attributes }}>
+                    {% if block.settings.slide_url != blank %}
+                      <a href="{{ block.settings.slide_url }}" class="category-hero__slide-link">
+                    {% endif %}
+
+                    {% if block.settings.image_mobile != blank %}
+                      <img src="{{ block.settings.image_mobile | image_url: width: 800 }}" alt="{{ block.settings.title | escape }}" class="category-hero__slide-img-mobile category-hero__slide-img-mobile--active" loading="eager" width="400" height="280">
+                    {% endif %}
+
+                    {% if block.settings.image_desktop != blank %}
+                      <img src="{{ block.settings.image_desktop | image_url: width: 1600 }}" alt="{{ block.settings.title | escape }}" class="category-hero__slide-img-desktop" loading="eager" width="800" height="400">
+                    {% elsif block.settings.image_mobile == blank %}
+                      <div class="category-hero__slide-img-desktop" style="background: linear-gradient(135deg, #111111 0%, #2b303a 100%); width:100%; height:100%;"></div>
+                    {% endif %}
+
+                    {% if block.settings.title != blank or block.settings.subtitle != blank or block.settings.button_label != blank %}
+                      <div class="category-hero__slide-overlay" style="justify-content: {{ justify_css }}; align-items: {{ align_css }}; text-align: {{ text_align_css }}; background: {{ overlay_bg_css }};">
+                        {% if block.settings.title != blank %}
+                          <h2 class="category-hero__slide-title" style="color: {{ s_title_color }} !important;">{{ block.settings.title }}</h2>
+                        {% endif %}
+                        {% if block.settings.subtitle != blank %}
+                          <p class="category-hero__slide-subtitle" style="color: {{ s_subtitle_color }} !important;">{{ block.settings.subtitle }}</p>
+                        {% endif %}
+                        {% if block.settings.button_label != blank %}
+                          {% if block.settings.button_link != blank and block.settings.slide_url == blank %}
+                            <a href="{{ block.settings.button_link }}" class="category-hero__slide-btn" style="background-color: {{ s_btn_bg }} !important; color: {{ s_btn_text }} !important;">{{ block.settings.button_label }}</a>
+                          {% else %}
+                            <span class="category-hero__slide-btn" style="background-color: {{ s_btn_bg }} !important; color: {{ s_btn_text }} !important;">{{ block.settings.button_label }}</span>
+                          {% endif %}
+                        {% endif %}
+                      </div>
+                    {% endif %}
+
+                    {% if block.settings.slide_url != blank %}
+                      </a>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="category-hero__slide">
+                  <div class="category-hero__slide-img-desktop" style="background: linear-gradient(135deg, #050505 0%, #1c2517 100%); width:100%; height:100%;"></div>
+                  <div class="category-hero__slide-overlay" style="justify-content: flex-end; align-items: flex-start; text-align: left;">
+                    <h2 class="category-hero__slide-title">SOUND. STYLE.<br>SMART LIVING.</h2>
+                    <p class="category-hero__slide-subtitle">Premium Audio. Smarter Tech. Better Every Day.</p>
+                    <a href="/collections/all" class="category-hero__slide-btn">EXPLORE NOW</a>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            {% assign show_nav_arrows = section.settings.show_arrows %}
+            {% if show_nav_arrows == nil %}{% assign show_nav_arrows = true %}{% endif %}
+            {% assign show_nav_dots = section.settings.show_dots %}
+            {% if show_nav_dots == nil %}{% assign show_nav_dots = true %}{% endif %}
+
+            {% if slide_blocks.size > 1 and show_nav_arrows %}
+              <button type="button" class="category-hero__slider-nav category-hero__slider-nav--prev" onclick="document.getElementById('HeroSlider-{{ section.id }}').scrollBy({left: -600, behavior: 'smooth'})" aria-label="Previous Slide">‹</button>
+              <button type="button" class="category-hero__slider-nav category-hero__slider-nav--next" onclick="document.getElementById('HeroSlider-{{ section.id }}').scrollBy({left: 600, behavior: 'smooth'})" aria-label="Next Slide">›</button>
+            {% endif %}
+
+            {% if slide_blocks.size > 1 and show_nav_dots %}
+              <div class="category-hero__slider-dots" id="HeroDots-{{ section.id }}">
+                {% for block in slide_blocks %}
+                  <button type="button" class="category-hero__dot{% if forloop.first %} category-hero__dot--active{% endif %}" onclick="document.getElementById('HeroSlider-{{ section.id }}').scrollTo({left: {{ forloop.index0 }} * document.getElementById('HeroSlider-{{ section.id }}').clientWidth, behavior: 'smooth'})" aria-label="Slide {{ forloop.index }}"></button>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </main>
+        {% endif %}
+
+        {% comment %} --- Right Column: Stacked Promo Banners --- {% endcomment %}
+        {% if show_promos_desktop or show_promos_mobile %}
+          {% assign promo_class = '' %}
+          {% if show_promos_desktop == false %}
+            {% assign promo_class = promo_class | append: ' hero-hide-desktop' %}
+          {% endif %}
+          {% if show_promos_mobile == false %}
+            {% assign promo_class = promo_class | append: ' hero-hide-mobile' %}
+          {% endif %}
+
+          <aside class="category-hero__right {{ promo_class }}">
+            {% assign promo_blocks = section.blocks | where: 'type', 'promo_banner' %}
+            {% if promo_blocks.size > 0 %}
+              {% for block in promo_blocks limit: 2 %}
+                {% liquid
+                  assign p_badge_bg = block.settings.badge_bg_color | default: section.settings.promo_badge_bg | default: 'rgba(0, 0, 0, 0.8)'
+                  assign p_badge_text = block.settings.badge_text_color | default: section.settings.promo_badge_text | default: '#ffffff'
+                  assign p_title_color = block.settings.title_color | default: section.settings.promo_title_color | default: '#ffffff'
+                %}
+                <a href="{{ block.settings.link | default: '#' }}" class="category-hero__promo-card" {{ block.shopify_attributes }}>
+                  {% if block.settings.badge_text != blank %}
+                    <span class="category-hero__promo-badge" style="background-color: {{ p_badge_bg }} !important; color: {{ p_badge_text }} !important;">{{ block.settings.badge_text }}</span>
+                  {% endif %}
+                  {% if block.settings.image != blank %}
+                    <img src="{{ block.settings.image | image_url: width: 600 }}" alt="{{ block.settings.title | escape }}" loading="lazy" width="300" height="180">
+                  {% else %}
+                    <div style="background: #1e2530; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: {{ p_title_color }} !important; font-weight: 700; padding: 20px;">
+                      {{ block.settings.title | default: 'PROMO BANNER' }}
+                    </div>
+                  {% endif %}
+                </a>
+              {% endfor %}
+            {% else %}
+              <a href="/collections/all" class="category-hero__promo-card">
+                <span class="category-hero__promo-badge">STARTING FROM RS. 599/-</span>
+                <div style="background: linear-gradient(135deg, #dce4ee 0%, #b8c4d4 100%); width: 100%; height: 100%; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; color: #0f172a;">
+                  <strong style="font-size: 1.2rem; text-transform: uppercase;">SMART EARBUDS</strong>
+                </div>
+              </a>
+              <a href="/collections/all" class="category-hero__promo-card">
+                <span class="category-hero__promo-badge">STARTING FROM RS. 799/-</span>
+                <div style="background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 100%); width: 100%; height: 100%; min-height: 180px; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; color: #0f172a;">
+                  <strong style="font-size: 1.2rem; text-transform: uppercase;">SMART WATCHES</strong>
+                </div>
+              </a>
+            {% endif %}
+          </aside>
+        {% endif %}
+
+      </div>
+    {% endif %}
+
+  </div>
+{% endif %}
+
+{% comment %} --- Auto Play Carousel Script (Hero Slider & Mobile Categories Bar) --- {% endcomment %}
+<script>
+  (function() {
+    {% if section.settings.enable_autoplay and show_hero_content %}
+      const slider = document.getElementById('HeroSlider-{{ section.id }}');
+      const dots = document.querySelectorAll('#HeroDots-{{ section.id }} .category-hero__dot');
+
+      if (slider) {
+        const speed = Math.max(2, parseInt({{ section.settings.autoplay_speed | default: 5 }})) * 1000;
+        let autoplayTimer = setInterval(nextSlide, speed);
+
+        function updateDots(index) {
+          if (!dots || dots.length === 0) return;
+          dots.forEach((dot, idx) => {
+            if (idx === index) {
+              dot.classList.add('category-hero__dot--active');
+            } else {
+              dot.classList.remove('category-hero__dot--active');
+            }
+          });
+        }
+
+        function nextSlide() {
+          const slideWidth = slider.clientWidth;
+          const maxScroll = slider.scrollWidth - slideWidth;
+          let nextScroll = slider.scrollLeft + slideWidth;
+          
+          if (slider.scrollLeft >= maxScroll - 10) {
+            slider.scrollTo({ left: 0, behavior: 'smooth' });
+            updateDots(0);
+          } else {
+            slider.scrollBy({ left: slideWidth, behavior: 'smooth' });
+            const currentIndex = Math.round((slider.scrollLeft + slideWidth) / slideWidth);
+            updateDots(currentIndex);
+          }
+        }
+
+        slider.addEventListener('scroll', () => {
+          const slideWidth = slider.clientWidth;
+          const currentIndex = Math.round(slider.scrollLeft / slideWidth);
+          updateDots(currentIndex);
+        });
+
+        {% if section.settings.pause_autoplay_on_hover != false %}
+          slider.addEventListener('mouseenter', () => clearInterval(autoplayTimer));
+          slider.addEventListener('mouseleave', () => {
+            clearInterval(autoplayTimer);
+            autoplayTimer = setInterval(nextSlide, speed);
+          });
+        {% endif %}
+
+        // Mobile touch & hover interaction for navigation arrows & pause
+        const heroMain = slider.closest('.category-hero__main');
+        if (heroMain) {
+          let touchTimer;
+          heroMain.addEventListener('touchstart', () => {
+            heroMain.classList.add('is-interacting');
+            {% if section.settings.pause_autoplay_on_hover != false %}
+              clearInterval(autoplayTimer);
+            {% endif %}
+            clearTimeout(touchTimer);
+          }, { passive: true });
+
+          heroMain.addEventListener('touchend', () => {
+            clearTimeout(touchTimer);
+            {% if section.settings.pause_autoplay_on_hover != false %}
+              clearInterval(autoplayTimer);
+              autoplayTimer = setInterval(nextSlide, speed);
+            {% endif %}
+            touchTimer = setTimeout(() => {
+              heroMain.classList.remove('is-interacting');
+            }, 3000);
+          }, { passive: true });
+        }
+      }
+    {% endif %}
+
+    const catBar = document.getElementById('MobileCategoryBarContainer-{{ section.id }}');
+    if (catBar) {
+      {% if section.settings.enable_mobile_category_autoplay and show_categories_mobile %}
+        const catSpeed = ({{ section.settings.mobile_category_autoplay_speed | default: 3 }}) * 1000;
+        let catTimer = setInterval(scrollNextCat, catSpeed);
+
+        function scrollNextCat() {
+          const maxScroll = catBar.scrollWidth - catBar.clientWidth;
+          if (catBar.scrollLeft >= maxScroll - 15) {
+            catBar.scrollTo({ left: 0, behavior: 'smooth' });
+          } else {
+            catBar.scrollBy({ left: 160, behavior: 'smooth' });
+          }
+        }
+
+        catBar.addEventListener('touchstart', () => clearInterval(catTimer), {passive: true});
+        catBar.addEventListener('touchend', () => {
+          clearInterval(catTimer);
+          catTimer = setInterval(scrollNextCat, catSpeed);
+        }, {passive: true});
+      {% endif %}
+
+      // --- Mouse Drag-to-Scroll & Mouse Wheel Horizontal Scroll ---
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+      let hasDragged = false;
+
+      catBar.addEventListener('mousedown', (e) => {
+        isDown = true;
+        hasDragged = false;
+        catBar.classList.add('is-dragging');
+        startX = e.pageX - catBar.offsetLeft;
+        scrollLeft = catBar.scrollLeft;
+      });
+
+      catBar.addEventListener('mouseleave', () => {
+        isDown = false;
+        catBar.classList.remove('is-dragging');
+      });
+
+      catBar.addEventListener('mouseup', () => {
+        isDown = false;
+        catBar.classList.remove('is-dragging');
+      });
+
+      catBar.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const x = e.pageX - catBar.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        if (Math.abs(walk) > 4) {
+          hasDragged = true;
+          e.preventDefault();
+          catBar.scrollLeft = scrollLeft - walk;
+        }
+      });
+
+      // Prevent link clicking only when dragged
+      catBar.addEventListener('click', (e) => {
+        if (hasDragged) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+
+      // Mouse Wheel Horizontal Scroll
+      catBar.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          catBar.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Category Hero Banner",
+  "tag": "section",
+  "class": "section-category-hero-banner",
+  "settings": [
+        {
+      "type": "header",
+      "content": "🎨 Colors & Styling"
+    },
+    {
+      "type": "color",
+      "id": "section_bg_color",
+      "label": "Section Background Color",
+      "default": "#f7f8fa"
+    },
+    {
+      "type": "color",
+      "id": "sidebar_bg_color",
+      "label": "Sidebar Card Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "sidebar_header_color",
+      "label": "Sidebar Header Color",
+      "default": "#71778e"
+    },
+    {
+      "type": "color",
+      "id": "sidebar_text_color",
+      "label": "Sidebar Links Color",
+      "default": "#2c3038"
+    },
+    {
+      "type": "color",
+      "id": "mobile_bar_bg",
+      "label": "Mobile Categories Bar Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "mobile_pill_bg",
+      "label": "Mobile Category Pill Background",
+      "default": "#f3f5f9"
+    },
+    {
+      "type": "color",
+      "id": "mobile_pill_text",
+      "label": "Mobile Category Pill Text Color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "slide_title_color",
+      "label": "Banner Slide Title Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "slide_subtitle_color",
+      "label": "Banner Slide Subtitle Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "slide_button_bg",
+      "label": "Banner Button Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "slide_button_text",
+      "label": "Banner Button Text Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "promo_title_color",
+      "label": "Side Promo Title Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "promo_badge_bg",
+      "label": "Side Promo Badge Background",
+      "default": "rgba(0, 0, 0, 0.8)"
+    },
+    {
+      "type": "color",
+      "id": "promo_badge_text",
+      "label": "Side Promo Badge Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "📐 Banner Content Position & Alignment"
+    },
+    {
+      "type": "select",
+      "id": "content_position_vertical",
+      "label": "Content Vertical Position",
+      "options": [
+        { "value": "top", "label": "Top" },
+        { "value": "center", "label": "Center" },
+        { "value": "bottom", "label": "Bottom (Default)" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "type": "select",
+      "id": "content_position_horizontal",
+      "label": "Content Horizontal Alignment",
+      "options": [
+        { "value": "left", "label": "Left (Default)" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "🏹 Navigation Arrows & Dots"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "Show Navigation Arrows",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dots",
+      "label": "Show Pagination Dots",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Page Display Options"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_on_homepage",
+      "label": "Show Hero Slider & Promos ONLY on Homepage",
+      "default": true,
+      "info": "When checked, the main Hero Banner & Side Promos will NOT appear on Collection pages."
+    },
+    {
+      "type": "header",
+      "content": "Collection Page Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_categories_on_collection_desktop",
+      "label": "Show Categories Sidebar on Collection Pages (Desktop)",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_categories_on_collection_mobile",
+      "label": "Show Categories Carousel on Collection Pages (Mobile)",
+      "default": true,
+      "info": "Allows customers on Mobile Collection pages to easily toggle between categories!"
+    },
+    {
+      "type": "header",
+      "content": "Homepage Layout & Visibility Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_categories_desktop",
+      "label": "Show Categories Sidebar (Desktop)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_categories_mobile",
+      "label": "Show Categories Carousel (Mobile)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_promos_desktop",
+      "label": "Show Side Promo Banners (Desktop)",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_promos_mobile",
+      "label": "Show Side Promo Banners (Mobile)",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "hero_height_desktop",
+      "min": 250,
+      "max": 650,
+      "step": 10,
+      "unit": "px",
+      "label": "Hero Height (Desktop)",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "hero_height_mobile",
+      "min": 180,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "label": "Hero Height (Mobile)",
+      "default": 280
+    },
+    {
+      "type": "header",
+      "content": "⏱️ Hero Banner Auto-Play & Duration Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_autoplay",
+      "label": "Enable Banner Auto-Play",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "min": 2,
+      "max": 15,
+      "step": 1,
+      "unit": "s",
+      "label": "Banner Auto-Play Duration (Seconds)",
+      "info": "Adjust how many seconds each banner slide stays before auto-transitioning (e.g. 3s, 5s, 8s).",
+      "default": 5
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_autoplay_on_hover",
+      "label": "Pause Auto-Play on Hover / Touch",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Mobile Categories Auto-Play Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_mobile_category_autoplay",
+      "label": "Enable Mobile Categories Auto-Scroll",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "mobile_category_autoplay_speed",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "unit": "s",
+      "label": "Mobile Categories Auto-Scroll Speed",
+      "default": 3
+    },
+    {
+      "type": "header",
+      "content": "Sidebar Settings"
+    },
+    {
+      "type": "text",
+      "id": "sidebar_heading",
+      "label": "Sidebar Heading",
+      "default": "TOP CATEGORIES"
+    },
+    {
+      "type": "link_list",
+      "id": "sidebar_menu",
+      "label": "Sidebar Navigation Menu"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category_item",
+      "name": "Custom Category Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Category Title",
+          "default": "Category Name"
+        },
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Category Icon / Image"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Category Link"
+        }
+      ]
+    },
+    {
+      "type": "slide_item",
+      "name": "Hero Slide",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image_desktop",
+          "label": "Desktop Banner Image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile Banner Image (Optional)"
+        },
+        {
+          "type": "url",
+          "id": "slide_url",
+          "label": "Slide Click URL / Link"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Slide Title",
+          "default": "SOUND. STYLE. SMART LIVING."
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Slide Subtitle",
+          "default": "Premium Audio. Smarter Tech. Better Every Day."
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button Label",
+          "default": "EXPLORE NOW"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button Link"
+        },
+        {
+          "type": "header",
+          "content": "🎨 Slide Colors & Alignment"
+        },
+        {
+          "type": "color",
+          "id": "title_color",
+          "label": "Slide Title Color (Overrides Section Setting)"
+        },
+        {
+          "type": "color",
+          "id": "subtitle_color",
+          "label": "Slide Subtitle Color (Overrides Section Setting)"
+        },
+        {
+          "type": "color",
+          "id": "button_bg_color",
+          "label": "Slide Button Background Color"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "Slide Button Text Color"
+        },
+        {
+          "type": "header",
+          "content": "📐 Slide Content Position & Alignment"
+        },
+        {
+          "type": "select",
+          "id": "content_position_vertical",
+          "label": "Vertical Position (Overrides Section)",
+          "options": [
+            { "value": "default", "label": "Default (Use Section Setting)" },
+            { "value": "top", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "bottom", "label": "Bottom" }
+          ],
+          "default": "default"
+        },
+        {
+          "type": "select",
+          "id": "content_position_horizontal",
+          "label": "Horizontal Alignment (Overrides Section)",
+          "options": [
+            { "value": "default", "label": "Default (Use Section Setting)" },
+            { "value": "left", "label": "Left" },
+            { "value": "center", "label": "Center" },
+            { "value": "right", "label": "Right" }
+          ],
+          "default": "default"
+        }
+      ]
+    },
+    {
+      "type": "promo_banner",
+      "name": "Side Promo Banner",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Banner Title",
+          "default": "Smart Earbuds"
+        },
+        {
+          "type": "text",
+          "id": "badge_text",
+          "label": "Badge Text",
+          "default": "STARTING FROM RS. 599/-"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Banner Image"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Banner Link"
+        },
+        {
+          "type": "header",
+          "content": "🎨 Promo Colors"
+        },
+        {
+          "type": "color",
+          "id": "title_color",
+          "label": "Title Color",
+          "default": "#ffffff"
+        },
+        {
+          "type": "color",
+          "id": "badge_bg_color",
+          "label": "Badge Background Color"
+        },
+        {
+          "type": "color",
+          "id": "badge_text_color",
+          "label": "Badge Text Color"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Category Hero Banner",
+      "blocks": [
+        {
+          "type": "slide_item"
+        },
+        {
+          "type": "promo_banner",
+          "settings": {
+            "title": "Smart Earbuds",
+            "badge_text": "STARTING FROM RS. 599/-"
+          }
+        },
+        {
+          "type": "promo_banner",
+          "settings": {
+            "title": "Smart Watches",
+            "badge_text": "STARTING FROM RS. 799/-"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "shipping_returns": {
+      "type": "main-shipping-returns",
+      "settings": {
+        "badge_text": "DEALBAZAAR TRUST & QUALITY GUARANTEE",
+        "heading": "Shipping, Delivery & Return Policy",
+        "subheading": "At DealBazaar, our priority is providing high-quality products with fast nationwide delivery and a completely risk-free shopping experience across Pakistan.",
+        "whatsapp_number": "923102492119"
+      }
+    }
+  },
+  "order": [
+    "shipping_returns"
+  ]
+}

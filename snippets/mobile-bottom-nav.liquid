@@ -1,0 +1,660 @@
+{% liquid
+  assign enable_dock = settings.enable_mobile_bottom_nav
+  if enable_dock == nil
+    assign enable_dock = true
+  endif
+
+  # Dock Color Settings
+  assign dock_bg = settings.dock_bg_color | default: '#ffffff'
+  assign dock_active_color = settings.dock_active_color | default: '#00b853'
+  assign dock_inactive_color = settings.dock_inactive_color | default: '#64748b'
+  assign center_gradient_start = settings.dock_item_center_color_start | default: '#00b853'
+  assign center_gradient_end = settings.dock_item_center_color_end | default: '#059669'
+
+  # Slot 1 Settings (Home)
+  assign item_1_enable = settings.dock_item_1_enable
+  if item_1_enable == nil
+    assign item_1_enable = true
+  endif
+  assign item_1_label = settings.dock_item_1_label | default: 'Home'
+  assign item_1_link = settings.dock_item_1_link | default: '/'
+  assign item_1_icon = settings.dock_item_1_icon | default: 'home'
+
+  # Slot 2 Settings (Categories)
+  assign item_2_enable = settings.dock_item_2_enable
+  if item_2_enable == nil
+    assign item_2_enable = true
+  endif
+  assign item_2_label = settings.dock_item_2_label | default: 'Categories'
+  assign item_2_action = settings.dock_item_2_action | default: 'open_categories_drawer'
+  assign item_2_link = settings.dock_item_2_link | default: '/collections'
+  assign item_2_icon = settings.dock_item_2_icon | default: 'grid'
+
+  # Slot 3 Settings (Center Button)
+  assign center_enable = settings.dock_item_center_enable
+  if center_enable == nil
+    assign center_enable = true
+  endif
+  assign center_elevated = settings.dock_item_center_elevated
+  if center_elevated == nil
+    assign center_elevated = true
+  endif
+  assign center_label = settings.dock_item_center_label | default: 'Sale'
+  assign center_link = settings.dock_item_center_link | default: '/collections/all'
+  assign center_icon = settings.dock_item_center_icon | default: 'bolt'
+
+  # Slot 4 Settings (Cart)
+  assign item_4_enable = settings.dock_item_4_enable
+  if item_4_enable == nil
+    assign item_4_enable = true
+  endif
+  assign item_4_label = settings.dock_item_4_label | default: 'Cart'
+  assign item_4_action = settings.dock_item_4_action | default: 'open_cart_drawer'
+  assign item_4_link = settings.dock_item_4_link | default: '/cart'
+  assign item_4_show_badge = settings.dock_item_4_show_badge
+  if item_4_show_badge == nil
+    assign item_4_show_badge = true
+  endif
+  assign item_4_icon = settings.dock_item_4_icon | default: 'cart_bag'
+
+  # Slot 5 Settings (WhatsApp / Track / Account)
+  assign item_5_enable = settings.dock_item_5_enable
+  if item_5_enable == nil
+    assign item_5_enable = true
+  endif
+  assign item_5_label = settings.dock_item_5_label | default: 'WhatsApp'
+  assign item_5_action = settings.dock_item_5_action | default: 'whatsapp_chat'
+  assign item_5_number = settings.dock_item_5_whatsapp_number | default: '923102492119'
+  assign item_5_link = settings.dock_item_5_link | default: 'https://wa.me/923102492119'
+  assign item_5_icon = settings.dock_item_5_icon | default: 'whatsapp'
+
+  assign current_path = request.path
+%}
+
+{% if enable_dock %}
+  <style>
+    /* ==========================================================================
+       Ultra-Modern Dynamic Mobile Bottom Dock
+       ========================================================================== */
+    .db-mobile-dock {
+      display: none;
+    }
+
+    @media screen and (max-width: 768px) {
+      body {
+        padding-bottom: 70px !important;
+      }
+
+      .db-mobile-dock {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 62px !important;
+        background: {{ dock_bg }} !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+        border-radius: 18px 18px 0 0 !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.07) !important;
+        z-index: 999990 !important;
+        align-items: center !important;
+        justify-content: space-around !important;
+        padding: 0 4px calc(env(safe-area-inset-bottom, 0px) / 2) 4px !important;
+        box-sizing: border-box !important;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+      }
+
+      .db-dock-item {
+        flex: 1 1 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-decoration: none !important;
+        color: {{ dock_inactive_color }} !important;
+        font-size: 0.68rem !important;
+        font-weight: 600 !important;
+        gap: 3px !important;
+        position: relative !important;
+        transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+        padding: 4px 0 !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+      }
+
+      .db-dock-item.active,
+      .db-dock-item:hover {
+        color: {{ dock_active_color }} !important;
+      }
+
+      .db-dock-icon-wrap {
+        position: relative !important;
+        width: 24px !important;
+        height: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .db-dock-icon {
+        width: 21px !important;
+        height: 21px !important;
+        stroke-width: 2 !important;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+
+      .db-dock-item.active .db-dock-icon {
+        transform: scale(1.12) !important;
+      }
+
+      .db-dock-label {
+        font-size: 0.67rem !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        letter-spacing: 0.1px !important;
+        white-space: nowrap !important;
+      }
+
+      /* --- Center Elevated Floating Bubble Button --- */
+      .db-dock-center-wrapper {
+        position: relative !important;
+        flex: 1 1 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        height: 100% !important;
+        padding-bottom: 5px !important;
+      }
+
+      .db-dock-center-btn {
+        position: absolute !important;
+        top: -18px !important;
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, {{ center_gradient_start }}, {{ center_gradient_end }}) !important;
+        border: 3.5px solid {{ dock_bg }} !important;
+        color: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 5px 16px rgba(0, 184, 83, 0.4) !important;
+        text-decoration: none !important;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+        -webkit-tap-highlight-color: transparent !important;
+        z-index: 2 !important;
+      }
+
+      .db-dock-center-btn:active {
+        transform: scale(0.92) !important;
+      }
+
+      .db-dock-center-icon {
+        width: 22px !important;
+        height: 22px !important;
+        stroke-width: 2.2 !important;
+        color: #ffffff !important;
+      }
+
+      .db-dock-center-label {
+        font-size: 0.67rem !important;
+        font-weight: 700 !important;
+        color: {{ center_gradient_start }} !important;
+        line-height: 1 !important;
+        letter-spacing: 0.2px !important;
+        margin-top: auto !important;
+        z-index: 3 !important;
+        white-space: nowrap !important;
+      }
+
+      .db-dock-notch-aura {
+        position: absolute;
+        top: -13px;
+        width: 58px;
+        height: 29px;
+        background: {{ dock_bg }};
+        border-radius: 29px 29px 0 0;
+        z-index: 1;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.02);
+      }
+
+      /* Cart badge indicator on dock item */
+      .db-dock-badge {
+        position: absolute !important;
+        top: -4px !important;
+        right: -8px !important;
+        background: #ef4444 !important;
+        color: #ffffff !important;
+        font-size: 0.62rem !important;
+        font-weight: 800 !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        border-radius: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 4px !important;
+        border: 1.5px solid #ffffff !important;
+        line-height: 1 !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 5px rgba(239, 68, 68, 0.4) !important;
+      }
+
+      .db-dock-whatsapp-icon {
+        color: #25d366 !important;
+      }
+    }
+  </style>
+
+  <nav class="db-mobile-dock" id="DbMobileDock" aria-label="Mobile Bottom Navigation">
+    
+    {% comment %} --- SLOT 1 (Default: Home) --- {% endcomment %}
+    {% if item_1_enable %}
+      {% assign is_active_1 = false %}
+      {% if current_path == '/' or current_path == '' %}
+        {% assign is_active_1 = true %}
+      {% endif %}
+      <a href="{{ item_1_link }}" class="db-dock-item {% if is_active_1 %}active{% endif %}">
+        <div class="db-dock-icon-wrap">
+          {% case item_1_icon %}
+            {% when 'shop' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l2-5h14l2 5v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <path d="M9 21V9"></path>
+              </svg>
+            {% when 'grid' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+            {% when 'search' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            {% when 'heart' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            {% when 'user' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            {% when 'cart' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            {% when 'whatsapp' %}
+              <svg class="db-dock-icon db-dock-whatsapp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+            {% else %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="{% if is_active_1 %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+          {% endcase %}
+        </div>
+        <span class="db-dock-label">{{ item_1_label }}</span>
+      </a>
+    {% endif %}
+
+    {% comment %} --- SLOT 2 (Default: Categories / Menu) --- {% endcomment %}
+    {% if item_2_enable %}
+      {% assign is_active_2 = false %}
+      {% if current_path contains '/collections' and current_path != '/collections/all' %}
+        {% assign is_active_2 = true %}
+      {% endif %}
+      <a 
+        href="{{ item_2_link }}" 
+        class="db-dock-item {% if is_active_2 %}active{% endif %}"
+        {% if item_2_action == 'open_categories_drawer' %}onclick="openMobileCategories(event)"{% elsif item_2_action == 'open_search_modal' %}onclick="openMobileSearchModal(event)"{% endif %}
+        aria-label="{{ item_2_label }}"
+      >
+        <div class="db-dock-icon-wrap">
+          {% case item_2_icon %}
+            {% when 'layers' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            {% when 'tag' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+            {% when 'fire' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+              </svg>
+            {% when 'shop' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l2-5h14l2 5v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <path d="M9 21V9"></path>
+              </svg>
+            {% else %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="{% if is_active_2 %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+              </svg>
+          {% endcase %}
+        </div>
+        <span class="db-dock-label">{{ item_2_label }}</span>
+      </a>
+    {% endif %}
+
+    {% comment %} --- SLOT 3 (Center Highlighted Floating Bubble) --- {% endcomment %}
+    {% if center_enable %}
+      {% if center_elevated %}
+        <div class="db-dock-center-wrapper">
+          <div class="db-dock-notch-aura"></div>
+          <a href="{{ center_link }}" class="db-dock-center-btn" aria-label="{{ center_label }}">
+            {% case center_icon %}
+              {% when 'flame' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                </svg>
+              {% when 'tag' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                  <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                </svg>
+              {% when 'gift' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                  <rect x="2" y="7" width="20" height="5"></rect>
+                  <line x1="12" y1="22" x2="12" y2="7"></line>
+                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                </svg>
+              {% when 'sparkle' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"></path>
+                </svg>
+              {% when 'percentage' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="5" x2="5" y2="19"></line>
+                  <circle cx="6.5" cy="6.5" r="2.5"></circle>
+                  <circle cx="17.5" cy="17.5" r="2.5"></circle>
+                </svg>
+              {% when 'star' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              {% when 'whatsapp' %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+              {% else %}
+                <svg class="db-dock-center-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+            {% endcase %}
+          </a>
+          <span class="db-dock-center-label">{{ center_label }}</span>
+        </div>
+      {% else %}
+        <a href="{{ center_link }}" class="db-dock-item {% if current_path == center_link %}active{% endif %}">
+          <div class="db-dock-icon-wrap">
+            <svg class="db-dock-icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <span class="db-dock-label">{{ center_label }}</span>
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {% comment %} --- SLOT 4 (Default: Cart) --- {% endcomment %}
+    {% if item_4_enable %}
+      {% assign is_active_4 = false %}
+      {% if current_path == '/cart' %}
+        {% assign is_active_4 = true %}
+      {% endif %}
+      <button 
+        type="button"
+        class="db-dock-item {% if is_active_4 %}active{% endif %}"
+        aria-label="{{ item_4_label }}"
+        {% if item_4_action == 'open_cart_drawer' %}onclick="openMobileCartDrawer(event)"{% else %}onclick="window.location.href='{{ item_4_link }}'"{% endif %}
+      >
+        <div class="db-dock-icon-wrap">
+          {% case item_4_icon %}
+            {% when 'cart_trolley' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            {% when 'cart_basket' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3.5 6.5 12 2 20.5 6.5"></polyline>
+                <path d="M5 10v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9"></path>
+                <line x1="12" y1="10" x2="12" y2="21"></line>
+              </svg>
+            {% when 'heart' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            {% else %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+          {% endcase %}
+
+          {% if item_4_show_badge %}
+            <span class="db-dock-badge" id="DbDockCartBadge" style="{% if cart.item_count == 0 %}display:none;{% endif %}">
+              {{ cart.item_count }}
+            </span>
+          {% endif %}
+        </div>
+        <span class="db-dock-label">{{ item_4_label }}</span>
+      </button>
+    {% endif %}
+
+    {% comment %} --- SLOT 5 (Default: WhatsApp / Support / Track) --- {% endcomment %}
+    {% if item_5_enable %}
+      {% assign is_active_5 = false %}
+      {% if current_path contains '/account' and item_5_action == 'open_account' %}
+        {% assign is_active_5 = true %}
+      {% endif %}
+
+      {% assign final_slot5_href = item_5_link %}
+      {% if item_5_action == 'whatsapp_chat' %}
+        {% assign clean_num = item_5_number | remove: '+' | remove: '-' | remove: ' ' %}
+        {% assign final_slot5_href = 'https://wa.me/' | append: clean_num %}
+      {% elsif item_5_action == 'open_account' %}
+        {% assign final_slot5_href = '/account' %}
+      {% elsif item_5_action == 'phone_call' %}
+        {% assign clean_phone = item_5_number | remove: ' ' %}
+        {% assign final_slot5_href = 'tel:' | append: clean_phone %}
+      {% endif %}
+
+      <a 
+        href="{{ final_slot5_href }}" 
+        class="db-dock-item {% if is_active_5 %}active{% endif %}"
+        {% if item_5_action == 'whatsapp_chat' %}target="_blank" rel="noopener"{% endif %}
+        aria-label="{{ item_5_label }}"
+      >
+        <div class="db-dock-icon-wrap">
+          {% case item_5_icon %}
+            {% when 'user' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            {% when 'phone' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+            {% when 'headset' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+              </svg>
+            {% when 'chat' %}
+              <svg class="db-dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            {% else %}
+              <svg class="db-dock-icon db-dock-whatsapp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+          {% endcase %}
+        </div>
+        <span class="db-dock-label">{{ item_5_label }}</span>
+      </a>
+    {% endif %}
+
+  </nav>
+
+  <script>
+    function openMobileCategories(e) {
+      const menuContainer = document.getElementById('Details-menu-drawer-container') || document.querySelector('header-drawer details');
+      if (menuContainer) {
+        if (e) e.preventDefault();
+        const summary = menuContainer.querySelector('summary');
+        if (summary) {
+          summary.click();
+          return;
+        }
+        menuContainer.setAttribute('open', '');
+        return;
+      }
+    }
+
+    function openMobileSearchModal(e) {
+      if (e) e.preventDefault();
+      const modal = document.getElementById('search-modal') || document.querySelector('search-modal dialog');
+      if (modal) {
+        if (typeof modal.showModal === 'function') modal.showModal();
+        modal.setAttribute('open', '');
+        return;
+      }
+      window.location.href = '/search';
+    }
+
+    function openMobileCartDrawer(e) {
+      if (e) e.preventDefault();
+      const drawer = document.getElementById('cart-drawer');
+      if (!drawer) {
+        window.location.href = '/cart';
+        return;
+      }
+      
+      const dialog = drawer.querySelector('dialog') || (drawer.tagName === 'DIALOG' ? drawer : null);
+      if (dialog && typeof dialog.showModal === 'function') {
+        try { dialog.showModal(); } catch (err) {}
+      }
+
+      drawer.setAttribute('open', '');
+      if (drawer.show) drawer.show();
+      drawer.dispatchEvent(new CustomEvent('theme-drawer:open', { bubbles: true }));
+    }
+
+    // --- Real-Time Cart Count Synchronization ---
+    (function() {
+      function setDbCartBadgeCount(count) {
+        const badge = document.getElementById('DbDockCartBadge');
+        if (!badge) return;
+        const num = parseInt(count, 10) || 0;
+        badge.textContent = num;
+        badge.style.display = num > 0 ? 'flex' : 'none';
+      }
+
+      function syncFromCartAPI() {
+        fetch('/cart.js')
+          .then(res => res.json())
+          .then(cart => {
+            if (cart && typeof cart.item_count !== 'undefined') {
+              setDbCartBadgeCount(cart.item_count);
+            }
+          })
+          .catch(() => {});
+      }
+
+      const originalFetch = window.fetch;
+      window.fetch = function() {
+        const args = arguments;
+        const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+        const promise = originalFetch.apply(this, args);
+
+        if (url && (url.includes('/cart/add') || url.includes('/cart/change') || url.includes('/cart/update') || url.includes('/cart/clear'))) {
+          promise.then(response => {
+            try {
+              const clone = response.clone();
+              clone.json().then(data => {
+                if (data && typeof data.item_count !== 'undefined') {
+                  setDbCartBadgeCount(data.item_count);
+                } else {
+                  syncFromCartAPI();
+                }
+              }).catch(() => syncFromCartAPI());
+            } catch (err) {
+              syncFromCartAPI();
+            }
+          });
+        }
+        return promise;
+      };
+
+      const cartEvents = ['cart:lines:update', 'cart:updated', 'cart:update', 'cart:change', 'ajaxCart.afterCartLoad', 'shopify:cart:lines-update'];
+      cartEvents.forEach(evtName => {
+        document.addEventListener(evtName, function(event) {
+          if (event && event.detail && typeof event.detail.item_count !== 'undefined') {
+            setDbCartBadgeCount(event.detail.item_count);
+          } else if (event && event.detail && typeof event.detail.itemCount !== 'undefined') {
+            setDbCartBadgeCount(event.detail.itemCount);
+          } else if (event && event.detail && event.detail.cart && typeof event.detail.cart.item_count !== 'undefined') {
+            setDbCartBadgeCount(event.detail.cart.item_count);
+          } else {
+            syncFromCartAPI();
+          }
+        });
+      });
+
+      function observeHeaderCart() {
+        const headerBadges = document.querySelectorAll('[ref="cartBubbleCount"], .theme-drawer__badge, cart-icon');
+        if (headerBadges.length > 0) {
+          const observer = new MutationObserver(() => {
+            headerBadges.forEach(el => {
+              const val = parseInt(el.textContent.trim(), 10);
+              if (!isNaN(val)) setDbCartBadgeCount(val);
+            });
+          });
+          headerBadges.forEach(el => observer.observe(el, { childList: true, characterData: true, subtree: true }));
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          syncFromCartAPI();
+          observeHeaderCart();
+        });
+      } else {
+        syncFromCartAPI();
+        observeHeaderCart();
+      }
+
+      window.addEventListener('pageshow', syncFromCartAPI);
+      window.setDbMobileCartBadge = setDbCartBadgeCount;
+    })();
+  </script>
+{% endif %}

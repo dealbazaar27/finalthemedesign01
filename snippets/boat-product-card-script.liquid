@@ -1,0 +1,302 @@
+<script>
+  // Global Dynamic Swatch Click Handler (Colors & Sizes)
+  if (typeof selectBoatVariant !== 'function') {
+    window.selectBoatVariant = function(dotBtn) {
+      const card = dotBtn.closest('.boat-pick-card');
+      if (!card) return;
+
+      const allSwatches = card.querySelectorAll('.boat-swatch-dot, .boat-swatch-pill');
+      allSwatches.forEach(d => d.classList.remove('active'));
+      dotBtn.classList.add('active');
+
+      const variantId = dotBtn.getAttribute('data-variant-id');
+      const variantImage = dotBtn.getAttribute('data-variant-image');
+      const variantPrice = dotBtn.getAttribute('data-variant-price');
+      const variantCompare = dotBtn.getAttribute('data-variant-compare');
+      const variantDiscount = dotBtn.getAttribute('data-variant-discount');
+      const isAvailable = dotBtn.getAttribute('data-variant-available') === 'true';
+
+      if (variantImage) {
+        const img = card.querySelector('.boat-pick-card__image');
+        if (img) img.src = variantImage;
+      }
+
+      const input = card.querySelector('input[name="id"]');
+      if (input && variantId) input.value = variantId;
+
+      const priceElem = card.querySelector('.boat-pick-card__price');
+      if (priceElem && variantPrice) priceElem.textContent = variantPrice;
+
+      const compareElem = card.querySelector('.boat-pick-card__compare-price');
+      if (compareElem) {
+        if (variantCompare) {
+          compareElem.textContent = variantCompare;
+          compareElem.style.display = 'inline';
+        } else {
+          compareElem.style.display = 'none';
+        }
+      }
+
+      const discountElem = card.querySelector('.boat-pick-card__discount');
+      if (discountElem) {
+        if (variantDiscount && variantDiscount !== '0% off') {
+          discountElem.textContent = variantDiscount;
+          discountElem.style.display = 'inline';
+        } else {
+          discountElem.style.display = 'none';
+        }
+      }
+
+      const submitBtn = card.querySelector('.boat-pick-card__hover-atc');
+      if (submitBtn) {
+        submitBtn.disabled = !isAvailable;
+      }
+    };
+  }
+
+  // Global fresh cart drawer HTML fetcher with retry mechanism
+  if (typeof window.getFreshCartDrawerHtml !== 'function') {
+    window.getFreshCartDrawerHtml = async function(retries = 5) {
+      const cartItemsComp = document.querySelector('cart-items-component');
+      const sectionId = cartItemsComp?.dataset?.sectionId || 'cart-drawer-section';
+      for (let i = 0; i < retries; i++) {
+        try {
+          const res = await fetch(`/?sections=${sectionId}&_=${Date.now()}`);
+          if (res.ok) {
+            const data = await res.json();
+            const html = data[sectionId];
+            if (html && !html.includes('boat-empty-cart-container') && !html.includes('cart-drawer--empty')) {
+              return html;
+            }
+          }
+        } catch(e) {}
+        await new Promise(r => setTimeout(r, 250));
+      }
+      return null;
+    };
+  }
+
+  // Unified Theme-Native Add to Cart Handler (Powers Product Cards & Dispatches StandardEvents)
+  if (typeof handleBoatAddToCart !== 'function') {
+    window.handleBoatAddToCart = async function(event, formElement) {
+      event.preventDefault();
+      const btn = formElement.querySelector('.boat-pdp-btn--atc') || formElement.querySelector('button[type="submit"]');
+      if (!btn || btn.disabled) return;
+
+      const isPdpBtn = btn.classList.contains('boat-pdp-btn--atc');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+
+      const stickyBtn = document.querySelector('.boat-pdp-sticky-btn--atc');
+      let originalStickyHTML = '';
+      if (stickyBtn) {
+        originalStickyHTML = stickyBtn.innerHTML;
+        stickyBtn.disabled = true;
+        stickyBtn.innerHTML = '<span>Adding...</span>';
+      }
+
+      if (isPdpBtn) {
+        btn.innerHTML = '<span>Adding...</span>';
+      } else {
+        btn.innerHTML = '<span style="font-size:12px; font-weight:800; color:#fff;">...</span>';
+      }
+
+      const formData = new FormData(formElement);
+
+      const sectionIds = new Set(['cart-drawer-section']);
+      document.querySelectorAll('cart-items-component').forEach(item => {
+        if (item.dataset && item.dataset.sectionId) sectionIds.add(item.dataset.sectionId);
+      });
+      formData.append('sections', Array.from(sectionIds).join(','));
+
+      const variantId = String(formData.get('id') || '');
+      const itemCount = Number(formData.get('quantity')) || 1;
+
+      // Create deferred promise for StandardEvents.cartLinesUpdate ('shopify:cart:lines-update')
+      let resolveUpdate, rejectUpdate;
+      const deferredPromise = new Promise((resolve, reject) => {
+        resolveUpdate = resolve;
+        rejectUpdate = reject;
+      });
+
+      const cartEvent = new CustomEvent('shopify:cart:lines-update', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          action: 'add',
+          context: 'product',
+          lines: [{ merchandiseId: variantId, quantity: itemCount }],
+          promise: deferredPromise
+        }
+      });
+      cartEvent.action = 'add';
+      cartEvent.promise = deferredPromise;
+      document.dispatchEvent(cartEvent);
+
+      try {
+        const response = await fetch(window.Theme?.routes?.cart_add_url || '/cart/add.js', {
+          method: 'POST',
+          body: formData,
+          headers: { 'Accept': 'application/json' }
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok && !responseData.status && !responseData.errors) {
+          if (isPdpBtn) {
+            btn.style.background = '#00b853';
+            btn.innerHTML = '<span>✓ Added to Cart!</span>';
+          } else {
+            btn.style.background = '#16a34a';
+            btn.innerHTML = '<span style="font-size:15px; font-weight:800; color:#fff;">✓</span>';
+          }
+
+          if (stickyBtn) {
+            stickyBtn.innerHTML = '<span>✓ Added!</span>';
+          }
+
+          // Fetch accurate cart data from /cart.js to ensure 100% exact item count everywhere
+          let cartData = null;
+          try {
+            const cartRes = await fetch('/cart.js', { headers: { 'Accept': 'application/json' } });
+            cartData = await cartRes.json();
+          } catch (e) {}
+
+          const trueItemCount = (cartData && typeof cartData.item_count === 'number') ? cartData.item_count : itemCount;
+
+          let sectionsData = responseData.sections || {};
+          const cartItemsComp = document.querySelector('cart-items-component');
+          const secId = cartItemsComp?.dataset?.sectionId || 'cart-drawer-section';
+
+          if (trueItemCount > 0 && (!sectionsData[secId] || sectionsData[secId].includes('boat-empty-cart-container') || sectionsData[secId].includes('cart-drawer--empty'))) {
+            const freshHTML = await window.getFreshCartDrawerHtml();
+            if (freshHTML) {
+              sectionsData[secId] = freshHTML;
+            }
+          }
+
+          // Resolve promise immediately so Theme's CartItemsComponent morphs drawer, HeaderActions & CartIcon update badges
+          resolveUpdate({
+            cart: {
+              totalQuantity: trueItemCount,
+              lines: cartData?.items || [responseData],
+              cost: { totalAmount: { amount: String((cartData?.total_price || 0) / 100), currencyCode: cartData?.currency || 'PKR' } }
+            },
+            detail: {
+              items: cartData?.items || [responseData],
+              itemCount: trueItemCount,
+              sections: sectionsData,
+              didError: false,
+              source: 'boat-product-card'
+            }
+          });
+
+          // Smoothly open cart drawer immediately
+          const drawer = document.getElementById('cart-drawer');
+          if (drawer && typeof drawer.open === 'function') {
+            drawer.open();
+          }
+
+          // Directly sync all header and mobile cart badges to guarantee exact count
+          document.querySelectorAll('[ref="cartBubbleCount"], .cart-bubble__text-count').forEach(el => {
+            el.textContent = trueItemCount;
+            el.classList.toggle('hidden', trueItemCount === 0);
+          });
+          document.querySelectorAll('[ref="cartBubble"], .cart-bubble').forEach(el => {
+            el.classList.toggle('visually-hidden', trueItemCount === 0);
+          });
+          document.querySelectorAll('.theme-drawer__badge').forEach(el => {
+            el.textContent = trueItemCount;
+            el.classList.toggle('visually-hidden', trueItemCount === 0);
+          });
+          const cartIcon = document.querySelector('cart-icon');
+          if (cartIcon && typeof cartIcon.renderCartBubble === 'function') {
+            cartIcon.renderCartBubble(trueItemCount, false);
+          }
+          try {
+            sessionStorage.setItem('cart-count', JSON.stringify({ value: String(trueItemCount), timestamp: Date.now() }));
+          } catch(e) {}
+
+          // Trigger toast notification if active
+          if (typeof window.showBoatCartToast === 'function') {
+            const cardElem = formElement.closest('.boat-pick-card');
+            const pdpTitle = document.querySelector('.boat-pdp-title')?.innerText?.trim();
+            const pdpImg = document.querySelector('.boat-pdp-main-img')?.src;
+            const toastTitle = responseData.product_title || responseData.title || pdpTitle || cardElem?.querySelector('.boat-pick-card__title')?.innerText?.trim() || 'Product';
+            const toastPrice = responseData.price ? ((typeof formatMoneyWithoutDecimals === 'function') ? formatMoneyWithoutDecimals(responseData.price) : 'Rs.' + (responseData.price/100)) : (cardElem?.querySelector('.boat-pick-card__price')?.innerText?.trim() || '');
+            const toastImg = responseData.image || responseData.featured_image?.url || pdpImg || cardElem?.querySelector('.boat-pick-card__image')?.src || '';
+
+            window.showBoatCartToast({
+              title: toastTitle,
+              price: toastPrice,
+              image: toastImg
+            });
+          }
+
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.style.background = '';
+            btn.innerHTML = originalHTML;
+
+            if (stickyBtn && originalStickyHTML) {
+              stickyBtn.disabled = false;
+              stickyBtn.innerHTML = originalStickyHTML;
+            }
+          }, 1200);
+
+        } else {
+          rejectUpdate(new Error(responseData.message || responseData.description || 'Add to cart failed'));
+          btn.disabled = false;
+          btn.innerHTML = originalHTML;
+
+          if (stickyBtn && originalStickyHTML) {
+            stickyBtn.disabled = false;
+            stickyBtn.innerHTML = originalStickyHTML;
+          }
+        }
+      } catch (err) {
+        rejectUpdate(err);
+        console.error('ATC Error:', err);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+
+      }
+    };
+  }
+
+  // Ensure header and mobile cart badges always perfectly match the real cart on page load
+  async function syncRealCartBadge() {
+    try {
+      const res = await fetch('/cart.js', { headers: { 'Accept': 'application/json' } });
+      const cart = await res.json();
+      if (cart && typeof cart.item_count === 'number') {
+        const count = cart.item_count;
+        document.querySelectorAll('[ref="cartBubbleCount"], .cart-bubble__text-count').forEach(el => {
+          el.textContent = count;
+          el.classList.toggle('hidden', count === 0);
+        });
+        document.querySelectorAll('[ref="cartBubble"], .cart-bubble').forEach(el => {
+          el.classList.toggle('visually-hidden', count === 0);
+        });
+        document.querySelectorAll('.theme-drawer__badge').forEach(el => {
+          el.textContent = count;
+          el.classList.toggle('visually-hidden', count === 0);
+        });
+        const cartIcon = document.querySelector('cart-icon');
+        if (cartIcon && typeof cartIcon.renderCartBubble === 'function') {
+          cartIcon.renderCartBubble(count, false);
+        }
+        try {
+          sessionStorage.setItem('cart-count', JSON.stringify({ value: String(count), timestamp: Date.now() }));
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncRealCartBadge);
+  } else {
+    syncRealCartBadge();
+  }
+  window.addEventListener('pageshow', syncRealCartBadge);
+</script>

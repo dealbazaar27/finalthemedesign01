@@ -1,0 +1,56 @@
+{% doc %}
+  Renders the predictive search empty state with Top Tag Pills and 8 Featured Collection Products
+{% enddoc %}
+
+<div
+  id="predictive-search-results"
+  class="predictive-search-dropdown"
+  role="listbox"
+  aria-expanded="true"
+>
+  <div class="boat-search-modal-container" style="padding: 12px 16px;">
+    
+    {% comment %} --- Top Search Tag Pills --- {% endcomment %}
+    {% assign text_tags = section.settings.search_tags | default: settings.search_tags %}
+
+    <div class="boat-search-tags-carousel" id="BoatSearchTagsCarousel" style="margin-bottom: 16px;">
+      {% if text_tags != blank %}
+        {% assign tags = text_tags | split: ',' %}
+        {% for tag in tags %}
+          {% assign clean_tag = tag | strip %}
+          {% if clean_tag != blank %}
+            <a href="{{ routes.search_url }}?q={{ clean_tag | url_param_escape }}" class="boat-search-tag-pill">
+              {{ clean_tag }}
+            </a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <a href="{{ routes.search_url }}?q=smartwatch" class="boat-search-tag-pill">smartwatch</a>
+        <a href="{{ routes.search_url }}?q=official+warranty" class="boat-search-tag-pill">official warranty</a>
+        <a href="{{ routes.search_url }}?q=earbuds" class="boat-search-tag-pill">earbuds</a>
+        <a href="{{ routes.search_url }}?q=clearance+sale" class="boat-search-tag-pill">clearance sale</a>
+        <a href="{{ routes.search_url }}?q=sale" class="boat-search-tag-pill">sale</a>
+        <a href="{{ routes.search_url }}?q=westpoint" class="boat-search-tag-pill">westpoint</a>
+      {% endif %}
+    </div>
+
+    {% comment %} --- Dynamic Section Title --- {% endcomment %}
+    <h4 class="predictive-search-results__title">
+      {{ section.settings.search_modal_heading | default: settings.search_modal_heading | default: 'Trending Products' }}
+    </h4>
+
+    {% comment %} --- Selected Collection Products --- {% endcomment %}
+    {% assign selected_col = section.settings.search_featured_collection | default: settings.search_featured_collection %}
+    {% if selected_col == blank %}
+      {% assign selected_col = collections.all %}
+    {% endif %}
+
+    <div class="predictive-search-results__wrapper-products">
+      {% if selected_col != blank and selected_col.products.size > 0 %}
+        {% for product in selected_col.products limit: 8 %}
+          {% render 'predictive-search-product-card-item', product: product %}
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>

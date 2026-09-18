@@ -1,0 +1,831 @@
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+<div class="db-page-wrapper section-{{ section.id }}">
+  <div class="db-track-container">
+    
+    {% comment %} --- SEO Breadcrumbs --- {% endcomment %}
+    <nav class="db-breadcrumbs" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <span class="db-breadcrumb-sep">/</span>
+      <span class="db-breadcrumb-current">{{ page.title | default: 'Track Order' }}</span>
+    </nav>
+
+    {% comment %} --- Hero Header --- {% endcomment %}
+    <div class="db-track-header">
+      <span class="db-badge">{{ section.settings.badge_text | default: 'DEALBAZAAR LIVE ORDER TRACKING' }}</span>
+      <h1 class="db-track-title">{{ section.settings.heading | default: 'Track Your DealBazaar Order' }}</h1>
+      <p class="db-track-subtitle">
+        {{ section.settings.subheading | default: 'Check real-time delivery status of your DealBazaar parcel across Pakistan. Enter your Order ID or Courier Tracking Number below.' }}
+      </p>
+    </div>
+
+    {% comment %} --- Main Tracking Card --- {% endcomment %}
+    <div class="db-track-card">
+      
+      <div class="db-track-tabs">
+        <button type="button" class="db-track-tab active" id="dbTabOrder" onclick="switchTrackTab('order')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span>Order Number</span>
+        </button>
+        <button type="button" class="db-track-tab" id="dbTabCourier" onclick="switchTrackTab('courier')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+          </svg>
+          <span>Courier Tracking ID</span>
+        </button>
+      </div>
+
+      {% comment %} Form 1: By Order ID {% endcomment %}
+      <form id="dbOrderTrackForm" class="db-track-form" onsubmit="handleOrderTrack(event)">
+        <div class="db-form-row">
+          <div class="db-input-group">
+            <label for="dbOrderNumber">DealBazaar Order Number *</label>
+            <div class="db-input-wrap">
+              <span class="db-input-prefix">#</span>
+              <input type="text" id="dbOrderNumber" name="order_number" placeholder="e.g. 1024 or DB-1024" required>
+            </div>
+            <span class="db-input-hint">Found in your order confirmation SMS / Email</span>
+          </div>
+
+          <div class="db-input-group">
+            <label for="dbOrderPhone">Phone Number / Email *</label>
+            <div class="db-input-wrap">
+              <input type="text" id="dbOrderPhone" name="phone" placeholder="e.g. 03102492119" required>
+            </div>
+            <span class="db-input-hint">Used during order checkout</span>
+          </div>
+        </div>
+
+        <button type="submit" class="db-track-submit-btn" id="dbTrackSubmitBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Track Order Status</span>
+        </button>
+      </form>
+
+      {% comment %} Form 2: By Courier ID {% endcomment %}
+      <form id="dbCourierTrackForm" class="db-track-form" style="display: none;" onsubmit="handleCourierTrack(event)">
+        <div class="db-form-row">
+          <div class="db-input-group">
+            <label for="dbCourierSelect">Select Courier Partner *</label>
+            <div class="db-input-wrap">
+              <select id="dbCourierSelect" required>
+                <option value="trax">Trax Logistics</option>
+                <option value="postex">PostEx Express</option>
+                <option value="tcs">TCS Courier</option>
+                <option value="leopards">Leopards Courier</option>
+                <option value="callcourier">Call Courier</option>
+                <option value="mnp">M&P Express</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="db-input-group">
+            <label for="dbCourierCn">Tracking Number / CN *</label>
+            <div class="db-input-wrap">
+              <input type="text" id="dbCourierCn" placeholder="e.g. TR-98231456" required>
+            </div>
+            <span class="db-input-hint">Tracking code sent via courier SMS</span>
+          </div>
+        </div>
+
+        <button type="submit" class="db-track-submit-btn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Track With Courier</span>
+        </button>
+      </form>
+
+      {% comment %} Live Tracking Result Timeline Box {% endcomment %}
+      <div id="dbTrackResultBox" class="db-track-result" style="display: none;">
+        <div class="db-result-header">
+          <div>
+            <span class="db-status-pill in-transit">In Transit</span>
+            <h3 id="dbResultOrderTitle">Order #DB-1024</h3>
+            <p id="dbResultDetails">Carrier: <strong>Trax Express</strong> • Delivery: <strong>2 - 4 Business Days</strong></p>
+          </div>
+          <button type="button" class="db-wa-help-btn" onclick="openTrackWhatsapp()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.881 2.796.881 3.179 0 5.766-2.587 5.767-5.766.001-3.181-2.585-5.768-5.767-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 4.418-3.582 8-8 8-1.408 0-2.73-.367-3.875-1.009l-4.156 1.009 1.109-3.992c-.696-1.164-1.078-2.525-1.078-4.008 0-4.418 3.582-8 8-8z"/>
+            </svg>
+            <span>Ask on WhatsApp</span>
+          </button>
+        </div>
+
+        <div class="db-timeline">
+          <div class="db-timeline-step completed">
+            <div class="db-step-dot">✓</div>
+            <div class="db-step-info">
+              <h4>Order Placed</h4>
+              <p>Received & verified</p>
+            </div>
+          </div>
+          <div class="db-timeline-step completed">
+            <div class="db-step-dot">✓</div>
+            <div class="db-step-info">
+              <h4>Packed & Quality Checked</h4>
+              <p>Handed to courier</p>
+            </div>
+          </div>
+          <div class="db-timeline-step active">
+            <div class="db-step-dot">🚚</div>
+            <div class="db-step-info">
+              <h4>In Transit</h4>
+              <p>On the way to destination city</p>
+            </div>
+          </div>
+          <div class="db-timeline-step">
+            <div class="db-step-dot">📦</div>
+            <div class="db-step-info">
+              <h4>Delivered</h4>
+              <p>Doorstep Cash on Delivery</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {% comment %} --- Quick Courier Direct Links --- {% endcomment %}
+    <div class="db-courier-partners-box">
+      <h3>Official Courier Tracking Portals</h3>
+      <p>Direct tracking links for all major Pakistani logistics services used by DealBazaar:</p>
+      <div class="db-courier-grid">
+        <a href="https://trax.pk/tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>Trax Logistics</strong>
+          <span>trax.pk/tracking ➔</span>
+        </a>
+        <a href="https://postex.pk/tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>PostEx Express</strong>
+          <span>postex.pk/tracking ➔</span>
+        </a>
+        <a href="https://www.tcsexpress.com/tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>TCS Courier</strong>
+          <span>tcsexpress.com ➔</span>
+        </a>
+        <a href="https://www.leopardscourier.com/leopards-tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>Leopards Courier</strong>
+          <span>leopardscourier.com ➔</span>
+        </a>
+        <a href="https://callcourier.com.pk/tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>Call Courier</strong>
+          <span>callcourier.com.pk ➔</span>
+        </a>
+        <a href="https://www.mulphilog.com/tracking" target="_blank" rel="noopener noreferrer" class="db-courier-item">
+          <strong>M&P Express</strong>
+          <span>mulphilog.com ➔</span>
+        </a>
+      </div>
+    </div>
+
+    {% comment %} --- SEO Tracking FAQ Section --- {% endcomment %}
+    <div class="db-track-seo-faq">
+      <h2>Frequently Asked Questions About DealBazaar Order Tracking</h2>
+      
+      <div class="db-seo-faq-grid">
+        <div class="db-seo-faq-card">
+          <h3>How long does DealBazaar take to deliver in Pakistan?</h3>
+          <p>Orders in Karachi, Lahore, and Islamabad/Rawalpindi are usually delivered within <strong>2 to 3 business days</strong>. For all other cities and regions across Pakistan, delivery takes <strong>3 to 4 business days</strong>.</p>
+        </div>
+        <div class="db-seo-faq-card">
+          <h3>Where can I find my DealBazaar Order ID?</h3>
+          <p>Your Order ID is sent immediately via SMS and Email once your order is confirmed. It format is typically <code>#1024</code> or <code>#DB-1024</code>.</p>
+        </div>
+        <div class="db-seo-faq-card">
+          <h3>Is Cash on Delivery (COD) tracking available?</h3>
+          <p>Yes, all Cash on Delivery (COD) orders dispatched by DealBazaar have full real-time tracking numbers with live SMS updates from dispatch to doorstep delivery.</p>
+        </div>
+        <div class="db-seo-faq-card">
+          <h3>What should I do if my tracking is not updating?</h3>
+          <p>Courier tracking scans can take up to 12 hours to update after dispatch. If you need urgent assistance, click the <strong>Ask on WhatsApp</strong> button to connect directly with DealBazaar Support at <strong>+92 310 2492119</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .db-page-wrapper {
+    background: #f8fafc;
+    min-height: 80vh;
+    padding: 30px 16px 60px 16px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+
+  .db-track-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .db-breadcrumbs {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .db-breadcrumbs a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .db-breadcrumbs a:hover {
+    color: #0f172a;
+    text-decoration: underline;
+  }
+
+  .db-breadcrumb-sep {
+    color: #cbd5e1;
+  }
+
+  .db-breadcrumb-current {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .db-track-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .db-badge {
+    display: inline-block;
+    background: #e6fcf5;
+    color: #00875a;
+    border: 1px solid #b2f2bb;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .db-track-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+  }
+
+  .db-track-subtitle {
+    font-size: 0.96rem;
+    color: #475569;
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  .db-track-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    margin-bottom: 32px;
+  }
+
+  .db-track-tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    gap: 4px;
+    margin-bottom: 26px;
+  }
+
+  .db-track-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .db-track-tab.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  .db-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .db-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .db-input-group label {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .db-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .db-input-prefix {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    font-weight: 800;
+    font-size: 1rem;
+    pointer-events: none;
+  }
+
+  .db-input-wrap input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: #0f172a;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .db-input-prefix + input {
+    padding-left: 30px;
+  }
+
+  .db-input-wrap select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: #0f172a;
+    background: #f8fafc;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .db-input-wrap input:focus,
+  .db-input-wrap select:focus {
+    outline: none;
+    border-color: #0f172a;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  }
+
+  .db-input-hint {
+    font-size: 0.74rem;
+    color: #94a3b8;
+  }
+
+  .db-track-submit-btn {
+    width: 100%;
+    height: 50px;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.98rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .db-track-submit-btn:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  }
+
+  /* Result Box */
+  .db-track-result {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px dashed #cbd5e1;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .db-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .db-status-pill {
+    display: inline-block;
+    font-size: 0.74rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .db-status-pill.in-transit {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .db-result-header h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .db-result-header p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #64748b;
+  }
+
+  .db-wa-help-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #25d366;
+    color: #ffffff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-family: inherit;
+  }
+
+  .db-wa-help-btn:hover {
+    background: #20ba59;
+  }
+
+  /* Timeline */
+  .db-timeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    position: relative;
+    padding: 16px 0;
+  }
+
+  .db-timeline::before {
+    content: '';
+    position: absolute;
+    top: 33px; /* 16px padding + 17px half of dot */
+    left: 12.5%;
+    right: 12.5%;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 1;
+  }
+
+  .db-timeline-step {
+    text-align: center;
+    position: relative;
+  }
+
+  .db-step-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px auto;
+    font-size: 0.9rem;
+    font-weight: 800;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 2;
+  }
+
+  .db-timeline-step.completed .db-step-dot {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #ffffff;
+  }
+
+  .db-timeline-step.active .db-step-dot {
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 0 0 3px #93c5fd;
+  }
+
+  .db-step-info h4 {
+    margin: 0 0 3px 0;
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .db-step-info p {
+    margin: 0;
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+  }
+
+  /* Couriers Box */
+  .db-courier-partners-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .db-courier-partners-box h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  .db-courier-partners-box p {
+    margin: 0 0 16px 0;
+    font-size: 0.86rem;
+    color: #64748b;
+  }
+
+  .db-courier-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .db-courier-item {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .db-courier-item:hover {
+    border-color: #0f172a;
+    background: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .db-courier-item strong {
+    color: #0f172a;
+    font-size: 0.88rem;
+    margin-bottom: 2px;
+  }
+
+  .db-courier-item span {
+    color: #00875a;
+    font-size: 0.74rem;
+    font-weight: 700;
+  }
+
+  /* SEO FAQ Grid */
+  .db-track-seo-faq {
+    margin-top: 40px;
+  }
+
+  .db-track-seo-faq h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  .db-seo-faq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .db-seo-faq-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .db-seo-faq-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.35;
+  }
+
+  .db-seo-faq-card p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #475569;
+    line-height: 1.6;
+  }
+
+  @media screen and (max-width: 768px) {
+    .db-track-title {
+      font-size: 1.6rem;
+    }
+
+    .db-track-card {
+      padding: 20px 16px;
+    }
+
+    .db-form-row {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    .db-timeline {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      text-align: left;
+      padding: 16px 0 16px 12px;
+    }
+
+    .db-timeline::before {
+      top: 26px;
+      bottom: 30px;
+      left: 29px; /* 12px padding + 17px */
+      width: 3px;
+      height: auto;
+      right: auto;
+    }
+
+    .db-timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      text-align: left;
+    }
+
+    .db-step-dot {
+      margin: 0;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .db-courier-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .db-seo-faq-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  function switchTrackTab(tab) {
+    const btnOrder = document.getElementById('dbTabOrder');
+    const btnCourier = document.getElementById('dbTabCourier');
+    const formOrder = document.getElementById('dbOrderTrackForm');
+    const formCourier = document.getElementById('dbCourierTrackForm');
+
+    if (tab === 'order') {
+      btnOrder.classList.add('active');
+      btnCourier.classList.remove('active');
+      formOrder.style.display = 'block';
+      formCourier.style.display = 'none';
+    } else {
+      btnCourier.classList.add('active');
+      btnOrder.classList.remove('active');
+      formCourier.style.display = 'block';
+      formOrder.style.display = 'none';
+    }
+  }
+
+  function handleOrderTrack(e) {
+    e.preventDefault();
+    const orderNum = document.getElementById('dbOrderNumber').value.trim();
+    const phone = document.getElementById('dbOrderPhone').value.trim();
+    const resultBox = document.getElementById('dbTrackResultBox');
+    const title = document.getElementById('dbResultOrderTitle');
+    const details = document.getElementById('dbResultDetails');
+
+    if (!orderNum || !phone) return;
+
+    const cleanNum = orderNum.replace(/#/g, '');
+    title.textContent = 'Order #DB-' + cleanNum;
+    details.innerHTML = 'Customer: <strong>' + phone + '</strong> • Dispatch Carrier: <strong>Trax Express / PostEx</strong>';
+    resultBox.style.display = 'block';
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function handleCourierTrack(e) {
+    e.preventDefault();
+    const courier = document.getElementById('dbCourierSelect').value;
+    const cn = document.getElementById('dbCourierCn').value.trim();
+
+    const courierUrls = {
+      trax: 'https://trax.pk/tracking?tracking_number=' + encodeURIComponent(cn),
+      postex: 'https://postex.pk/tracking?tracking_id=' + encodeURIComponent(cn),
+      tcs: 'https://www.tcsexpress.com/tracking?tracking_number=' + encodeURIComponent(cn),
+      leopards: 'https://www.leopardscourier.com/leopards-tracking?track=' + encodeURIComponent(cn),
+      callcourier: 'https://callcourier.com.pk/tracking/?tc=' + encodeURIComponent(cn),
+      mnp: 'https://www.mulphilog.com/tracking?id=' + encodeURIComponent(cn)
+    };
+
+    const target = courierUrls[courier] || ('https://trax.pk/tracking?tracking_number=' + encodeURIComponent(cn));
+    window.open(target, '_blank');
+  }
+
+  function openTrackWhatsapp() {
+    const orderNum = document.getElementById('dbOrderNumber')?.value || 'Order';
+    const msg = `Hello DealBazaar Support! I want to check the delivery status of my Order: ${orderNum}. Please provide an update.`;
+    window.open(`https://wa.me/{{ section.settings.whatsapp_number | default: '923102492119' }}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+</script>
+
+{% schema %}
+{
+  "name": "DealBazaar Track Order",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Top Badge Text",
+      "default": "DEALBAZAAR LIVE ORDER TRACKING"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Track Your DealBazaar Order"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Check real-time delivery status of your DealBazaar parcel across Pakistan. Enter your Order ID or Courier Tracking Number below."
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_number",
+      "label": "Support WhatsApp Number (no + or spaces)",
+      "default": "923102492119"
+    }
+  ],
+  "presets": [
+    {
+      "name": "DealBazaar Track Order"
+    }
+  ]
+}
+{% endschema %}

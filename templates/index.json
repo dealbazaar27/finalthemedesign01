@@ -1,0 +1,209 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "category_hero_banner_main": {
+      "type": "category-hero-banner",
+      "blocks": {
+        "slide_1": {
+          "type": "slide_item",
+          "settings": {
+            "image_desktop": "shopify://shop_images/01_desktop_1200x500_678fc071-1f68-4cf5-8ad1-003341122344.jpg",
+            "image_mobile": "shopify://shop_images/02_mobile_800x600_702247c7-d019-4611-915a-61ce7b926212.jpg",
+            "slide_url": "",
+            "title": "STYLE.SMART LIVING.",
+            "subtitle": "Premium & Smarter. Better Every Day.",
+            "button_label": "EXPLORE NOW",
+            "button_link": "shopify://collections/all",
+            "title_color": "",
+            "subtitle_color": "",
+            "button_bg_color": "",
+            "button_text_color": "",
+            "content_position_vertical": "center",
+            "content_position_horizontal": "left"
+          }
+        },
+        "slide_item_dcG8rq": {
+          "type": "slide_item",
+          "settings": {
+            "image_desktop": "shopify://shop_images/desktop_1200x500_c5f269da-986c-4a33-bdad-5291f9689917.png",
+            "image_mobile": "shopify://shop_images/mobile_800x600_3d6c0c02-72b2-42f7-85e1-7e6b712dba6d.png",
+            "slide_url": "",
+            "title": "STYLE.SMART LIVING.",
+            "subtitle": "Premium & Smarter. Better Every Day.",
+            "button_label": "EXPLORE NOW",
+            "button_link": "shopify://collections/all",
+            "title_color": "{{ settings.color_palette.foreground }}",
+            "subtitle_color": "{{ settings.color_palette.foreground }}",
+            "button_bg_color": "",
+            "button_text_color": "",
+            "content_position_vertical": "center",
+            "content_position_horizontal": "default"
+          }
+        },
+        "promo_banner_1": {
+          "type": "promo_banner",
+          "settings": {
+            "title": "Smart Earbuds",
+            "badge_text": "STARTING FROM RS. 599/-",
+            "image": "shopify://shop_images/promo_400x240_2f805ac2-1344-4d17-8953-498eccee8ca0.jpg",
+            "link": "",
+            "title_color": "{{ settings.color_palette.foreground }}",
+            "badge_bg_color": "",
+            "badge_text_color": ""
+          }
+        },
+        "promo_banner_2": {
+          "type": "promo_banner",
+          "settings": {
+            "title": "Smart Watches",
+            "badge_text": "STARTING FROM RS. 2299/-",
+            "image": "shopify://shop_images/promo_400x240_b4840b71-4d0a-464b-b7de-9556b00a3e13.png",
+            "link": "",
+            "title_color": "#ffffff",
+            "badge_bg_color": "",
+            "badge_text_color": ""
+          }
+        }
+      },
+      "block_order": [
+        "slide_1",
+        "slide_item_dcG8rq",
+        "promo_banner_1",
+        "promo_banner_2"
+      ],
+      "settings": {
+        "section_bg_color": "#f7f8fa",
+        "sidebar_bg_color": "#ffffff",
+        "sidebar_header_color": "#71778e",
+        "sidebar_text_color": "#2c3038",
+        "mobile_bar_bg": "#ffffff",
+        "mobile_pill_bg": "#f3f5f9",
+        "mobile_pill_text": "#1a1a1a",
+        "slide_title_color": "#ffffff",
+        "slide_subtitle_color": "#ffffff",
+        "slide_button_bg": "#ffffff",
+        "slide_button_text": "#000000",
+        "promo_title_color": "#ffffff",
+        "promo_badge_bg": "#000000cc",
+        "promo_badge_text": "#ffffff",
+        "content_position_vertical": "bottom",
+        "content_position_horizontal": "left",
+        "show_arrows": true,
+        "show_dots": true,
+        "show_only_on_homepage": true,
+        "show_categories_on_collection_desktop": false,
+        "show_categories_on_collection_mobile": true,
+        "show_categories_desktop": true,
+        "show_categories_mobile": true,
+        "show_promos_desktop": true,
+        "show_promos_mobile": false,
+        "hero_height_desktop": 400,
+        "hero_height_mobile": 280,
+        "enable_autoplay": true,
+        "autoplay_speed": 5,
+        "pause_autoplay_on_hover": true,
+        "enable_mobile_category_autoplay": true,
+        "mobile_category_autoplay_speed": 3,
+        "sidebar_heading": "TOP CATEGORIES",
+        "sidebar_menu": "main-menu"
+      }
+    },
+    "boat_top_picks_main": {
+      "type": "boat-top-picks",
+      "blocks": {
+        "tab_1": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "New Launches",
+            "collection": "all"
+          }
+        }
+      },
+      "block_order": [
+        "tab_1"
+      ],
+      "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "accent_color": "#d8232a",
+        "view_all_color": "#1e293b",
+        "tab_active_bg": "#000000",
+        "tab_active_text": "#ffffff",
+        "tab_inactive_bg": "#f1f5f9",
+        "tab_inactive_text": "#64748b",
+        "card_strip_bg": "#ffc700",
+        "card_strip_text": "#000000",
+        "title": "Top Picks For You",
+        "underline_word": "You",
+        "collection": "",
+        "enable_desktop_slider": true,
+        "max_products": 16,
+        "columns_desktop": 6,
+        "card_gap": 12,
+        "card_radius": 16,
+        "view_all_text": "View All",
+        "view_all_link": "shopify://collections/all",
+        "max_products_mobile": 4,
+        "columns_mobile": "2",
+        "enable_mobile_slider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "boat_top_picks_rUKVUj": {
+      "type": "boat-top-picks",
+      "blocks": {
+        "tab_block_epNzka": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "New Launches",
+            "collection": "sale"
+          }
+        }
+      },
+      "block_order": [
+        "tab_block_epNzka"
+      ],
+      "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "accent_color": "#d8232a",
+        "view_all_color": "#1e293b",
+        "tab_active_bg": "#000000",
+        "tab_active_text": "#ffffff",
+        "tab_inactive_bg": "#f1f5f9",
+        "tab_inactive_text": "#64748b",
+        "card_strip_bg": "#ffc700",
+        "card_strip_text": "#000000",
+        "title": "Top Picks For You",
+        "underline_word": "You",
+        "collection": "sale",
+        "enable_desktop_slider": true,
+        "max_products": 16,
+        "columns_desktop": 6,
+        "card_gap": 12,
+        "card_radius": 16,
+        "view_all_text": "View All",
+        "view_all_link": "shopify://collections/all",
+        "max_products_mobile": 4,
+        "columns_mobile": "2",
+        "enable_mobile_slider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "category_hero_banner_main",
+    "boat_top_picks_main",
+    "boat_top_picks_rUKVUj"
+  ]
+}

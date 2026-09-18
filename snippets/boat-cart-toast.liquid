@@ -1,0 +1,295 @@
+<div class="boat-cart-toast" id="BoatCartToast" aria-live="polite">
+  <div class="boat-cart-toast__inner">
+    <div class="boat-cart-toast__icon-wrap">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+    
+    <div class="boat-cart-toast__img-wrap" id="BoatToastImgWrap">
+      <img id="BoatToastImg" src="" alt="Product thumbnail" width="44" height="44" loading="lazy">
+    </div>
+
+    <div class="boat-cart-toast__content">
+      <div class="boat-cart-toast__status">
+        <span>Added to Cart!</span>
+      </div>
+      <div class="boat-cart-toast__title" id="BoatToastTitle">Product Name</div>
+      <div class="boat-cart-toast__price" id="BoatToastPrice"></div>
+    </div>
+
+    <div class="boat-cart-toast__actions">
+      <button type="button" class="boat-cart-toast__view-btn" onclick="openBoatCartDrawer()">
+        View Cart
+      </button>
+      <button type="button" class="boat-cart-toast__close-btn" onclick="hideBoatCartToast()" aria-label="Close Notification">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <div class="boat-cart-toast__progress-track">
+    <div class="boat-cart-toast__progress-bar" id="BoatToastProgressBar"></div>
+  </div>
+</div>
+
+<style>
+  .boat-cart-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 2147483647;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-24px) scale(0.95);
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    pointer-events: none;
+    box-sizing: border-box;
+  }
+
+  .boat-cart-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .boat-cart-toast__inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    box-sizing: border-box;
+  }
+
+  .boat-cart-toast__icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #22c55e;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.35);
+  }
+
+  .boat-cart-toast__img-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .boat-cart-toast__img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .boat-cart-toast__content {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .boat-cart-toast__status {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #16a34a;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .boat-cart-toast__title {
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .boat-cart-toast__price {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #475569;
+  }
+
+  .boat-cart-toast__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .boat-cart-toast__view-btn {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .boat-cart-toast__view-btn:hover {
+    background: #00b853;
+    transform: scale(1.03);
+  }
+
+  .boat-cart-toast__close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.15s ease, background 0.15s ease;
+    padding: 0;
+  }
+
+  .boat-cart-toast__close-btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+  }
+
+  .boat-cart-toast__progress-track {
+    width: 100%;
+    height: 3px;
+    background: #f1f5f9;
+    overflow: hidden;
+  }
+
+  .boat-cart-toast__progress-bar {
+    height: 100%;
+    background: #22c55e;
+    width: 100%;
+  }
+
+  @media screen and (max-width: 600px) {
+    .boat-cart-toast {
+      top: 14px;
+      right: 14px;
+      left: 14px;
+      width: auto;
+      max-width: none;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    window.showBoatCartToast = function(productData) {
+      const toast = document.getElementById('BoatCartToast');
+      if (!toast) return;
+
+      const titleElem = document.getElementById('BoatToastTitle');
+      const priceElem = document.getElementById('BoatToastPrice');
+      const imgElem = document.getElementById('BoatToastImg');
+      const imgWrap = document.getElementById('BoatToastImgWrap');
+      const progressBar = document.getElementById('BoatToastProgressBar');
+
+      if (titleElem) {
+        titleElem.textContent = productData.title || 'Product added to cart';
+      }
+      if (priceElem) {
+        priceElem.textContent = productData.price || '';
+        priceElem.style.display = productData.price ? 'block' : 'none';
+      }
+      if (imgElem && imgWrap) {
+        if (productData.image) {
+          imgElem.src = productData.image;
+          imgWrap.style.display = 'flex';
+        } else {
+          imgWrap.style.display = 'none';
+        }
+      }
+
+      if (progressBar) {
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+          progressBar.style.transition = 'width 3.2s linear';
+          progressBar.style.width = '0%';
+        }, 50);
+      }
+
+      toast.classList.add('show');
+
+      clearTimeout(window.boatToastTimer);
+      window.boatToastTimer = setTimeout(() => {
+        hideBoatCartToast();
+      }, 3400);
+    };
+
+    window.hideBoatCartToast = function() {
+      const toast = document.getElementById('BoatCartToast');
+      if (toast) toast.classList.remove('show');
+    };
+
+    window.openBoatCartDrawer = function() {
+      hideBoatCartToast();
+      const cartDrawer = document.getElementById('cart-drawer');
+      if (cartDrawer && typeof cartDrawer.open === 'function') {
+        cartDrawer.open();
+      } else {
+        window.location.href = '/cart';
+      }
+    };
+
+    // Global fetch interceptor to automatically catch all cart add events
+    const originalFetch = window.fetch;
+    window.fetch = async function(...args) {
+      const response = await originalFetch.apply(this, args);
+      try {
+        const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+        if (url.includes('/cart/add')) {
+          const clone = response.clone();
+          clone.json().then(data => {
+            if (data && !data.status && (data.title || data.product_title)) {
+              let priceStr = '';
+              if (data.price) {
+                priceStr = (typeof formatMoneyWithoutDecimals === 'function') 
+                  ? formatMoneyWithoutDecimals(data.price) 
+                  : ('Rs.' + (data.price / 100).toLocaleString());
+              }
+              showBoatCartToast({
+                title: data.product_title || data.title,
+                price: priceStr,
+                image: data.featured_image?.url || data.image || ''
+              });
+            }
+          }).catch(() => {});
+        }
+      } catch(e) {}
+      return response;
+    };
+  })();
+</script>

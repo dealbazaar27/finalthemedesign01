@@ -1,0 +1,219 @@
+{%- doc -%}
+  Renders the boAt-inspired mobile navigation menu drawer.
+  @param {object} linklist - The Shopify menu linklist object
+  @param {object} [block_settings] - Block settings
+{%- enddoc -%}
+
+<div class="boat-mobile-drawer-wrapper">
+  <!-- Capsule Search Bar Trigger in Mobile Drawer -->
+  <div class="boat-mobile-drawer-search-form">
+    <button
+      type="button"
+      class="boat-mobile-drawer-search-input-wrap button-unstyled"
+      on:click="#search-modal/showDialog"
+      aria-label="Search"
+      aria-haspopup="dialog"
+    >
+      <span class="boat-mobile-drawer-search-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </span>
+      <span class="boat-mobile-drawer-search-placeholder">
+        Search <strong class="boat-search-highlight">"Headphones"</strong>
+      </span>
+    </button>
+  </div>
+
+  {% liquid
+    assign categories_link = null
+    for link in linklist.links
+      assign link_title_downcase = link.title | downcase
+      if link_title_downcase contains 'category' or link_title_downcase contains 'categories' or link_title_downcase contains 'shop' or link_title_downcase contains 'product'
+        assign categories_link = link
+        break
+      endif
+    endfor
+
+    if categories_link == null and linklist.links.size > 0
+      for link in linklist.links
+        if link.links != blank
+          assign categories_link = link
+          break
+        endif
+      endfor
+    endif
+  %}
+
+  <!-- Top Categories Section (Open by Default) -->
+  <details class="boat-mobile-categories-details" open>
+    <summary class="boat-mobile-categories-summary">
+      <span class="boat-mobile-categories-title">
+        {%- if categories_link != null -%}
+          {{ categories_link.title | escape }}
+        {%- else -%}
+          Categories
+        {%- endif -%}
+      </span>
+      <span class="boat-mobile-toggle-icon">
+        <svg class="boat-icon-minus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <svg class="boat-icon-plus" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </span>
+    </summary>
+
+    <div class="boat-mobile-categories-body">
+      <div class="boat-mobile-cat-grid" id="BoatMobileCategoryGrid">
+        {% liquid
+          assign category_items = null
+          if categories_link != null and categories_link.links != blank
+            assign category_items = categories_link.links
+          else
+            assign category_items = linklist.links
+          endif
+        %}
+
+        {% for item in category_items %}
+          <a href="{{ item.url }}" class="boat-mobile-cat-card{% if forloop.index > 9 %} boat-mobile-cat-card--hidden{% endif %}">
+            <div class="boat-mobile-cat-avatar">
+              {% liquid
+                assign has_img = false
+                assign img_src = ''
+                if item.type == 'collection_link' and item.object.featured_image
+                  assign img_src = item.object.featured_image | image_url: width: 160
+                  assign has_img = true
+                elsif item.type == 'collection_link' and item.object.products.first.featured_image
+                  assign img_src = item.object.products.first.featured_image | image_url: width: 160
+                  assign has_img = true
+                elsif item.type == 'product_link' and item.object.featured_image
+                  assign img_src = item.object.featured_image | image_url: width: 160
+                  assign has_img = true
+                endif
+              %}
+              {% if has_img %}
+                <img src="{{ img_src }}" alt="{{ item.title | escape }}" loading="lazy" width="80" height="80">
+              {% else %}
+                <span class="boat-mobile-cat-placeholder">
+                  {{ item.title | slice: 0, 1 | upcase }}
+                </span>
+              {% endif %}
+            </div>
+            <span class="boat-mobile-cat-title">{{ item.title | escape }}</span>
+          </a>
+        {% endfor %}
+      </div>
+
+      {% if category_items.size > 9 %}
+        <button type="button" class="boat-mobile-expand-btn" id="BoatMobileExpandBtn" aria-expanded="false">
+          <span class="boat-mobile-expand-text">Expand More</span>
+          <span class="boat-mobile-expand-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </button>
+      {% endif %}
+    </div>
+  </details>
+
+  <!-- Secondary List Items below Categories -->
+  <ul class="boat-mobile-list-menu" role="list">
+    {% for link in linklist.links %}
+      {% if categories_link != null and link.handle == categories_link.handle %}
+        {% continue %}
+      {% endif %}
+
+      {% assign is_home = false %}
+      {% assign link_title_lc = link.title | downcase %}
+      {% if link_title_lc == 'home' or link.url == '/' or link.url == routes.root_url %}
+        {% assign is_home = true %}
+      {% endif %}
+
+      <li class="boat-mobile-list-item-wrap">
+        {% if link.links != blank %}
+          <details class="boat-mobile-item-details">
+            <summary class="boat-mobile-list-item boat-mobile-list-item--summary{% if is_home %} boat-mobile-list-item--home{% endif %}">
+              <span class="boat-mobile-list-title">{{ link.title | escape }}</span>
+              <span class="boat-mobile-list-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </span>
+            </summary>
+            <ul class="boat-mobile-sublist" role="list">
+              {% for childlink in link.links %}
+                <li>
+                  <a href="{{ childlink.url }}" class="boat-mobile-sublink">
+                    {{ childlink.title | escape }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </details>
+        {% else %}
+          <a href="{{ link.url }}" class="boat-mobile-list-item{% if is_home %} boat-mobile-list-item--home{% endif %}">
+            <span class="boat-mobile-list-title">{{ link.title | escape }}</span>
+            <span class="boat-mobile-list-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </span>
+          </a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  <!-- Bottom Dynamic Collection Featured Showcase Box -->
+  {% liquid
+    assign selected_collection = null
+    if block_settings.mobile_drawer_collection != blank
+      assign selected_collection = block_settings.mobile_drawer_collection
+    elsif collections['trending'].products.size > 0
+      assign selected_collection = collections['trending']
+    elsif collections['frontpage'].products.size > 0
+      assign selected_collection = collections['frontpage']
+    else
+      assign selected_collection = collections.all
+    endif
+
+    assign section_title = block_settings.mobile_drawer_collection_title
+    if section_title == blank
+      if selected_collection != null and selected_collection.title != blank
+        assign section_title = selected_collection.title
+      else
+        assign section_title = 'Trending Deals'
+      endif
+    endif
+
+    assign view_all_url = '/collections/all'
+    if selected_collection != null and selected_collection.url != blank
+      assign view_all_url = selected_collection.url
+    endif
+  %}
+
+  {% if selected_collection != null and selected_collection.products.size > 0 %}
+    <div class="boat-mobile-featured-box">
+      <div class="boat-mobile-featured-header">
+        <span class="boat-mobile-featured-badge">{{ section_title | escape }}</span>
+        <a href="{{ view_all_url }}" class="boat-mobile-featured-viewall">View All &rarr;</a>
+      </div>
+      <div class="boat-mobile-featured-carousel">
+        {% for product in selected_collection.products limit: 6 %}
+          <div class="boat-mobile-card-item-wrap" style="width: 165px; flex: 0 0 165px;">
+            {% render 'boat-product-card-item', product: product %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const expandBtn = document.getElementById('BoatMobileExpandBtn');
+    const catGrid = document.getElementById('BoatMobileCategoryGrid');
+    if (expandBtn && catGrid) {
+      expandBtn.addEventListener('click', function() {
+        const isExpanded = catGrid.classList.toggle('boat-mobile-cat-grid--expanded');
+        expandBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        const textSpan = expandBtn.querySelector('.boat-mobile-expand-text');
+        if (textSpan) {
+          textSpan.textContent = isExpanded ? 'Show Less' : 'Expand More';
+        }
+        expandBtn.classList.toggle('boat-mobile-expand-btn--active', isExpanded);
+      });
+    }
+  });
+</script>

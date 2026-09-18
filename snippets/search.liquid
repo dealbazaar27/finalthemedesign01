@@ -1,0 +1,128 @@
+{%- doc -%}
+  Renders the search action button as a boAt Pill Search Bar with Auto-Rotating Placeholder Keywords.
+
+  @param {string} [style] - The style of the search action.
+  @param {string} [class] - Additional classes for the search action.
+  @param {string} [display_style] - The display style ('icon' or 'text').
+{%- enddoc -%}
+
+{% assign raw_keywords = section.settings.search_placeholder_keywords | default: settings.search_placeholder_keywords | default: 'Smartwatches, Earbuds, Headphones, Speakers, Powerbanks' %}
+{% assign keyword_array = raw_keywords | split: ',' %}
+{% assign first_keyword = keyword_array.first | strip | default: 'Smartwatches' %}
+
+{% unless style == 'none' %}
+  <search-button
+    id="SH1"
+    class="search-action boat-search-action-wrapper{% if class != blank %} {{ class | strip }}{% endif %}"
+  >
+    <button
+      on:click="#search-modal/showDialog"
+      class="button-unstyled boat-search-pill-button"
+      aria-label="{{ 'content.search_input_label' | t }}"
+      aria-haspopup="dialog"
+    >
+      <span class="svg-wrapper boat-search-pill-icon">
+        {{ 'icon-search.svg' | inline_asset_content }}
+      </span>
+
+      <span class="boat-search-pill-text">
+        Search <strong class="boat-rotating-keyword" style="transition: opacity 0.3s ease, transform 0.3s ease; display: inline-block;">"{{ first_keyword }}"</strong>
+      </span>
+    </button>
+  </search-button>
+{% endunless %}
+
+<script>
+  (function() {
+    const keywords = [
+      {% for kw in keyword_array %}
+        "{{ kw | strip }}"{% unless forloop.last %},{% endunless %}
+      {% endfor %}
+    ];
+
+    if (keywords.length <= 1) return;
+
+    let currentIndex = 0;
+
+    function rotateSearchKeywords() {
+      const elements = document.querySelectorAll('.boat-rotating-keyword');
+      if (!elements.length) return;
+
+      currentIndex = (currentIndex + 1) % keywords.length;
+      const nextWord = keywords[currentIndex];
+
+      elements.forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-4px)';
+        setTimeout(() => {
+          el.textContent = `"${nextWord}"`;
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, 300);
+      });
+    }
+
+    if (!window.boatKeywordRotatorInterval) {
+      window.boatKeywordRotatorInterval = setInterval(rotateSearchKeywords, 3000);
+    }
+  })();
+</script>
+
+{% stylesheet %}
+  .boat-search-action-wrapper {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .boat-search-pill-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 8px 18px !important;
+    width: 250px !important;
+    max-width: 100% !important;
+    background: #f4f5f8 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 30px !important;
+    cursor: pointer !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  }
+
+  @media (max-width: 768px) {
+    .boat-search-action-wrapper {
+      width: 100% !important;
+    }
+    .boat-search-pill-button {
+      width: 100% !important;
+      justify-content: space-between !important;
+      padding: 8px 16px !important;
+      background: #ffffff !important;
+      border: 1.5px solid #000000 !important;
+      border-radius: 6px !important;
+    }
+  }
+
+  .boat-search-pill-button:hover {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+  }
+
+  .boat-search-pill-text {
+    font-size: 0.9rem !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 !important;
+  }
+
+  .boat-search-pill-text strong {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+  }
+{% endstylesheet %}

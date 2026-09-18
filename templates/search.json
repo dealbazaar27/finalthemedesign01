@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "boat-search-page",
+      "settings": {
+        "placeholder_text": "Search for products, brands and deals...",
+        "products_per_page": 24
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

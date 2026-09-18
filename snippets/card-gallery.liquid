@@ -1,0 +1,24 @@
+{% liquid
+  assign product = closest.product
+%}
+
+{% if product != blank %}
+  {% render 'boat-product-card-item', product: product %}
+{% else %}
+  <div class="boat-pick-card boat-pick-card--placeholder">
+    <div class="boat-pick-card__media-container">
+      <div style="width:100%; height:100%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:2rem;">📦</div>
+    </div>
+    <div class="boat-pick-card__yellow-bar">
+      <span>Sample Product</span>
+      <span>⭐ 4.8</span>
+    </div>
+    <div class="boat-pick-card__details">
+      <span class="boat-pick-card__title">Sample Product Title</span>
+      <div class="boat-pick-card__divider"></div>
+      <div class="boat-pick-card__price-row">
+        <span class="boat-pick-card__price">$99.00</span>
+      </div>
+    </div>
+  </div>
+{% endif %}

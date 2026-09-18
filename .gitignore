@@ -1,0 +1,13 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Zip and archive files
+*.zip
+*.tar.gz
+
+# Environment & node
+.env
+node_modules/
+.shopify/

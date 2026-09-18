@@ -1,0 +1,96 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "boat-product-page",
+      "settings": {
+        "enable_desktop_sticky": true,
+        "enable_pdp_tabs": true,
+        "show_tab_overview": true,
+        "show_tab_specs": true,
+        "show_tab_faqs": true,
+        "show_tab_reviews": true,
+        "show_rating": true,
+        "show_timer": true,
+        "timer_label": "Flash Sale Ends In:",
+        "timer_hours": 100,
+        "timer_minutes": 2,
+        "hide_inline_buttons_mobile": true,
+        "enable_mobile_sticky": true,
+        "show_sticky_deal_strip": true,
+        "sticky_atc_text": "Add To Cart",
+        "sticky_buy_text": "Buy Now",
+        "sticky_strip_bg": "#00875a",
+        "sticky_strip_text": "#ffffff",
+        "sticky_atc_bg": "#0f172a",
+        "sticky_atc_text_color": "#ffffff",
+        "sticky_buy_bg": "#00b853",
+        "sticky_buy_text_color": "#ffffff",
+        "title_font_size": 28,
+        "title_color": "#0f172a",
+        "price_color": "#0f172a",
+        "discount_color": "#00b853",
+        "atc_btn_bg": "#0f172a",
+        "atc_btn_text": "#ffffff",
+        "buy_btn_bg": "#00b853",
+        "buy_btn_text": "#ffffff",
+        "enable_deals": true,
+        "deal_title": "🔥 BEST DEAL",
+        "deals_tag_filter": "",
+        "deals_collection_filter": "",
+        "tier_1_qty": 2,
+        "tier_1_discount": 6,
+        "tier_1_code": "DEAL6",
+        "tier_1_badge": "MOST POPULAR",
+        "tier_2_qty": 5,
+        "tier_2_discount": 7,
+        "tier_2_code": "DEAL7",
+        "tier_2_badge": "BEST VALUE",
+        "tier_3_qty": 10,
+        "tier_3_discount": 10,
+        "tier_3_code": "DEAL10",
+        "tier_3_badge": "MOST SAVINGS",
+        "enable_whatsapp_order": true,
+        "whatsapp_phone": "923102492119",
+        "whatsapp_btn_label": "Order via WhatsApp",
+        "whatsapp_btn_bg": "#25d366"
+      }
+    },
+    "related_products": {
+      "type": "boat-related-products",
+      "settings": {
+        "heading": "Related Products",
+        "subheading": "",
+        "collection": "",
+        "products_to_show": 10,
+        "show_view_all": true
+      }
+    },
+    "quick_order_list_mCkCUU": {
+      "type": "quick-order-list",
+      "disabled": true,
+      "name": "t:names.quick_order_list",
+      "settings": {
+        "variants_per_page": 50,
+        "show_image": false,
+        "show_sku": false,
+        "background_color": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": [
+    "main",
+    "related_products",
+    "quick_order_list_mCkCUU"
+  ]
+}

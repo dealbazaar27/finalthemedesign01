@@ -1,0 +1,1045 @@
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+{% liquid
+  assign title = section.settings.title | default: 'Top Picks For You'
+  assign underline_word = section.settings.underline_word | default: 'You'
+  assign view_all_text = section.settings.view_all_text | default: 'View All'
+  assign view_all_link = section.settings.view_all_link | default: '/collections/all'
+  assign max_products = section.settings.max_products | default: 8
+  assign columns_desktop = section.settings.columns_desktop | default: 6
+  assign enable_desktop_slider = section.settings.enable_desktop_slider
+  assign card_gap = section.settings.card_gap | default: 12
+  assign card_radius = section.settings.card_radius | default: 16
+
+  # Mobile Customization Settings
+  assign max_products_mobile = section.settings.max_products_mobile | default: 6
+  assign columns_mobile = section.settings.columns_mobile | default: '2'
+  assign enable_mobile_slider = section.settings.enable_mobile_slider
+%}
+
+<style>
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top }}px;
+    padding-bottom: {{ section.settings.padding_bottom }}px;
+    background-color: {{ section.settings.background_color | default: '#ffffff' }} !important;
+  }
+  .section-{{ section.id }}-padding .boat-top-picks__heading {
+    color: {{ section.settings.heading_color | default: '#0f172a' }} !important;
+  }
+  .section-{{ section.id }}-padding .boat-top-picks__heading span.underline-red::after {
+    background-color: {{ section.settings.accent_color | default: '#d8232a' }} !important;
+  }
+  .section-{{ section.id }}-padding .boat-top-picks__view-all {
+    color: {{ section.settings.view_all_color | default: '#1e293b' }} !important;
+  }
+  .section-{{ section.id }}-padding .boat-top-picks__tab {
+    background-color: {{ section.settings.tab_inactive_bg | default: '#f1f5f9' }} !important;
+    color: {{ section.settings.tab_inactive_text | default: '#64748b' }} !important;
+  }
+  .section-{{ section.id }}-padding .boat-top-picks__tab.active {
+    background-color: {{ section.settings.tab_active_bg | default: '#000000' }} !important;
+    color: {{ section.settings.tab_active_text | default: '#ffffff' }} !important;
+  }
+
+  /* --- Top Picks Section Wrapper --- */
+  .boat-top-picks {
+    width: 100%;
+    max-width: var(--page-width, 1400px);
+    margin: 0 auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    box-sizing: border-box;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  /* --- Section Header Row --- */
+  .boat-top-picks__header {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .boat-top-picks__title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  .boat-top-picks__heading {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.4px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    max-width: 100%;
+    word-break: break-word;
+  }
+
+  .boat-top-picks__heading span.underline-red {
+    position: relative;
+    display: inline-block;
+  }
+
+  .boat-top-picks__heading span.underline-red::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #d8232a;
+    border-radius: 2px;
+  }
+
+  .boat-top-picks__view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .boat-top-picks__view-all:hover {
+    color: #d8232a;
+    transform: translateX(2px);
+  }
+
+  .boat-top-picks__view-all-arrow {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #1e293b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: border-color 0.2s ease;
+  }
+
+  .boat-top-picks__view-all:hover .boat-top-picks__view-all-arrow {
+    border-color: #d8232a;
+  }
+
+  /* --- Filter Tabs Bar (Mobile & Desktop Carousel Slider) --- */
+  .boat-top-picks__tabs {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 4px 1rem 6px 4px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .boat-top-picks__tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .boat-top-picks__tab-btn {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    white-space: nowrap;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1.5px solid #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 7px 18px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+  }
+
+  .boat-top-picks__tab-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    border-color: #94a3b8;
+  }
+
+  .boat-top-picks__tab-btn.active {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  /* --- Slider Container & Controls --- */
+  .boat-top-picks__grid-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .boat-top-picks__grid {
+    display: grid;
+    grid-template-columns: repeat({{ columns_desktop }}, minmax(0, 1fr));
+    gap: {{ card_gap }}px;
+    margin-top: 0.75rem;
+  }
+
+  {% if enable_desktop_slider %}
+    @media (min-width: 769px) {
+      .boat-top-picks__grid {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        padding-bottom: 8px;
+      }
+      .boat-top-picks__grid::-webkit-scrollbar {
+        display: none;
+      }
+      .boat-top-picks__grid > * {
+        flex: 0 0 calc((100% - ({{ columns_desktop | minus: 1 }} * {{ card_gap }}px)) / {{ columns_desktop }});
+        min-width: calc((100% - ({{ columns_desktop | minus: 1 }} * {{ card_gap }}px)) / {{ columns_desktop }});
+        scroll-snap-align: start;
+      }
+    }
+  {% endif %}
+
+  /* Slider Navigation Arrows (Desktop) */
+  .boat-top-picks__slider-nav {
+    position: absolute;
+    top: 45%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    font-size: 1.2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  }
+
+  .boat-top-picks__slider-nav:hover {
+    background: #0f172a;
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .boat-top-picks__slider-nav--prev {
+    left: -18px;
+  }
+
+  .boat-top-picks__slider-nav--next {
+    right: -18px;
+  }
+
+  .boat-pick-card-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+
+  @media (max-width: 768px) {
+    .boat-hide-mobile {
+      display: none !important;
+    }
+
+    .boat-top-picks__slider-nav {
+      display: none !important;
+    }
+
+    {% if enable_mobile_slider %}
+      .boat-top-picks__grid {
+        display: flex !important;
+        grid-template-columns: none !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory !important;
+        scroll-behavior: smooth !important;
+        scrollbar-width: none !important;
+        padding-bottom: 12px !important;
+        gap: 0.75rem !important;
+      }
+      .boat-top-picks__grid::-webkit-scrollbar {
+        display: none !important;
+      }
+      .boat-top-picks__grid > * {
+        {% if columns_mobile == '1' or columns_mobile == 1 %}
+          flex: 0 0 calc(86% - 0.5rem) !important;
+          min-width: calc(86% - 0.5rem) !important;
+        {% else %}
+          flex: 0 0 calc(52% - 0.4rem) !important;
+          min-width: calc(52% - 0.4rem) !important;
+        {% endif %}
+        scroll-snap-align: start !important;
+      }
+    {% else %}
+      .boat-top-picks__grid {
+        display: grid !important;
+        grid-template-columns: repeat({{ columns_mobile }}, minmax(0, 1fr)) !important;
+        gap: 0.65rem !important;
+      }
+    {% endif %}
+  }
+
+  /* --- Compact Card Container & Hover Effects --- */
+  .boat-top-picks__grid {
+    align-items: stretch !important;
+  }
+
+  .boat-pick-card {
+    background: #ffffff;
+    border-radius: {{ card_radius }}px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    height: 100%;
+    flex: 1 1 auto;
+  }
+
+  .boat-pick-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+  }
+
+  .boat-pick-card__media-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: 0;
+    padding-bottom: 100%;
+    overflow: hidden;
+    background: #f8fafc;
+    flex-shrink: 0;
+    display: block;
+  }
+
+  .boat-pick-card__image-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .boat-pick-card__image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transition: transform 0.35s ease, opacity 0.2s ease;
+  }
+
+  .boat-pick-card:hover .boat-pick-card__image {
+    transform: scale(1.04);
+  }
+
+  /* --- Floating Hover Add to Cart Icon Button --- */
+  .boat-pick-card__hover-form {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 5;
+    margin: 0;
+  }
+
+  .boat-pick-card__hover-atc {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+    transition: opacity 0.25s ease, transform 0.25s ease, background-color 0.2s ease !important;
+    padding: 0 !important;
+  }
+
+  .boat-pick-card:hover .boat-pick-card__hover-atc {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .boat-pick-card__hover-atc:hover {
+    background: #d8232a !important;
+    transform: scale(1.1) !important;
+  }
+
+  @media (max-width: 768px) {
+    .boat-pick-card__hover-atc {
+      opacity: 1 !important;
+      transform: translateY(0) scale(1) !important;
+    }
+  }
+
+  .boat-pick-card__hover-atc svg {
+    width: 15px !important;
+    height: 15px !important;
+    fill: #ffffff !important;
+  }
+
+  /* --- Top Badge Tag --- */
+  .boat-pick-card__badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 2;
+    background: #000000;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+
+  /* --- Yellow Feature Banner Bar --- */
+  .boat-pick-card__yellow-bar {
+    background: #ffc700;
+    color: #000000;
+    font-size: 0.72rem;
+    font-weight: 800;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    letter-spacing: -0.2px;
+    height: 26px;
+    box-sizing: border-box;
+  }
+
+  .boat-pick-card__rating {
+    background: #ffffff;
+    color: #000000;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* --- Card Details & Footer --- */
+  .boat-pick-card__details {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .boat-pick-card__title {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    line-height: 1.3;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: none;
+    height: 2.3rem;
+    min-height: 2.3rem; /* Enforce 2-line height alignment for all cards */
+  }
+  .boat-pick-card__title:hover {
+    color: #d8232a;
+  }
+
+  .boat-pick-card__footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  .boat-pick-card__price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
+    height: 20px;
+    min-height: 20px;
+    line-height: 1.2;
+  }
+
+  .boat-pick-card__price-values {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .boat-pick-card__price {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #000000;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .boat-pick-card__compare-price {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+    font-weight: 500;
+  }
+
+  .boat-pick-card__discount {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #00b853;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  .boat-pick-card__swatches {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    height: 20px;
+    min-height: 20px; /* Dedicated height for 100% equal card sizing */
+  }
+
+  .boat-swatch-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+    padding: 0;
+    outline: none;
+  }
+
+  .boat-swatch-dot:hover,
+  .boat-swatch-dot.active {
+    transform: scale(1.25);
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px #38bdf8;
+  }
+
+  .boat-swatch-pill {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .boat-swatch-pill.active,
+  .boat-swatch-pill:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-swatch-more {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+</style>
+
+<div class="boat-top-picks section-{{ section.id }}-padding">
+  
+  {% comment %} --- Section Header & Tabs --- {% endcomment %}
+  <div class="boat-top-picks__header">
+    <div class="boat-top-picks__title-row">
+      <h2 class="boat-top-picks__heading">
+        {{ title | remove: underline_word }} <span class="underline-red">{{ underline_word }}</span>
+      </h2>
+
+      {% if view_all_text != blank %}
+        <a href="{{ view_all_link }}" class="boat-top-picks__view-all">
+          <span>{{ view_all_text }}</span>
+          <span class="boat-top-picks__view-all-arrow">➔</span>
+        </a>
+      {% endif %}
+    </div>
+
+    {% assign blocks_tabs = section.blocks | where: 'type', 'tab_block' %}
+    {% if blocks_tabs.size > 0 %}
+      <div class="boat-top-picks__tabs">
+        {% for block in blocks_tabs %}
+          <button 
+            type="button" 
+            class="boat-top-picks__tab-btn{% if forloop.first %} active{% endif %}"
+            onclick="switchBoatTab('{{ section.id }}', 'tab-{{ block.id }}', this)"
+            {{ block.shopify_attributes }}
+          >
+            {{ block.settings.tab_title }}
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% comment %} --- Product Cards Container with Optional Desktop Slider --- {% endcomment %}
+  <div class="boat-top-picks__grid-wrapper">
+    {% if enable_desktop_slider %}
+      <button type="button" class="boat-top-picks__slider-nav boat-top-picks__slider-nav--prev" onclick="scrollBoatGrid(this, -320)" aria-label="Previous Products">‹</button>
+      <button type="button" class="boat-top-picks__slider-nav boat-top-picks__slider-nav--next" onclick="scrollBoatGrid(this, 320)" aria-label="Next Products">›</button>
+    {% endif %}
+
+    {% assign blocks_tabs = section.blocks | where: 'type', 'tab_block' %}
+    
+    {% if blocks_tabs.size > 0 %}
+      {% for block in blocks_tabs %}
+        {% assign current_collection = collections[block.settings.collection] %}
+        
+        <div 
+          id="boat-tab-{{ section.id }}-tab-{{ block.id }}" 
+          class="boat-top-picks__tab-content"
+          style="{% unless forloop.first %}display: none;{% endunless %}"
+        >
+          <div class="boat-top-picks__grid" id="BoatGrid-{{ section.id }}-{{ block.id }}">
+            {% if current_collection != blank and current_collection.products.size > 0 %}
+              {% for product in current_collection.products limit: max_products %}
+                <div class="boat-pick-card-wrapper{% if forloop.index > max_products_mobile %} boat-hide-mobile{% endif %}">
+                  {% render 'boat-product-card-item', product: product, section_settings: section.settings %}
+                </div>
+              {% endfor %}
+            {% else %}
+              {% for i in (1..max_products) %}
+                <div class="boat-pick-card-wrapper{% if forloop.index > max_products_mobile %} boat-hide-mobile{% endif %}">
+                  {% render 'boat-product-card-demo', index: i %}
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      {% assign fallback_collection = section.settings.collection %}
+      {% assign current_collection = collections[fallback_collection] %}
+
+      <div class="boat-top-picks__grid" id="BoatGrid-{{ section.id }}-default">
+        {% if current_collection != blank and current_collection.products.size > 0 %}
+          {% for product in current_collection.products limit: max_products %}
+            <div class="boat-pick-card-wrapper{% if forloop.index > max_products_mobile %} boat-hide-mobile{% endif %}">
+              {% render 'boat-product-card-item', product: product, section_settings: section.settings %}
+            </div>
+          {% endfor %}
+        {% else %}
+          {% for i in (1..max_products) %}
+            <div class="boat-pick-card-wrapper{% if forloop.index > max_products_mobile %} boat-hide-mobile{% endif %}">
+              {% render 'boat-product-card-demo', index: i %}
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  // Tab Switcher JS
+  function switchBoatTab(sectionId, tabId, btnElement) {
+    const container = btnElement.closest('.boat-top-picks');
+    const contents = container.querySelectorAll('.boat-top-picks__tab-content');
+    contents.forEach(content => content.style.display = 'none');
+
+    const buttons = container.querySelectorAll('.boat-top-picks__tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+
+    const targetContent = document.getElementById('boat-tab-' + sectionId + '-' + tabId);
+    if (targetContent) targetContent.style.display = 'block';
+    btnElement.classList.add('active');
+
+    // Smoothly scroll active tab into view on mobile tabs slider
+    try {
+      btnElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } catch(e) {}
+  }
+
+  // Desktop Grid Horizontal Scroll Handler (Scoped to current section instance)
+  function scrollBoatGrid(btnOrSectionId, amount) {
+    let grid = null;
+
+    if (btnOrSectionId instanceof Element) {
+      const wrapper = btnOrSectionId.closest('.boat-top-picks__grid-wrapper') || btnOrSectionId.closest('.boat-top-picks');
+      if (wrapper) {
+        const activeTab = wrapper.querySelector('.boat-top-picks__tab-content:not([style*="display: none"]) .boat-top-picks__grid');
+        grid = activeTab || wrapper.querySelector('.boat-top-picks__grid');
+      }
+    } else if (typeof btnOrSectionId === 'string') {
+      const sec = document.getElementById('shopify-section-' + btnOrSectionId) || document.querySelector('[data-section-id="' + btnOrSectionId + '"]');
+      if (sec) {
+        const activeTab = sec.querySelector('.boat-top-picks__tab-content:not([style*="display: none"]) .boat-top-picks__grid');
+        grid = activeTab || sec.querySelector('.boat-top-picks__grid');
+      }
+      if (!grid) {
+        grid = document.getElementById('BoatGrid-' + btnOrSectionId + '-default');
+      }
+    }
+
+    if (!grid) {
+      grid = document.querySelector('.boat-top-picks__grid');
+    }
+
+    if (grid) {
+      const card = grid.querySelector('.boat-pick-card-wrapper') || grid.querySelector('.boat-pick-card');
+      const step = card && card.offsetWidth > 0 ? (card.offsetWidth + 16) : Math.abs(amount);
+      const scrollDistance = (amount < 0 ? -1 : 1) * step;
+      grid.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+    }
+  }
+
+  // Dynamic Swatch Click Handler (Colors & Sizes)
+  function selectBoatVariant(dotBtn) {
+    const card = dotBtn.closest('.boat-pick-card');
+    if (!card) return;
+
+    const allSwatches = card.querySelectorAll('.boat-swatch-dot, .boat-swatch-pill');
+    allSwatches.forEach(d => d.classList.remove('active'));
+    dotBtn.classList.add('active');
+
+    const variantId = dotBtn.getAttribute('data-variant-id');
+    const variantImage = dotBtn.getAttribute('data-variant-image');
+    const variantPrice = dotBtn.getAttribute('data-variant-price');
+    const variantCompare = dotBtn.getAttribute('data-variant-compare');
+    const variantDiscount = dotBtn.getAttribute('data-variant-discount');
+    const isAvailable = dotBtn.getAttribute('data-variant-available') === 'true';
+
+    if (variantImage) {
+      const img = card.querySelector('.boat-pick-card__image');
+      if (img) img.src = variantImage;
+    }
+
+    const input = card.querySelector('input[name="id"]');
+    if (input && variantId) input.value = variantId;
+
+    const priceElem = card.querySelector('.boat-pick-card__price');
+    if (priceElem && variantPrice) priceElem.textContent = variantPrice;
+
+    const compareElem = card.querySelector('.boat-pick-card__compare-price');
+    if (compareElem) {
+      if (variantCompare) {
+        compareElem.textContent = variantCompare;
+        compareElem.style.display = 'inline';
+      } else {
+        compareElem.style.display = 'none';
+      }
+    }
+
+    const discountElem = card.querySelector('.boat-pick-card__discount');
+    if (discountElem) {
+      if (variantDiscount && variantDiscount !== '0% off') {
+        discountElem.textContent = variantDiscount;
+        discountElem.style.display = 'inline';
+      } else {
+        discountElem.style.display = 'none';
+      }
+    }
+
+    const submitBtn = card.querySelector('.boat-pick-card__hover-atc');
+    if (submitBtn) {
+      submitBtn.disabled = !isAvailable;
+    }
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Deal Bazaar Top Picks",
+  "tag": "section",
+  "class": "section-boat-top-picks",
+  "settings": [
+        {
+      "type": "header",
+      "content": "🎨 Colors & Typography Settings"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Section Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Text Color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent / Underline Color",
+      "default": "#d8232a"
+    },
+    {
+      "type": "color",
+      "id": "view_all_color",
+      "label": "View All Link Color",
+      "default": "#1e293b"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_bg",
+      "label": "Active Tab Background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_text",
+      "label": "Active Tab Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "tab_inactive_bg",
+      "label": "Inactive Tab Background",
+      "default": "#f1f5f9"
+    },
+    {
+      "type": "color",
+      "id": "tab_inactive_text",
+      "label": "Inactive Tab Text Color",
+      "default": "#64748b"
+    },
+    {
+      "type": "color",
+      "id": "card_strip_bg",
+      "label": "Card Feature / Sale Strip Background",
+      "default": "#ffc700"
+    },
+    {
+      "type": "color",
+      "id": "card_strip_text",
+      "label": "Card Feature / Sale Strip Text Color",
+      "default": "#000000"
+    },
+
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Heading",
+      "default": "Top Picks For You"
+    },
+    {
+      "type": "text",
+      "id": "underline_word",
+      "label": "Underline Red Word",
+      "default": "You"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Default Collection (if no tabs added)"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_desktop_slider",
+      "label": "Enable Desktop Horizontal Slider",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum Products to Show",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "label": "Columns on Desktop",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Space Between Cards (px)",
+      "min": 6,
+      "max": 24,
+      "step": 2,
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card Border Radius (px)",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "default": 16
+    },
+    {
+      "type": "text",
+      "id": "view_all_text",
+      "label": "View All Button Text",
+      "default": "View All"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "View All Button Link"
+    },
+    {
+      "type": "header",
+      "content": "📱 Mobile Layout Settings"
+    },
+    {
+      "type": "range",
+      "id": "max_products_mobile",
+      "label": "Maximum Products to Show on Mobile",
+      "min": 2,
+      "max": 16,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Mobile Grid Columns",
+      "options": [
+        {
+          "value": "1",
+          "label": "1 Column (Single Card)"
+        },
+        {
+          "value": "2",
+          "label": "2 Columns (Grid)"
+        }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_mobile_slider",
+      "label": "Enable Mobile Horizontal Slider / Carousel",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Section Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Top Padding",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom Padding",
+      "default": 36
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tab_block",
+      "name": "Collection Tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "tab_title",
+          "label": "Tab Title",
+          "default": "New Launches"
+        },
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select Collection"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deal Bazaar Top Picks",
+      "blocks": [
+        {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "New Launches"
+          }
+        },
+        {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "Personalisation"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

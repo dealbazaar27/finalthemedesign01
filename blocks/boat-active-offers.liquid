@@ -1,0 +1,274 @@
+<div class="boat-active-offers-card" {{ block.shopify_attributes }}>
+  <h4 class="boat-offers-heading">{{ block.settings.heading | default: 'Active Offers' }}</h4>
+  <div class="boat-offers-grid">
+    
+    <div class="boat-offer-box boat-offer-box--popular">
+      <div class="boat-offer-badge boat-offer-badge--green">
+        {{ block.settings.card1_badge | default: 'MOST POPULAR' }}
+      </div>
+      <div class="boat-offer-content">
+        <div class="boat-offer-title">{{ block.settings.card1_title | default: 'Buy 2 or more' }}</div>
+        <div class="boat-offer-discount">{{ block.settings.card1_discount | default: 'Get 6% Off' }}</div>
+        <div class="boat-offer-code-row" onclick="copyBoatCode('{{ block.settings.card1_code | default: 'DEAL6' }}', this)">
+          <span>Code: <strong>{{ block.settings.card1_code | default: 'DEAL6' }}</strong></span>
+          <svg class="boat-copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="boat-offer-box boat-offer-box--value">
+      <div class="boat-offer-badge boat-offer-badge--dark">
+        {{ block.settings.card2_badge | default: 'BEST VALUE' }}
+      </div>
+      <div class="boat-offer-content">
+        <div class="boat-offer-title">{{ block.settings.card2_title | default: 'Buy 5 or more' }}</div>
+        <div class="boat-offer-discount">{{ block.settings.card2_discount | default: 'Get 7% Off' }}</div>
+        <div class="boat-offer-code-row" onclick="copyBoatCode('{{ block.settings.card2_code | default: 'DEAL7' }}', this)">
+          <span>Code: <strong>{{ block.settings.card2_code | default: 'DEAL7' }}</strong></span>
+          <svg class="boat-copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="boat-offer-box boat-offer-box--savings">
+      <div class="boat-offer-badge boat-offer-badge--dark">
+        {{ block.settings.card3_badge | default: 'MOST SAVINGS' }}
+      </div>
+      <div class="boat-offer-content">
+        <div class="boat-offer-title">{{ block.settings.card3_title | default: 'Buy 10 or more' }}</div>
+        <div class="boat-offer-discount">{{ block.settings.card3_discount | default: 'Get 10% Off' }}</div>
+        <div class="boat-offer-code-row" onclick="copyBoatCode('{{ block.settings.card3_code | default: 'DEAL10' }}', this)">
+          <span>Code: <strong>{{ block.settings.card3_code | default: 'DEAL10' }}</strong></span>
+          <svg class="boat-copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function copyBoatCode(code, el) {
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(function() {
+      var origHtml = el.innerHTML;
+      el.innerHTML = '<span style="color: #00875a; font-weight: 700;">Copied ' + code + '!</span>';
+      setTimeout(function() {
+        el.innerHTML = origHtml;
+      }, 1800);
+    }).catch(function(err) {
+      console.error('Could not copy coupon code: ', err);
+    });
+  }
+</script>
+
+<style>
+  .boat-active-offers-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+  }
+  .boat-offers-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 12px 0;
+  }
+  .boat-offers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .boat-offer-box {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .boat-offer-box:hover {
+    border-color: #00875a;
+    transform: translateY(-2px);
+  }
+  .boat-offer-box--popular {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+  .boat-offer-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 6px;
+    text-align: center;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+  }
+  .boat-offer-badge--green {
+    background: #00875a;
+  }
+  .boat-offer-badge--dark {
+    background: #1e293b;
+  }
+  .boat-offer-content {
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+  .boat-offer-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .boat-offer-discount {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #00875a;
+  }
+  .boat-offer-code-row {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 6px;
+    font-size: 0.72rem;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.2s ease;
+  }
+  .boat-offer-code-row:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+  }
+  .boat-copy-icon {
+    stroke: #64748b;
+  }
+  @media (max-width: 640px) {
+    .boat-offers-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Deal Bazaar Active Offers",
+  "tag": "div",
+  "class": "boat-active-offers-block",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Active Offers"
+    },
+    {
+      "type": "header",
+      "content": "Card 1"
+    },
+    {
+      "type": "text",
+      "id": "card1_badge",
+      "label": "Card 1 Badge",
+      "default": "MOST POPULAR"
+    },
+    {
+      "type": "text",
+      "id": "card1_title",
+      "label": "Card 1 Title",
+      "default": "Buy 2 or more"
+    },
+    {
+      "type": "text",
+      "id": "card1_discount",
+      "label": "Card 1 Discount",
+      "default": "Get 6% Off"
+    },
+    {
+      "type": "text",
+      "id": "card1_code",
+      "label": "Card 1 Code",
+      "default": "DEAL6"
+    },
+    {
+      "type": "header",
+      "content": "Card 2"
+    },
+    {
+      "type": "text",
+      "id": "card2_badge",
+      "label": "Card 2 Badge",
+      "default": "BEST VALUE"
+    },
+    {
+      "type": "text",
+      "id": "card2_title",
+      "label": "Card 2 Title",
+      "default": "Buy 5 or more"
+    },
+    {
+      "type": "text",
+      "id": "card2_discount",
+      "label": "Card 2 Discount",
+      "default": "Get 7% Off"
+    },
+    {
+      "type": "text",
+      "id": "card2_code",
+      "label": "Card 2 Code",
+      "default": "DEAL7"
+    },
+    {
+      "type": "header",
+      "content": "Card 3"
+    },
+    {
+      "type": "text",
+      "id": "card3_badge",
+      "label": "Card 3 Badge",
+      "default": "MOST SAVINGS"
+    },
+    {
+      "type": "text",
+      "id": "card3_title",
+      "label": "Card 3 Title",
+      "default": "Buy 10 or more"
+    },
+    {
+      "type": "text",
+      "id": "card3_discount",
+      "label": "Card 3 Discount",
+      "default": "Get 10% Off"
+    },
+    {
+      "type": "text",
+      "id": "card3_code",
+      "label": "Card 3 Code",
+      "default": "DEAL10"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deal Bazaar Active Offers"
+    }
+  ]
+}
+{% endschema %}

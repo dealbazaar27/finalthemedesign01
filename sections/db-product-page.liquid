@@ -1,0 +1,3684 @@
+{% liquid
+  assign selected_variant = product.selected_or_first_available_variant
+  assign price = selected_variant.price
+  assign compare_price = selected_variant.compare_at_price
+  assign featured_img = selected_variant.featured_image | default: product.featured_image | default: product.media.first.preview_image
+  
+  if compare_price > price
+    assign discount_percent = compare_price | minus: price | times: 100.0 | divided_by: compare_price | round
+  else
+    assign discount_percent = 0
+  endif
+
+  assign form_id = 'BoatProductPageForm-' | append: product.id
+
+  # Exact Synchronized Deterministic Product Rating matching Top Picks Card Item
+  assign id_num = product.id | modulo: 15
+  case id_num
+    when 0
+      assign display_rating = '4.9'
+    when 1
+      assign display_rating = '4.7'
+    when 2
+      assign display_rating = '4.2'
+    when 3
+      assign display_rating = '4.8'
+    when 4
+      assign display_rating = '3.9'
+    when 5
+      assign display_rating = '4.5'
+    when 6
+      assign display_rating = '5.0'
+    when 7
+      assign display_rating = '4.1'
+    when 8
+      assign display_rating = '4.6'
+    when 9
+      assign display_rating = '3.8'
+    when 10
+      assign display_rating = '4.4'
+    when 11
+      assign display_rating = '4.9'
+    when 12
+      assign display_rating = '4.3'
+    when 13
+      assign display_rating = '4.8'
+    else
+      assign display_rating = '3.7'
+  endcase
+
+  assign id_count_seed = product.id | modulo: 380 | plus: 142
+  assign display_reviews_count = id_count_seed
+
+  assign show_rating = section.settings.show_rating
+  if show_rating == nil
+    assign show_rating = true
+  endif
+
+  assign show_timer = section.settings.show_timer
+  if show_timer == nil
+    assign show_timer = true
+  endif
+
+  assign show_deal = section.settings.enable_deals
+  if show_deal == nil
+    assign show_deal = true
+  endif
+
+  assign enable_desktop_sticky = section.settings.enable_desktop_sticky
+  if enable_desktop_sticky == nil
+    assign enable_desktop_sticky = true
+  endif
+
+  assign enable_pdp_tabs = section.settings.enable_pdp_tabs
+  if enable_pdp_tabs == nil
+    assign enable_pdp_tabs = true
+  endif
+
+  assign show_tab_overview = section.settings.show_tab_overview
+  if show_tab_overview == nil
+    assign show_tab_overview = true
+  endif
+
+  assign show_tab_specs = section.settings.show_tab_specs
+  if show_tab_specs == nil
+    assign show_tab_specs = true
+  endif
+
+  assign show_tab_faqs = section.settings.show_tab_faqs
+  if show_tab_faqs == nil
+    assign show_tab_faqs = true
+  endif
+
+  assign show_tab_reviews = section.settings.show_tab_reviews
+  if show_tab_reviews == nil
+    assign show_tab_reviews = true
+  endif
+
+  assign show_mobile_sticky = section.settings.enable_mobile_sticky
+  if show_mobile_sticky == nil
+    assign show_mobile_sticky = true
+  endif
+
+  assign hide_inline_buttons_mobile = section.settings.hide_inline_buttons_mobile
+  if hide_inline_buttons_mobile == nil
+    assign hide_inline_buttons_mobile = true
+  endif
+
+  assign show_sticky_deal_strip = section.settings.show_sticky_deal_strip
+  if show_sticky_deal_strip == nil
+    assign show_sticky_deal_strip = true
+  endif
+
+  if section.settings.deals_tag_filter != blank
+    unless product.tags contains section.settings.deals_tag_filter
+      assign show_deal = false
+    endunless
+  endif
+
+  if section.settings.deals_collection_filter != blank
+    assign in_col = false
+    for c in product.collections
+      if c.handle == section.settings.deals_collection_filter
+        assign in_col = true
+        break
+      endif
+    endfor
+    unless in_col
+      assign show_deal = false
+    endunless
+  endif
+
+  assign t1_qty = section.settings.tier_1_qty | default: 2
+  assign t1_disc = section.settings.tier_1_discount | default: 6
+  assign t1_code = section.settings.tier_1_code | default: 'DEAL6'
+  assign t1_badge = section.settings.tier_1_badge | default: 'MOST POPULAR'
+
+  assign t2_qty = section.settings.tier_2_qty | default: 5
+  assign t2_disc = section.settings.tier_2_discount | default: 7
+  assign t2_code = section.settings.tier_2_code | default: 'DEAL7'
+  assign t2_badge = section.settings.tier_2_badge | default: 'BEST VALUE'
+
+  assign t3_qty = section.settings.tier_3_qty | default: 10
+  assign t3_disc = section.settings.tier_3_discount | default: 10
+  assign t3_code = section.settings.tier_3_code | default: 'DEAL10'
+  assign t3_badge = section.settings.tier_3_badge | default: 'MOST SAVINGS'
+
+  assign unit_discount_price = price | times: 100.0 | minus: t1_disc | divided_by: 100.0 | round
+%}
+
+<div class="boat-pdp-container">
+  
+  {% comment %} --- Top Breadcrumb Navigation --- {% endcomment %}
+  <nav class="boat-pdp-breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ routes.root_url }}">Home</a>
+    <span class="boat-pdp-breadcrumb__sep">›</span>
+    {% if collection != blank %}
+      <a href="{{ collection.url }}">{{ collection.title | escape }}</a>
+      <span class="boat-pdp-breadcrumb__sep">›</span>
+    {% elsif product.collections.size > 0 %}
+      <a href="{{ product.collections.first.url }}">{{ product.collections.first.title | escape }}</a>
+      <span class="boat-pdp-breadcrumb__sep">›</span>
+    {% endif %}
+    {% if product.type != blank %}
+      <span>{{ product.type | escape }}</span>
+      <span class="boat-pdp-breadcrumb__sep">›</span>
+    {% endif %}
+    <span class="boat-pdp-breadcrumb__current">{{ product.title | escape }}</span>
+  </nav>
+
+  {% comment %} --- Main Product 2-Column Grid --- {% endcomment %}
+  <div class="boat-pdp-layout">
+    
+    {% comment %} === Left Column: Media Gallery === {% endcomment %}
+    <div class="boat-pdp-gallery-col">
+      <div class="boat-pdp-gallery-inner">
+        
+        {% comment %} Left Vertical (Desktop) / Contained Smooth Slider (Mobile) Thumbnails {% endcomment %}
+        {% if product.media.size > 1 %}
+          <div class="boat-pdp-thumbs" id="BoatPdpThumbs">
+            {% for media in product.media %}
+              <button 
+                type="button" 
+                class="boat-pdp-thumb-btn{% if forloop.first %} active{% endif %}"
+                data-media-id="{{ media.id }}"
+                data-image-src="{{ media | image_url: width: 1000 }}"
+                onclick="switchBoatPdpImage(this, '{{ media | image_url: width: 1000 }}')"
+                aria-label="Thumbnail {{ forloop.index }}"
+              >
+                <img 
+                  src="{{ media | image_url: width: 140, height: 140 }}" 
+                  alt="{{ media.alt | default: product.title | escape }}"
+                  loading="lazy"
+                  width="54"
+                  height="54"
+                >
+              </button>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% comment %} Main Featured Image Display with Infinite Loop Navigation {% endcomment %}
+        <div class="boat-pdp-main-image-wrapper">
+          <div class="boat-pdp-main-image-box" id="BoatPdpMainImageBox">
+            {% assign initial_img = selected_variant.featured_image | default: product.featured_image %}
+            <img 
+              id="BoatPdpMainImage"
+              src="{{ initial_img | image_url: width: 1000 }}" 
+              alt="{{ product.title | escape }}"
+              class="boat-pdp-main-image"
+              width="600"
+              height="600"
+            >
+
+            {% if product.media.size > 1 %}
+              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--prev" onclick="prevBoatPdpImage()" aria-label="Previous image">‹</button>
+              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--next" onclick="nextBoatPdpImage()" aria-label="Next image">›</button>
+            {% endif %}
+          </div>
+
+          {% comment %} Countdown Flash Sale Timer Bar {% endcomment %}
+          {% if show_timer %}
+            <div class="boat-pdp-timer-bar">
+              <span class="boat-pdp-timer-icon">⏳</span>
+              <span class="boat-pdp-timer-label">{{ section.settings.timer_label | default: 'Flash Sale Ends In:' }}</span>
+              <span class="boat-pdp-timer-digits" id="boatPdpCountdown">04h : 02m : 19s</span>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {% comment %} === Right Column: Product Information & Offers === {% endcomment %}
+    <div class="boat-pdp-info-col">
+      
+      {% comment %} 1. Review Rating Badge (Unique & Dynamic per Product) {% endcomment %}
+      {% if show_rating %}
+        <div class="boat-pdp-rating-row">
+          <span class="boat-pdp-star">★</span>
+          <span class="boat-pdp-score">{{ display_rating }}</span>
+          <span class="boat-pdp-count">({{ display_reviews_count }})</span>
+          <span class="boat-pdp-verified-icon">✔</span>
+        </div>
+      {% endif %}
+
+      {% comment %} 2. Product Title & Subtitle {% endcomment %}
+      <h1 class="boat-pdp-title">{{ product.title }}</h1>
+      
+      <div class="boat-pdp-subtitle">
+        {% if product.metafields.custom.subtitle != blank %}
+          {{ product.metafields.custom.subtitle }}
+        {% elsif product.description != blank %}
+          {{ product.description | strip_html | truncatewords: 22 }}
+        {% else %}
+          Wireless Earbuds with Massive Playback of upto 40 Hours, IPX5 Water & Sweat Resistance, IWP Technology Interface
+        {% endif %}
+      </div>
+
+      {% comment %} 3. Price Row {% endcomment %}
+      <div class="boat-pdp-price-offer-box">
+        <div class="boat-pdp-price-group">
+          <div class="boat-pdp-price-main">
+            <span class="boat-pdp-price" id="BoatPdpPrice">{{ price | money_without_trailing_zeros }}</span>
+            <span class="boat-pdp-compare-price" id="BoatPdpCompare" style="{% unless compare_price > price %}display: none;{% endunless %}">
+              {{ compare_price | money_without_trailing_zeros }}
+            </span>
+            <span class="boat-pdp-discount" id="BoatPdpDiscount" style="{% unless compare_price > price %}display: none;{% endunless %}">
+              {{ discount_percent }}% Off
+            </span>
+          </div>
+          <div class="boat-pdp-tax-text">MRP (Inclusive of all taxes)</div>
+        </div>
+      </div>
+
+      {% comment %} --- Form for Cart Add & Dynamic Variant Selection --- {% endcomment %}
+      <form action="/cart/add" method="post" id="{{ form_id }}" onsubmit="handleBoatPdpSubmit(event, this)">
+        <input type="hidden" name="id" id="BoatPdpSelectedVariantId" value="{{ selected_variant.id }}">
+        
+        {% comment %} 4. Multi-Option Variant Selectors (Color, Quantity, Size, Pack, etc.) {% endcomment %}
+        {% if product.variants.size > 1 %}
+          {% for option in product.options_with_values %}
+            {% assign option_index = forloop.index0 %}
+            {% assign opt_name_lower = option.name | downcase %}
+            {% assign is_color = false %}
+            {% if opt_name_lower contains 'color' or opt_name_lower contains 'colour' or opt_name_lower contains 'shade' %}
+              {% assign is_color = true %}
+            {% endif %}
+
+            <div class="boat-pdp-variant-section">
+              <div class="boat-pdp-variant-label">
+                Choose your {{ option.name }} : 
+                <span class="boat-pdp-variant-val" id="BoatPdpOptVal-{{ option_index }}">{{ option.selected_value }}</span>
+              </div>
+
+              <div class="boat-pdp-swatches-grid">
+                {% for value in option.values %}
+                  {% assign swatch_variant = null %}
+                  {% for variant in product.variants %}
+                    {% if variant.options[option_index] == value %}
+                      {% assign swatch_variant = variant %}
+                      {% break %}
+                    {% endif %}
+                  {% endfor %}
+
+                  {% if is_color %}
+                    <button 
+                      type="button" 
+                      class="boat-pdp-opt-btn boat-pdp-swatch-box{% if option.selected_value == value %} active{% endif %}"
+                      data-option-index="{{ option_index }}"
+                      data-option-value="{{ value | escape }}"
+                      onclick="handleOptionSelect(this)"
+                      aria-label="{{ value | escape }}"
+                    >
+                      {% if swatch_variant.featured_image != blank %}
+                        <img src="{{ swatch_variant.featured_image | image_url: width: 120, height: 120 }}" alt="{{ value | escape }}" loading="lazy">
+                      {% else %}
+                        <span>{{ value }}</span>
+                      {% endif %}
+                    </button>
+                  {% else %}
+                    <button 
+                      type="button" 
+                      class="boat-pdp-opt-btn boat-pdp-pill-btn{% if option.selected_value == value %} active{% endif %}"
+                      data-option-index="{{ option_index }}"
+                      data-option-value="{{ value | escape }}"
+                      onclick="handleOptionSelect(this)"
+                    >
+                      <span>{{ value }}</span>
+                    </button>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% comment %} Quantity Stepper Selector {% endcomment %}
+        <div class="boat-pdp-qty-wrapper">
+          <span class="boat-pdp-qty-label">Quantity :</span>
+          <div class="boat-pdp-qty-stepper">
+            <button type="button" class="boat-pdp-qty-btn" onclick="changePdpQty(-1)" aria-label="Decrease quantity">−</button>
+            <input type="number" id="BoatPdpQuantity" name="quantity" value="1" min="1" class="boat-pdp-qty-input" readonly>
+            <button type="button" class="boat-pdp-qty-btn" onclick="changePdpQty(1)" aria-label="Increase quantity">+</button>
+          </div>
+        </div>
+
+        {% comment %} Dynamic Real-Time Subtotal Row with Discount Tag {% endcomment %}
+        <div class="boat-pdp-subtotal-wrapper">
+          <div class="boat-pdp-subtotal-left">
+            <span class="boat-pdp-subtotal-label">Subtotal :</span>
+            <span class="boat-pdp-subtotal-val" id="BoatPdpSubtotal">{{ price | money_without_trailing_zeros }}</span>
+            <span class="boat-pdp-subtotal-compare" id="BoatPdpSubtotalCompare" style="display: none;"></span>
+          </div>
+          <span class="boat-pdp-subtotal-discount-tag" id="BoatPdpSubtotalDiscountTag" style="display: none;"></span>
+        </div>
+
+        {% comment %} 5. Dynamic DEAL Section {% endcomment %}
+        {% if show_deal %}
+          <div class="boat-pdp-offers-section">
+            <div class="boat-pdp-card-title">{{ section.settings.deal_title | default: '🔥 DEAL' }}</div>
+            <div class="boat-pdp-offers-grid">
+              
+              <div class="boat-pdp-offer-card" id="BoatDealCard-{{ t1_qty }}" onclick="applyBoatDeal({{ t1_qty }}, {{ t1_disc }}, '{{ t1_code }}', this)">
+                <div class="boat-pdp-offer-badge">{{ t1_badge }}</div>
+                <div class="boat-pdp-offer-inner">
+                  <div class="boat-pdp-offer-qty">Buy {{ t1_qty }} or more</div>
+                  <div class="boat-pdp-offer-disc">Get {{ t1_disc }}% Off</div>
+                  <div class="boat-pdp-offer-code">Code: <strong>{{ t1_code }}</strong></div>
+                </div>
+              </div>
+
+              <div class="boat-pdp-offer-card" id="BoatDealCard-{{ t2_qty }}" onclick="applyBoatDeal({{ t2_qty }}, {{ t2_disc }}, '{{ t2_code }}', this)">
+                <div class="boat-pdp-offer-badge">{{ t2_badge }}</div>
+                <div class="boat-pdp-offer-inner">
+                  <div class="boat-pdp-offer-qty">Buy {{ t2_qty }} or more</div>
+                  <div class="boat-pdp-offer-disc">Get {{ t2_disc }}% Off</div>
+                  <div class="boat-pdp-offer-code">Code: <strong>{{ t2_code }}</strong></div>
+                </div>
+              </div>
+
+              <div class="boat-pdp-offer-card" id="BoatDealCard-{{ t3_qty }}" onclick="applyBoatDeal({{ t3_qty }}, {{ t3_disc }}, '{{ t3_code }}', this)">
+                <div class="boat-pdp-offer-badge">{{ t3_badge }}</div>
+                <div class="boat-pdp-offer-inner">
+                  <div class="boat-pdp-offer-qty">Buy {{ t3_qty }} or more</div>
+                  <div class="boat-pdp-offer-disc">Get {{ t3_disc }}% Off</div>
+                  <div class="boat-pdp-offer-code">Code: <strong>{{ t3_code }}</strong></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        {% endif %}
+
+        {% comment %} 6. Action Buttons (Add to Cart + Buy Now + WhatsApp) {% endcomment %}
+        <div class="boat-pdp-cta-group{% if hide_inline_buttons_mobile %} boat-pdp-cta-group--hide-mobile{% endif %}">
+          <button 
+            type="submit" 
+            class="boat-pdp-btn boat-pdp-btn--atc" 
+            id="BoatPdpAtcBtn"
+            {% unless selected_variant.available %}disabled{% endunless %}
+          >
+            {% if selected_variant.available %}
+              <span>Add to Cart</span>
+            {% else %}
+              <span>Sold Out</span>
+            {% endif %}
+          </button>
+          
+          <button 
+            type="button" 
+            class="boat-pdp-btn boat-pdp-btn--buy" 
+            id="BoatPdpBuyBtn"
+            onclick="buyNowBoatPdp('{{ form_id }}')"
+            {% unless selected_variant.available %}disabled{% endunless %}
+          >
+            <span>Buy Now</span>
+          </button>
+        </div>
+
+        {% comment %} Direct WhatsApp Order Button {% endcomment %}
+        {% if section.settings.enable_whatsapp_order == nil or section.settings.enable_whatsapp_order == true %}
+          <div class="boat-pdp-whatsapp-row{% if hide_inline_buttons_mobile %} boat-pdp-cta-group--hide-mobile{% endif %}">
+            <button 
+              type="button" 
+              class="boat-pdp-btn boat-pdp-btn--whatsapp" 
+              id="BoatPdpWhatsappBtn"
+              onclick="orderBoatOnWhatsapp()"
+              style="{% if section.settings.whatsapp_btn_bg != blank %}background: {{ section.settings.whatsapp_btn_bg }};{% endif %}"
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.881 2.796.881 3.179 0 5.766-2.587 5.767-5.766.001-3.181-2.585-5.768-5.767-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 4.418-3.582 8-8 8-1.408 0-2.73-.367-3.875-1.009l-4.156 1.009 1.109-3.992c-.696-1.164-1.078-2.525-1.078-4.008 0-4.418 3.582-8 8-8z"/>
+              </svg>
+              <span>{{ section.settings.whatsapp_btn_label | default: 'Order via WhatsApp' }}</span>
+            </button>
+          </div>
+        {% endif %}
+
+      </form>
+
+    </div>
+
+  </div>
+
+  {% comment %} --- boAt Style Tab Navigation Bar (Overview, Specs, FAQs, Reviews) --- {% endcomment %}
+  {% if enable_pdp_tabs and show_tab_overview or show_tab_specs or show_tab_faqs or show_tab_reviews %}
+    {% assign first_active_tab = '' %}
+    {% if show_tab_overview %}
+      {% assign first_active_tab = 'overview' %}
+    {% elsif show_tab_specs %}
+      {% assign first_active_tab = 'specs' %}
+    {% elsif show_tab_faqs %}
+      {% assign first_active_tab = 'faqs' %}
+    {% elsif show_tab_reviews %}
+      {% assign first_active_tab = 'reviews' %}
+    {% endif %}
+
+    <div class="boat-pdp-nav-sticky-wrapper" id="BoatPdpNavStickyWrapper">
+      <div class="boat-pdp-nav-pill-bar" id="BoatPdpNavPillBar">
+        {% if show_tab_overview %}
+          <button type="button" class="boat-nav-pill{% if first_active_tab == 'overview' %} active{% endif %}" onclick="switchBoatTab('overview', this)">
+            <span>Overview</span>
+          </button>
+        {% endif %}
+
+        {% if show_tab_specs %}
+          <button type="button" class="boat-nav-pill{% if first_active_tab == 'specs' %} active{% endif %}" onclick="switchBoatTab('specs', this)">
+            <span>Specs</span>
+          </button>
+        {% endif %}
+
+        {% if show_tab_faqs %}
+          <button type="button" class="boat-nav-pill{% if first_active_tab == 'faqs' %} active{% endif %}" onclick="switchBoatTab('faqs', this)">
+            <span>FAQ's</span>
+          </button>
+        {% endif %}
+
+        {% if show_tab_reviews %}
+          <button type="button" class="boat-nav-pill{% if first_active_tab == 'reviews' %} active{% endif %}" onclick="switchBoatTab('reviews', this)">
+            <span>Reviews</span>
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    {% comment %} --- Dynamic Product Tabs Content Panels (Tab Switching) --- {% endcomment %}
+    <div class="boat-pdp-tabs-content">
+
+      {% comment %} Tab 1: Overview {% endcomment %}
+      {% if show_tab_overview %}
+        <section class="boat-tab-section{% if first_active_tab == 'overview' %} active{% endif %}" id="boat-tab-overview">
+          <div class="boat-tab-section__header">
+            <h2 class="boat-tab-section__title">Product Overview & Features</h2>
+            <p class="boat-tab-section__subtitle">Explore everything that makes {{ product.title }} special</p>
+          </div>
+          
+          <div class="boat-tab-overview-grid">
+            <div class="boat-tab-feature-card">
+              <div class="boat-feature-icon">⚡</div>
+              <h3 class="boat-feature-title">Premium Performance</h3>
+              <p class="boat-feature-desc">Engineered for exceptional reliability, durability and effortless everyday use.</p>
+            </div>
+            <div class="boat-tab-feature-card">
+              <div class="boat-feature-icon">🛡️</div>
+              <h3 class="boat-feature-title">100% Original & Verified</h3>
+              <p class="boat-feature-desc">Guaranteed authentic product backed by strict quality control standards.</p>
+            </div>
+            <div class="boat-tab-feature-card">
+              <div class="boat-feature-icon">🚚</div>
+              <h3 class="boat-feature-title">Fast Express Delivery</h3>
+              <p class="boat-feature-desc">Quick doorstep dispatch with real-time tracking and Cash on Delivery available.</p>
+            </div>
+            <div class="boat-tab-feature-card">
+              <div class="boat-feature-icon">💎</div>
+              <h3 class="boat-feature-title">Superior Build Quality</h3>
+              <p class="boat-feature-desc">Crafted with high-grade, durable materials built to last long.</p>
+            </div>
+          </div>
+
+          {% if product.description != blank %}
+            <div class="boat-tab-description-box">
+              <h3 class="boat-desc-heading">Detailed Description</h3>
+              <div class="boat-rte-content">
+                {{ product.description }}
+              </div>
+            </div>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% comment %} Tab 2: Specs (Filtered out default title) {% endcomment %}
+      {% if show_tab_specs %}
+        <section class="boat-tab-section{% if first_active_tab == 'specs' %} active{% endif %}" id="boat-tab-specs">
+          <div class="boat-tab-section__header">
+            <h2 class="boat-tab-section__title">Technical Specifications</h2>
+            <p class="boat-tab-section__subtitle">Complete details and technical parameters</p>
+          </div>
+
+          <div class="boat-tab-specs-table-card">
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Product Name</span>
+              <span class="boat-spec-val">{{ product.title }}</span>
+            </div>
+            {% if product.vendor != blank and product.vendor != 'vendor-unknown' %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">Brand / Vendor</span>
+                <span class="boat-spec-val">{{ product.vendor }}</span>
+              </div>
+            {% endif %}
+            {% if product.type != blank %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">Category / Type</span>
+                <span class="boat-spec-val">{{ product.type }}</span>
+              </div>
+            {% elsif product.collections.size > 0 %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">Category</span>
+                <span class="boat-spec-val">{{ product.collections.first.title }}</span>
+              </div>
+            {% endif %}
+            {% if selected_variant.sku != blank %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">SKU / Model Number</span>
+                <span class="boat-spec-val">{{ selected_variant.sku }}</span>
+              </div>
+            {% endif %}
+            {% if selected_variant.barcode != blank %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">Barcode / UPC</span>
+                <span class="boat-spec-val">{{ selected_variant.barcode }}</span>
+              </div>
+            {% endif %}
+            {% if selected_variant.weight > 0 %}
+              <div class="boat-spec-row">
+                <span class="boat-spec-name">Product Weight</span>
+                <span class="boat-spec-val">{{ selected_variant.weight | weight_with_unit }}</span>
+              </div>
+            {% endif %}
+            {% unless product.has_only_default_variant %}
+              {% for option in product.options_with_values %}
+                {% unless option.name == 'Title' and option.values.first == 'Default Title' %}
+                  <div class="boat-spec-row">
+                    <span class="boat-spec-name">Available {{ option.name }}</span>
+                    <span class="boat-spec-val">
+                      {% for val in option.values %}
+                        {{ val }}{% unless forloop.last %}, {% endunless %}
+                      {% endfor %}
+                    </span>
+                  </div>
+                {% endunless %}
+              {% endfor %}
+            {% endunless %}
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Quality Standard</span>
+              <span class="boat-spec-val">100% Brand New, Tested & Quality Checked</span>
+            </div>
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Delivery Speed</span>
+              <span class="boat-spec-val">2 to 4 Business Days Across Pakistan</span>
+            </div>
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Payment Options</span>
+              <span class="boat-spec-val">Cash on Delivery (COD) / Bank Transfer</span>
+            </div>
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Warranty / Guarantee</span>
+              <span class="boat-spec-val">7-Day Replacement Guarantee</span>
+            </div>
+            <div class="boat-spec-row">
+              <span class="boat-spec-name">Package Contents</span>
+              <span class="boat-spec-val">1x {{ product.title }} in Secure Packing</span>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+
+      {% comment %} Tab 3: FAQ's (Dynamic Blocks with Fallback Defaults) {% endcomment %}
+      {% if show_tab_faqs %}
+        <section class="boat-tab-section{% if first_active_tab == 'faqs' %} active{% endif %}" id="boat-tab-faqs">
+          <div class="boat-tab-section__header">
+            <h2 class="boat-tab-section__title">Frequently Asked Questions</h2>
+            <p class="boat-tab-section__subtitle">Got questions? We've got answers for you</p>
+          </div>
+
+          <div class="boat-faqs-accordion">
+            {% assign faq_block_count = 0 %}
+            {% for block in section.blocks %}
+              {% if block.type == 'faq' %}
+                {% assign faq_block_count = faq_block_count | plus: 1 %}
+                <div class="boat-faq-item" {{ block.shopify_attributes }} onclick="toggleBoatFaq(this)">
+                  <div class="boat-faq-question">
+                    <span>{{ block.settings.question }}</span>
+                    <span class="boat-faq-arrow">▾</span>
+                  </div>
+                  <div class="boat-faq-answer">
+                    <p>{{ block.settings.answer }}</p>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+
+            {% if faq_block_count == 0 %}
+              <div class="boat-faq-item" onclick="toggleBoatFaq(this)">
+                <div class="boat-faq-question">
+                  <span>What is the estimated delivery time for my order?</span>
+                  <span class="boat-faq-arrow">▾</span>
+                </div>
+                <div class="boat-faq-answer">
+                  <p>Orders are dispatched within 24 hours. Delivery typically takes 2 to 4 business days across all major cities in Pakistan with active tracking updates.</p>
+                </div>
+              </div>
+
+              <div class="boat-faq-item" onclick="toggleBoatFaq(this)">
+                <div class="boat-faq-question">
+                  <span>Is Cash on Delivery (COD) available?</span>
+                  <span class="boat-faq-arrow">▾</span>
+                </div>
+                <div class="boat-faq-answer">
+                  <p>Yes! We offer 100% Cash on Delivery across Pakistan. You can pay conveniently when the parcel arrives at your doorstep.</p>
+                </div>
+              </div>
+
+              <div class="boat-faq-item" onclick="toggleBoatFaq(this)">
+                <div class="boat-faq-question">
+                  <span>What if I receive a damaged or wrong product?</span>
+                  <span class="boat-faq-arrow">▾</span>
+                </div>
+                <div class="boat-faq-answer">
+                  <p>We provide a hassle-free 7-day replacement guarantee. Simply contact our support on WhatsApp at +92 310 2492119 and we will swiftly arrange a replacement for you.</p>
+                </div>
+              </div>
+
+              <div class="boat-faq-item" onclick="toggleBoatFaq(this)">
+                <div class="boat-faq-question">
+                  <span>How can I place an order directly on WhatsApp?</span>
+                  <span class="boat-faq-arrow">▾</span>
+                </div>
+                <div class="boat-faq-answer">
+                  <p>You can click the green "Order via WhatsApp" button on this product page. It will automatically generate a message with the product name and price for instant confirmation.</p>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% comment %} Tab 4: Reviews {% endcomment %}
+      {% if show_tab_reviews %}
+        <section class="boat-tab-section{% if first_active_tab == 'reviews' %} active{% endif %}" id="boat-tab-reviews">
+          <div class="boat-tab-section__header">
+            <div class="boat-reviews-header-flex">
+              <div>
+                <h2 class="boat-tab-section__title">Customer Reviews & Ratings</h2>
+                <p class="boat-tab-section__subtitle">Verified feedback from real customers</p>
+              </div>
+              <button type="button" class="boat-write-review-btn" onclick="toggleBoatReviewForm()">
+                <span>✍️ Write a Review</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="boat-reviews-summary-card">
+            <div class="boat-reviews-score-box">
+              <div class="boat-reviews-score-big">{{ display_rating }}</div>
+              <div class="boat-reviews-stars">★★★★★</div>
+              <div class="boat-reviews-count-text">Based on {{ display_reviews_count }} Verified Reviews</div>
+            </div>
+
+            <div class="boat-reviews-breakdown">
+              <div class="boat-rating-bar-row">
+                <span>5 Star</span>
+                <div class="boat-rating-progress"><div class="boat-rating-fill" style="width: 88%;"></div></div>
+                <span>88%</span>
+              </div>
+              <div class="boat-rating-bar-row">
+                <span>4 Star</span>
+                <div class="boat-rating-progress"><div class="boat-rating-fill" style="width: 9%;"></div></div>
+                <span>9%</span>
+              </div>
+              <div class="boat-rating-bar-row">
+                <span>3 Star</span>
+                <div class="boat-rating-progress"><div class="boat-rating-fill" style="width: 3%;"></div></div>
+                <span>3%</span>
+              </div>
+              <div class="boat-rating-bar-row">
+                <span>2 Star</span>
+                <div class="boat-rating-progress"><div class="boat-rating-fill" style="width: 0%;"></div></div>
+                <span>0%</span>
+              </div>
+              <div class="boat-rating-bar-row">
+                <span>1 Star</span>
+                <div class="boat-rating-progress"><div class="boat-rating-fill" style="width: 0%;"></div></div>
+                <span>0%</span>
+              </div>
+            </div>
+          </div>
+
+          {% comment %} Interactive Review Submission Form {% endcomment %}
+          <div class="boat-review-form-wrapper" id="BoatReviewFormWrapper" style="display: none;">
+            <form class="boat-review-form" onsubmit="handleBoatReviewSubmit(event, this)">
+              <h3 class="boat-form-title">Write your review for {{ product.title }}</h3>
+              
+              <div class="boat-form-row">
+                <label class="boat-form-label">Rating</label>
+                <div class="boat-form-star-select">
+                  <span class="boat-star-option" onclick="setBoatFormRating(1, this)">★</span>
+                  <span class="boat-star-option" onclick="setBoatFormRating(2, this)">★</span>
+                  <span class="boat-star-option" onclick="setBoatFormRating(3, this)">★</span>
+                  <span class="boat-star-option" onclick="setBoatFormRating(4, this)">★</span>
+                  <span class="boat-star-option active" onclick="setBoatFormRating(5, this)">★</span>
+                </div>
+                <input type="hidden" name="rating" id="BoatFormRatingVal" value="5">
+              </div>
+
+              <div class="boat-form-grid">
+                <div class="boat-form-field">
+                  <label class="boat-form-label">Your Name *</label>
+                  <input type="text" class="boat-form-input" placeholder="e.g. Ali Ahmed" required>
+                </div>
+                <div class="boat-form-field">
+                  <label class="boat-form-label">Your Phone / Email *</label>
+                  <input type="text" class="boat-form-input" placeholder="e.g. 0310-XXXXXXX" required>
+                </div>
+              </div>
+
+              <div class="boat-form-field">
+                <label class="boat-form-label">Your Review *</label>
+                <textarea class="boat-form-textarea" rows="3" placeholder="Share your experience with this product..." required></textarea>
+              </div>
+
+              <button type="submit" class="boat-form-submit-btn">
+                <span>Submit Review</span>
+              </button>
+              <div class="boat-review-success-msg" id="BoatReviewSuccessMsg" style="display: none;">
+                ✓ Thank you! Your review has been submitted and will appear after verification.
+              </div>
+            </form>
+          </div>
+
+          {% comment %} Shopify Product Review App Container Hook {% endcomment %}
+          <div id="shopify-product-reviews" data-id="{{ product.id }}">
+            {{ product.metafields.spr.reviews }}
+          </div>
+        </section>
+      {% endif %}
+
+    </div>
+  {% endif %}
+
+</div>
+
+{% comment %} Mobile Floating Sticky Bottom Bar (Matching Exact Screenshot UI) {% endcomment %}
+{% if show_mobile_sticky %}
+  <div class="boat-pdp-sticky-bar" id="BoatPdpStickyBar">
+    {% if show_sticky_deal_strip %}
+      <div class="boat-pdp-sticky-deal-strip" id="BoatPdpStickyDealStrip" onclick="scrollToBoatDeals()">
+        {% if show_deal %}
+          Get at <span id="BoatPdpStickyDealPrice">{{ price | money_without_trailing_zeros }}</span> by using <strong id="BoatPdpStickyDealCode">{{ t1_code }}</strong>
+        {% elsif discount_percent > 0 %}
+          🔥 Special Sale Price: {{ price | money_without_trailing_zeros }} (Save {{ discount_percent }}%)
+        {% else %}
+          ⚡ Best Price: {{ price | money_without_trailing_zeros }}
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="boat-pdp-sticky-inner">
+      <div class="boat-pdp-sticky-price-row">
+        <span class="boat-pdp-sticky-price" id="BoatPdpStickyPrice">{{ price | money_without_trailing_zeros }}</span>
+        <span class="boat-pdp-sticky-compare" id="BoatPdpStickyCompare" style="{% unless compare_price > price %}display: none;{% endunless %}">
+          {{ compare_price | money_without_trailing_zeros }}
+        </span>
+        <span class="boat-pdp-sticky-discount" id="BoatPdpStickyDiscount" style="{% unless compare_price > price %}display: none;{% endunless %}">
+          {{ discount_percent }}% Off
+        </span>
+        <span class="boat-pdp-sticky-tax">Inclusive of all Taxes</span>
+      </div>
+      <div class="boat-pdp-sticky-cta-row">
+        <button 
+          type="button" 
+          class="boat-pdp-sticky-btn boat-pdp-sticky-btn--atc" 
+          onclick="document.getElementById('BoatPdpAtcBtn').click()"
+          {% unless selected_variant.available %}disabled{% endunless %}
+        >
+          <span>{{ section.settings.sticky_atc_text | default: 'Add To Cart' }}</span>
+        </button>
+        <button 
+          type="button" 
+          class="boat-pdp-sticky-btn boat-pdp-sticky-btn--buy" 
+          onclick="document.getElementById('BoatPdpBuyBtn').click()"
+          {% unless selected_variant.available %}disabled{% endunless %}
+        >
+          <span>{{ section.settings.sticky_buy_text | default: 'Buy Now' }}</span>
+        </button>
+        <button 
+          type="button" 
+          class="boat-pdp-sticky-btn boat-pdp-sticky-btn--whatsapp" 
+          onclick="orderBoatOnWhatsapp()"
+          aria-label="Order on WhatsApp"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.881 2.796.881 3.179 0 5.766-2.587 5.767-5.766.001-3.181-2.585-5.768-5.767-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 4.418-3.582 8-8 8-1.408 0-2.73-.367-3.875-1.009l-4.156 1.009 1.109-3.992c-.696-1.164-1.078-2.525-1.078-4.008 0-4.418 3.582-8 8-8z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+{% comment %} Desktop Floating Sticky Pill Bar (Matching Exact Screenshot UI from Ronin/boAt) {% endcomment %}
+{% if enable_desktop_sticky %}
+  <div class="boat-pdp-desktop-sticky-bar" id="BoatPdpDesktopStickyBar">
+    <div class="boat-desktop-sticky-pill">
+      {% if featured_img != blank %}
+        <img class="boat-desktop-sticky-img" id="BoatDesktopStickyImg" src="{{ featured_img | image_url: width: 140 }}" alt="{{ product.title | escape }}">
+      {% elsif product.featured_image != blank %}
+        <img class="boat-desktop-sticky-img" id="BoatDesktopStickyImg" src="{{ product.featured_image | image_url: width: 140 }}" alt="{{ product.title | escape }}">
+      {% elsif product.media.first != blank %}
+        <img class="boat-desktop-sticky-img" id="BoatDesktopStickyImg" src="{{ product.media.first | image_url: width: 140 }}" alt="{{ product.title | escape }}">
+      {% endif %}
+      
+      <div class="boat-desktop-sticky-info">
+        <span class="boat-desktop-sticky-title">{{ product.title }}</span>
+        <div class="boat-desktop-sticky-pricing">
+          <span class="boat-desktop-sticky-price" id="BoatDesktopStickyPrice">{{ price | money_without_trailing_zeros }}</span>
+          <span class="boat-desktop-sticky-compare" id="BoatDesktopStickyCompare" style="{% unless compare_price > price %}display: none;{% endunless %}">
+            {{ compare_price | money_without_trailing_zeros }}
+          </span>
+        </div>
+      </div>
+
+      <button type="button" class="boat-desktop-sticky-btn" onclick="triggerBoatDesktopAtc()" {% unless selected_variant.available %}disabled{% endunless %}>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        <span>Add to cart</span>
+      </button>
+    </div>
+  </div>
+{% endif %}
+
+{% comment %} Output Master Product Variants JSON {% endcomment %}
+<script type="application/json" id="BoatPdpVariantsData">
+  [
+    {% for v in product.variants %}
+      {
+        "id": {{ v.id }},
+        "title": {{ v.title | json }},
+        "option1": {{ v.option1 | json }},
+        "option2": {{ v.option2 | json }},
+        "option3": {{ v.option3 | json }},
+        "price": {{ v.price }},
+        "compare_at_price": {{ v.compare_at_price | default: 0 }},
+        "available": {{ v.available }},
+        "featured_image": {% if v.featured_image != blank %}{{ v.featured_image | image_url: width: 1000 | json }}{% else %}null{% endif %}
+      }{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ]
+</script>
+
+<style>
+  /* ------------------------------------------------------------- */
+  /* boAt Authentic Product Page Styling (100% Mobile Responsive)  */
+  /* ------------------------------------------------------------- */
+
+  :root {
+    --boat-pdp-title-size: {{ section.settings.title_font_size | default: 28 }}px;
+    --boat-pdp-title-color: {{ section.settings.title_color | default: '#0f172a' }};
+    --boat-pdp-price-color: {{ section.settings.price_color | default: '#0f172a' }};
+    --boat-pdp-discount-color: {{ section.settings.discount_color | default: '#00b853' }};
+    --boat-pdp-atc-bg: {{ section.settings.atc_btn_bg | default: '#0f172a' }};
+    --boat-pdp-atc-text: {{ section.settings.atc_btn_text | default: '#ffffff' }};
+    --boat-pdp-buy-bg: {{ section.settings.buy_btn_bg | default: '#00b853' }};
+    --boat-pdp-buy-text: {{ section.settings.buy_btn_text | default: '#ffffff' }};
+    --boat-pdp-sticky-strip-bg: {{ section.settings.sticky_strip_bg | default: '#00875a' }};
+    --boat-pdp-sticky-strip-text: {{ section.settings.sticky_strip_text | default: '#ffffff' }};
+    --boat-pdp-sticky-atc-bg: {{ section.settings.sticky_atc_bg | default: '#0f172a' }};
+    --boat-pdp-sticky-atc-text: {{ section.settings.sticky_atc_text_color | default: '#ffffff' }};
+    --boat-pdp-sticky-buy-bg: {{ section.settings.sticky_buy_bg | default: '#00b853' }};
+    --boat-pdp-sticky-buy-text: {{ section.settings.sticky_buy_text_color | default: '#ffffff' }};
+  }
+
+  .boat-pdp-container {
+    max-width: 1320px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 16px 20px 48px 20px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  /* Breadcrumb */
+  .boat-pdp-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .boat-pdp-breadcrumb a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .boat-pdp-breadcrumb a:hover {
+    color: #0f172a;
+    text-decoration: underline;
+  }
+
+  .boat-pdp-breadcrumb__sep {
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+
+  .boat-pdp-breadcrumb__current {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  /* 2-Column Layout */
+  .boat-pdp-layout {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 48px;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Gallery Column & Inner */
+  .boat-pdp-gallery-col {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-gallery-inner {
+    display: flex;
+    gap: 16px;
+    position: sticky;
+    top: 90px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Vertical Thumbnails (Desktop) */
+  .boat-pdp-thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 68px;
+    flex-shrink: 0;
+    max-height: 520px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .boat-pdp-thumb-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    padding: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-thumb-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .boat-pdp-thumb-btn:hover,
+  .boat-pdp-thumb-btn.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 1px #0f172a;
+  }
+
+  /* Main Featured Image Box */
+  .boat-pdp-main-image-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-main-image-box {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    touch-action: pan-y;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .boat-pdp-arrow-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: all 0.2s ease;
+    z-index: 5;
+  }
+
+  .boat-pdp-arrow-btn:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  .boat-pdp-arrow-btn--prev { left: 10px; }
+  .boat-pdp-arrow-btn--next { right: 10px; }
+
+  /* Flash Sale Countdown Timer Bar */
+  .boat-pdp-timer-bar {
+    background: #fff9db;
+    border: 1px solid #ffe066;
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-timer-digits {
+    color: #d8232a;
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+  }
+
+  /* Right Information Column */
+  .boat-pdp-info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Rating Row */
+  .boat-pdp-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .boat-pdp-star { color: #f59e0b; font-size: 1rem; }
+  .boat-pdp-score { color: #0f172a; font-weight: 800; font-size: 0.9rem; }
+  .boat-pdp-count { color: #64748b; font-weight: 600; font-size: 0.8rem; }
+  .boat-pdp-verified-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #10b981;
+    color: #ffffff;
+    font-size: 9px;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    margin-left: 2px;
+  }
+
+  /* Title & Subtitle */
+  .boat-pdp-title {
+    font-size: var(--boat-pdp-title-size);
+    font-weight: 900;
+    color: var(--boat-pdp-title-color);
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+    word-break: break-word;
+  }
+
+  .boat-pdp-subtitle {
+    font-size: 0.88rem;
+    color: #475569;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+
+  /* Price Row */
+  .boat-pdp-price-offer-box {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-price-main {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .boat-pdp-price {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--boat-pdp-price-color);
+  }
+
+  .boat-pdp-compare-price {
+    font-size: 0.95rem;
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .boat-pdp-discount {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--boat-pdp-discount-color);
+  }
+
+  .boat-pdp-tax-text {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  /* Option / Swatch / Pill Selectors */
+  .boat-pdp-variant-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-variant-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .boat-pdp-variant-val {
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .boat-pdp-swatches-grid {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-swatch-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    background: #ffffff;
+    padding: 2px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-swatch-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .boat-pdp-swatch-box.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px #38bdf8;
+    transform: scale(1.04);
+  }
+
+  .boat-pdp-pill-btn {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-pill-btn:hover {
+    border-color: #0f172a;
+    background: #ffffff;
+  }
+
+  .boat-pdp-pill-btn.active {
+    border-color: #0f172a;
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+  }
+
+  /* Quantity Stepper */
+  .boat-pdp-qty-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-qty-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .boat-pdp-qty-stepper {
+    display: flex;
+    align-items: center;
+    background: #f1f5f9;
+    border-radius: 24px;
+    padding: 3px 6px;
+    border: 1px solid #e2e8f0;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-qty-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    font-size: 1.15rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-qty-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  .boat-pdp-qty-input {
+    width: 38px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  .boat-pdp-qty-input::-webkit-outer-spin-button,
+  .boat-pdp-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Dynamic Subtotal Row with Discount Tag */
+  .boat-pdp-subtotal-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1.5px dashed #cbd5e1;
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+  }
+
+  .boat-pdp-subtotal-left {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .boat-pdp-subtotal-label {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #475569;
+  }
+
+  .boat-pdp-subtotal-val {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+  }
+
+  .boat-pdp-subtotal-compare {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+
+  .boat-pdp-subtotal-discount-tag {
+    background: #e6fcf5;
+    color: #00875a;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #b2f2bb;
+    white-space: nowrap;
+    animation: popInBadge 0.2s ease;
+  }
+
+  @keyframes popInBadge {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* DEAL Section */
+  .boat-pdp-offers-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-card-title {
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+  }
+
+  .boat-pdp-offers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-offer-card {
+    background: #e6fcf5;
+    border: 1.5px solid #a3e635;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .boat-pdp-offer-card:hover {
+    border-color: #00a651;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 166, 81, 0.15);
+  }
+
+  .boat-pdp-offer-card.active {
+    border-color: #00a651;
+    background: #d3f9e8;
+    box-shadow: 0 0 0 2px #00a651, 0 4px 14px rgba(0, 166, 81, 0.2);
+  }
+
+  .boat-pdp-offer-badge {
+    background: #00a651;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .boat-pdp-offer-inner {
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .boat-pdp-offer-qty {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .boat-pdp-offer-disc {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #00875a;
+  }
+
+  .boat-pdp-offer-code {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px dashed #00a651;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 100%;
+    margin-top: 4px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-offer-card:hover .boat-pdp-offer-code,
+  .boat-pdp-offer-card.active .boat-pdp-offer-code {
+    background: #ffffff;
+    border-style: solid;
+  }
+
+  /* In-Page Action CTA Buttons */
+  .boat-pdp-cta-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0 8px 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-btn {
+    flex: 1 1 0;
+    width: 50%;
+    min-width: 0;
+    height: 48px;
+    border-radius: 26px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  .boat-pdp-btn--atc {
+    background: var(--boat-pdp-atc-bg);
+    color: var(--boat-pdp-atc-text);
+  }
+
+  .boat-pdp-btn--atc:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .boat-pdp-btn--buy {
+    background: var(--boat-pdp-buy-bg);
+    color: var(--boat-pdp-buy-text);
+  }
+
+  .boat-pdp-btn--buy:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .boat-pdp-whatsapp-row {
+    width: 100% !important;
+    margin: 6px 0 10px 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .boat-pdp-btn--whatsapp {
+    width: 100% !important;
+    background: #25d366 !important;
+    color: #ffffff !important;
+    height: 48px !important;
+    border-radius: 26px !important;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35) !important;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease !important;
+  }
+
+  .boat-pdp-btn--whatsapp:hover {
+    background: #20ba59 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(37, 211, 102, 0.45) !important;
+  }
+
+  .boat-pdp-btn--whatsapp svg {
+    flex-shrink: 0;
+  }
+
+  /* Mobile Sticky Bottom Bar (Exact SS match) */
+  .boat-pdp-sticky-bar {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------- */
+  /* Mobile Responsive Breakpoints (Tablets & Phones)              */
+  /* ------------------------------------------------------------- */
+
+  @media screen and (max-width: 989px) {
+    .boat-pdp-container {
+      padding: 12px 16px 115px 16px !important;
+    }
+
+    .boat-pdp-sticky-bar {
+      display: block !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      z-index: 99999 !important;
+      box-sizing: border-box !important;
+      pointer-events: auto !important;
+      transform: translateZ(0);
+    }
+
+    .boat-pdp-layout {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .boat-pdp-gallery-inner {
+      flex-direction: column-reverse;
+      position: relative;
+      top: 0;
+      gap: 10px;
+    }
+
+    /* Contained Thumbnail Slider on Mobile (Zero Horizontal Spilling) */
+    .boat-pdp-thumbs {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      max-height: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      padding: 2px 2px 6px 2px;
+      gap: 8px;
+      scrollbar-width: none;
+      box-sizing: border-box;
+    }
+
+    .boat-pdp-thumbs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .boat-pdp-thumb-btn {
+      flex: 0 0 54px;
+      width: 54px;
+      height: 54px;
+      min-width: 54px;
+      max-width: 54px;
+      scroll-snap-align: start;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-pdp-container {
+      padding: 10px 12px 90px 12px;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+      box-sizing: border-box;
+    }
+
+    .boat-pdp-breadcrumb {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      scrollbar-width: none !important;
+      -webkit-overflow-scrolling: touch !important;
+      font-size: 0.75rem !important;
+      margin-bottom: 10px !important;
+      gap: 4px !important;
+      width: 100% !important;
+    }
+
+    .boat-pdp-breadcrumb::-webkit-scrollbar {
+      display: none !important;
+    }
+
+    .boat-pdp-breadcrumb a,
+    .boat-pdp-breadcrumb span {
+      flex-shrink: 0 !important;
+    }
+
+    .boat-pdp-breadcrumb__current {
+      max-width: 150px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      flex-shrink: 1 !important;
+    }
+
+    .boat-pdp-title {
+      font-size: calc(var(--boat-pdp-title-size) * 0.82) !important;
+      letter-spacing: -0.3px !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      line-height: 1.25 !important;
+      max-height: calc(1.25em * 2) !important;
+    }
+
+    .boat-pdp-subtitle {
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .boat-pdp-price {
+      font-size: 1.35rem;
+    }
+
+    .boat-pdp-compare-price,
+    .boat-pdp-discount {
+      font-size: 0.85rem;
+    }
+
+    .boat-pdp-swatch-box {
+      width: 44px;
+      height: 44px;
+    }
+
+    .boat-pdp-pill-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .boat-pdp-subtotal-wrapper {
+      padding: 8px 12px;
+      margin-top: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .boat-pdp-subtotal-label {
+      font-size: 0.82rem;
+    }
+
+    .boat-pdp-subtotal-val {
+      font-size: 1.1rem;
+    }
+
+    /* 3-Column Contained Responsive DEAL Grid */
+    .boat-pdp-offers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .boat-pdp-offer-inner {
+      padding: 6px 3px;
+      gap: 2px;
+    }
+
+    .boat-pdp-offer-badge {
+      font-size: 0.52rem;
+      padding: 2px 2px;
+    }
+
+    .boat-pdp-offer-qty {
+      font-size: 0.68rem;
+    }
+
+    .boat-pdp-offer-disc {
+      font-size: 0.72rem;
+    }
+
+    .boat-pdp-offer-code {
+      font-size: 0.62rem;
+      padding: 2px 2px;
+    }
+
+    /* 100% Fit Dual Action Buttons */
+    .boat-pdp-cta-group {
+      display: flex;
+      width: 100%;
+      max-width: 100%;
+      gap: 8px;
+      margin: 12px 0 6px 0;
+      box-sizing: border-box;
+    }
+
+    .boat-pdp-cta-group--hide-mobile {
+      display: none !important;
+    }
+
+    .boat-pdp-btn {
+      flex: 1 1 0;
+      width: calc(50% - 4px);
+      min-width: 0;
+      height: 44px;
+      font-size: 0.88rem;
+      border-radius: 24px;
+      padding: 0 4px;
+      box-sizing: border-box;
+    }
+
+    /* Mobile Sticky Bottom Bar (Exact SS match) */
+    .boat-pdp-sticky-bar {
+      display: block !important;
+      position: fixed !important;
+      bottom: 0px !important;
+      left: 0px !important;
+      right: 0px !important;
+      width: 100vw !important;
+      max-width: 100% !important;
+      z-index: 2147483647 !important;
+      box-sizing: border-box !important;
+      pointer-events: auto !important;
+      transform: translateZ(0);
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .boat-pdp-sticky-deal-strip {
+      background: var(--boat-pdp-sticky-strip-bg) !important;
+      color: var(--boat-pdp-sticky-strip-text) !important;
+      font-size: 0.72rem !important;
+      font-weight: 700 !important;
+      text-align: center !important;
+      padding: 3px 10px !important;
+      border-radius: 10px 10px 0 0 !important;
+      margin: 0 8px !important;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.08) !important;
+      display: block !important;
+      box-sizing: border-box !important;
+      cursor: pointer !important;
+    }
+
+    .boat-pdp-sticky-inner {
+      background: #ffffff !important;
+      border-radius: 14px 14px 0 0 !important;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.16) !important;
+      border-top: 1px solid #e2e8f0 !important;
+      padding: 6px 10px 8px 10px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 5px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+    }
+
+    .boat-pdp-sticky-price-row {
+      display: flex !important;
+      align-items: baseline !important;
+      gap: 6px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .boat-pdp-sticky-price {
+      font-size: 1.15rem !important;
+      font-weight: 900 !important;
+      color: #0f172a !important;
+      letter-spacing: -0.3px !important;
+    }
+
+    .boat-pdp-sticky-compare {
+      font-size: 0.8rem !important;
+      text-decoration: line-through !important;
+      color: #94a3b8 !important;
+      font-weight: 600 !important;
+    }
+
+    .boat-pdp-sticky-discount {
+      font-size: 0.8rem !important;
+      font-weight: 800 !important;
+      color: #00b853 !important;
+    }
+
+    .boat-pdp-sticky-tax {
+      font-size: 0.62rem !important;
+      color: #94a3b8 !important;
+      margin-left: auto !important;
+    }
+
+    .boat-pdp-sticky-cta-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .boat-pdp-sticky-btn {
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      height: 38px !important;
+      border-radius: 19px !important;
+      font-size: 0.88rem !important;
+      font-weight: 800 !important;
+      border: none !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-family: inherit !important;
+      transition: transform 0.15s ease, opacity 0.15s ease !important;
+      box-sizing: border-box !important;
+    }
+
+    .boat-pdp-sticky-btn:active {
+      transform: scale(0.98) !important;
+    }
+
+    .boat-pdp-sticky-btn--atc {
+      background: var(--boat-pdp-sticky-atc-bg) !important;
+      color: var(--boat-pdp-sticky-atc-text) !important;
+    }
+
+    .boat-pdp-sticky-btn--buy {
+      background: var(--boat-pdp-sticky-buy-bg) !important;
+      color: var(--boat-pdp-sticky-buy-text) !important;
+    }
+
+    .boat-pdp-sticky-btn--whatsapp {
+      background: #25d366 !important;
+      color: #ffffff !important;
+      width: 40px !important;
+      flex: 0 0 40px !important;
+      padding: 0 !important;
+      border-radius: 20px !important;
+      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3) !important;
+    }
+
+    .boat-pdp-sticky-btn--whatsapp:active {
+      background: #20ba59 !important;
+    }
+  }
+
+  /* ------------------------------------------------------------- */
+  /* boAt Sticky Navigation Pill Bar & Detailed Product Sections   */
+  /* ------------------------------------------------------------- */
+
+  .boat-pdp-nav-sticky-wrapper {
+    position: sticky;
+    top: 70px;
+    z-index: 25;
+    width: 100%;
+    padding: 16px 0 12px 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.9) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .boat-pdp-nav-pill-bar {
+    display: inline-flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 5px;
+    border-radius: 9999px;
+    gap: 4px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .boat-pdp-nav-pill-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .boat-nav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #475569;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    user-select: none;
+  }
+
+  .boat-nav-pill:hover {
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .boat-nav-pill.active {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .boat-nav-pill-icon {
+    flex-shrink: 0;
+    color: inherit;
+  }
+
+  /* Detailed Tabs Content Container */
+  .boat-pdp-tabs-content {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-top: 12px;
+  }
+
+  .boat-tab-section {
+    display: none;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 32px 36px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.2s ease;
+  }
+
+  .boat-tab-section.active {
+    display: block;
+    animation: boatTabFadeIn 0.25s ease-in-out;
+  }
+
+  @keyframes boatTabFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .boat-tab-section__header {
+    margin-bottom: 24px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+  }
+
+  .boat-tab-section__title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.3px;
+  }
+
+  .boat-tab-section__subtitle {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Overview Feature Cards Grid */
+  .boat-tab-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .boat-tab-feature-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 16px;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .boat-tab-feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  .boat-feature-icon {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+  }
+
+  .boat-feature-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 6px 0;
+  }
+
+  .boat-feature-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  .boat-tab-description-box {
+    background: #ffffff;
+    border-radius: 12px;
+  }
+
+  .boat-desc-heading {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 14px 0;
+  }
+
+  .boat-rte-content {
+    font-size: 0.94rem;
+    line-height: 1.7;
+    color: #334155;
+  }
+
+  .boat-rte-content p {
+    margin-bottom: 14px;
+  }
+
+  /* Specs Table */
+  .boat-tab-specs-table-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .boat-spec-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .boat-spec-row:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .boat-spec-row:last-child {
+    border-bottom: none;
+  }
+
+  .boat-spec-name {
+    font-weight: 700;
+    color: #475569;
+    flex: 0 0 35%;
+  }
+
+  .boat-spec-val {
+    font-weight: 600;
+    color: #0f172a;
+    flex: 1 1 auto;
+    text-align: right;
+  }
+
+  /* FAQs Accordion */
+  .boat-faqs-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .boat-faq-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .boat-faq-item.active {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  }
+
+  .boat-faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: #0f172a;
+    user-select: none;
+  }
+
+  .boat-faq-arrow {
+    font-size: 0.9rem;
+    color: #64748b;
+    transition: transform 0.25s ease;
+  }
+
+  .boat-faq-item.active .boat-faq-arrow {
+    transform: rotate(180deg);
+  }
+
+  .boat-faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 20px;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .boat-faq-item.active .boat-faq-answer {
+    max-height: 200px;
+    padding: 0 20px 16px 20px;
+  }
+
+  .boat-faq-answer p {
+    margin: 0;
+  }
+
+  /* Reviews Header Flex & Button */
+  .boat-reviews-header-flex {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .boat-write-review-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 18px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .boat-write-review-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+  }
+
+  /* Reviews Summary */
+  .boat-reviews-summary-card {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+  }
+
+  .boat-reviews-score-box {
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .boat-reviews-score-big {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .boat-reviews-stars {
+    color: #f59e0b;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .boat-reviews-count-text {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+  }
+
+  .boat-reviews-breakdown {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .boat-rating-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .boat-rating-bar-row span:first-child {
+    width: 48px;
+  }
+
+  .boat-rating-bar-row span:last-child {
+    width: 36px;
+    text-align: right;
+  }
+
+  .boat-rating-progress {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .boat-rating-fill {
+    height: 100%;
+    background: #f59e0b;
+    border-radius: 9999px;
+  }
+
+  /* Review Form */
+  .boat-review-form-wrapper {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    animation: boatTabFadeIn 0.25s ease-in-out;
+  }
+
+  .boat-form-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+  }
+
+  .boat-form-row {
+    margin-bottom: 14px;
+  }
+
+  .boat-form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 6px;
+  }
+
+  .boat-form-star-select {
+    display: flex;
+    gap: 6px;
+  }
+
+  .boat-star-option {
+    font-size: 1.5rem;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+    user-select: none;
+  }
+
+  .boat-star-option:hover,
+  .boat-star-option.active {
+    color: #f59e0b;
+    transform: scale(1.1);
+  }
+
+  .boat-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .boat-form-field {
+    margin-bottom: 14px;
+  }
+
+  .boat-form-input,
+  .boat-form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-family: inherit;
+    color: #0f172a;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+  }
+
+  .boat-form-input:focus,
+  .boat-form-textarea:focus {
+    outline: none;
+    border-color: #0f172a;
+  }
+
+  .boat-form-submit-btn {
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 800;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-family: inherit;
+  }
+
+  .boat-form-submit-btn:hover {
+    background: #1e293b;
+  }
+
+  .boat-review-success-msg {
+    margin-top: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #16a34a;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-pdp-nav-sticky-wrapper {
+      top: 56px;
+      padding: 10px 0 8px 0;
+      margin-top: 24px;
+      margin-bottom: 16px;
+    }
+
+    .boat-nav-pill {
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      gap: 5px;
+    }
+
+    .boat-tab-section {
+      padding: 20px 16px;
+      border-radius: 16px;
+      scroll-margin-top: 110px;
+    }
+
+    .boat-tab-section__title {
+      font-size: 1.2rem;
+    }
+
+    .boat-tab-overview-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .boat-tab-feature-card {
+      padding: 14px 10px;
+    }
+
+    .boat-feature-icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+    }
+
+    .boat-feature-title {
+      font-size: 0.84rem;
+    }
+
+    .boat-feature-desc {
+      font-size: 0.74rem;
+    }
+
+    .boat-spec-row {
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 14px;
+    }
+
+    .boat-spec-val {
+      text-align: left;
+    }
+
+    .boat-reviews-summary-card {
+      flex-direction: column;
+      gap: 20px;
+      padding: 18px 16px;
+    }
+  }
+
+  /* Desktop Floating Sticky Pill Bar (SS 2 Matching Ronin/boAt) */
+  .boat-pdp-desktop-sticky-bar {
+    position: fixed !important;
+    bottom: 24px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(160px) !important;
+    z-index: 2147483646 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease !important;
+    display: block !important;
+  }
+
+  .boat-pdp-desktop-sticky-bar.visible {
+    transform: translateX(-50%) translateY(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  @media screen and (max-width: 768px) {
+    .boat-pdp-desktop-sticky-bar {
+      display: none !important;
+    }
+  }
+
+  .boat-desktop-sticky-pill {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.65);
+    border-radius: 9999px;
+    padding: 6px 8px 6px 8px;
+    gap: 14px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
+    min-width: 390px;
+    max-width: 550px;
+    box-sizing: border-box;
+  }
+
+  .boat-desktop-sticky-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: #ffffff;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    padding: 2px;
+    box-sizing: border-box;
+  }
+
+  .boat-desktop-sticky-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .boat-desktop-sticky-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 230px;
+    line-height: 1.25;
+  }
+
+  .boat-desktop-sticky-pricing {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .boat-desktop-sticky-price {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .boat-desktop-sticky-compare {
+    font-size: 0.82rem;
+    color: #64748b;
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+
+  .boat-desktop-sticky-btn {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+    padding: 9px 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.2s ease !important;
+    font-family: inherit !important;
+  }
+
+  .boat-desktop-sticky-btn:hover {
+    background: #f8fafc !important;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.14) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .boat-desktop-sticky-btn:active {
+    transform: scale(0.97) !important;
+  }
+
+  .boat-desktop-sticky-btn:active {
+    transform: scale(0.97) !important;
+  }
+</style>
+
+<script>
+  // WhatsApp Order Direct Handler
+  function orderBoatOnWhatsapp() {
+    const phone = '923102492119';
+    const title = {{ product.title | json }};
+    const priceElem = document.getElementById('BoatPdpPrice') || document.getElementById('BoatPdpStickyPrice');
+    const price = priceElem ? priceElem.innerText.trim() : '{{ price | money_without_trailing_zeros }}';
+    const url = window.location.href;
+
+    let msg = `Hello DealBazaar! I want to order this product:\n\n`;
+    msg += `📌 *Product:* ${title}\n`;
+    msg += `💰 *Price:* ${price}\n`;
+    msg += `🔗 *Link:* ${url}\n\n`;
+    msg += `Please confirm my order. Thank you!`;
+
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  }
+
+  // Image Thumbnail Switcher with Smooth Center Scrolling
+  function switchBoatPdpImage(btn, imgSrc) {
+    const mainImg = document.getElementById('BoatPdpMainImage');
+    if (mainImg && imgSrc) {
+      mainImg.style.opacity = '0.35';
+      mainImg.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        mainImg.src = imgSrc;
+        mainImg.style.opacity = '1';
+        mainImg.style.transform = 'scale(1)';
+      }, 120);
+    }
+
+    const allThumbs = document.querySelectorAll('.boat-pdp-thumb-btn');
+    allThumbs.forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Smooth scroll thumbnail into center of slider
+    if (typeof btn.scrollIntoView === 'function') {
+      btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  // Infinite Loop Previous & Next Arrow Handlers
+  function prevBoatPdpImage() {
+    const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
+    if (allThumbs.length <= 1) return;
+    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    const nextIdx = (activeIdx - 1 + allThumbs.length) % allThumbs.length;
+    allThumbs[nextIdx].click();
+  }
+
+  function nextBoatPdpImage() {
+    const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
+    if (allThumbs.length <= 1) return;
+    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    const nextIdx = (activeIdx + 1) % allThumbs.length;
+    allThumbs[nextIdx].click();
+  }
+
+  // Touch Swipe on Main Image Box for Mobile
+  (function() {
+    const box = document.getElementById('BoatPdpMainImageBox');
+    if (!box) return;
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    box.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    box.addEventListener('touchend', function(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const swipeDistance = touchEndX - touchStartX;
+      if (Math.abs(swipeDistance) > 40) {
+        if (swipeDistance < 0) {
+          nextBoatPdpImage(); // Swiped left -> next
+        } else {
+          prevBoatPdpImage(); // Swiped right -> prev
+        }
+      }
+    }
+  })();
+
+  // Live Flash Sale Countdown Timer
+  (function() {
+    let totalSeconds = {{ section.settings.timer_hours | default: 4 }} * 3600 + {{ section.settings.timer_minutes | default: 2 }} * 60 + 19;
+    const timerElem = document.getElementById('boatPdpCountdown');
+    if (!timerElem) return;
+
+    setInterval(() => {
+      if (totalSeconds > 0) totalSeconds--;
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const seconds = String(totalSeconds % 60).padStart(2, '0');
+      timerElem.textContent = `${hours}h : ${minutes}m : ${seconds}s`;
+    }, 1000);
+  })();
+
+  // Master Variant Resolver & Multi-Option Matching
+  const variantsData = JSON.parse(document.getElementById('BoatPdpVariantsData').textContent);
+  let currentVariantPrice = {{ selected_variant.price }};
+  let currentVariantComparePrice = {{ selected_variant.compare_at_price | default: 0 }};
+  let currentVariantDiscountPercent = {{ discount_percent }};
+  let activeCouponCode = '';
+
+  const tierConfig = {
+    t1_qty: {{ t1_qty }},
+    t1_disc: {{ t1_disc }},
+    t1_code: {{ t1_code | json }},
+    t2_qty: {{ t2_qty }},
+    t2_disc: {{ t2_disc }},
+    t2_code: {{ t2_code | json }},
+    t3_qty: {{ t3_qty }},
+    t3_disc: {{ t3_disc }},
+    t3_code: {{ t3_code | json }}
+  };
+
+  let selectedOptions = [
+    {% for option in product.options_with_values %}
+      {{ option.selected_value | json }}{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  ];
+
+  function formatMoneyWithoutDecimals(cents) {
+    const amount = Math.floor(cents / 100);
+    return 'Rs.' + amount.toLocaleString();
+  }
+
+  const isDealsEnabledOnProduct = {{ show_deal | json }};
+
+  function scrollToBoatDeals() {
+    const dealSec = document.querySelector('.boat-pdp-offers-section');
+    if (dealSec) {
+      dealSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      dealSec.style.transition = 'all 0.3s ease';
+      dealSec.style.boxShadow = '0 0 0 3px #00a651';
+      dealSec.style.borderRadius = '14px';
+      setTimeout(() => { dealSec.style.boxShadow = ''; }, 1500);
+    }
+  }
+
+  // Dynamic Subtotal Calculator with Automatic Tier Discounts and Sticky Bar Sync
+  function updateBoatSubtotal() {
+    const qtyInput = document.getElementById('BoatPdpQuantity');
+    const qty = qtyInput ? parseInt(qtyInput.value, 10) || 1 : 1;
+    const originalCents = currentVariantPrice * qty;
+
+    let discountPercent = 0;
+    let activeCode = '';
+
+    if (qty >= tierConfig.t3_qty) {
+      discountPercent = tierConfig.t3_disc;
+      activeCode = tierConfig.t3_code;
+    } else if (qty >= tierConfig.t2_qty) {
+      discountPercent = tierConfig.t2_disc;
+      activeCode = tierConfig.t2_code;
+    } else if (qty >= tierConfig.t1_qty) {
+      discountPercent = tierConfig.t1_disc;
+      activeCode = tierConfig.t1_code;
+    }
+
+    activeCouponCode = activeCode;
+    window.activePdpDiscountCode = activeCode;
+
+    const discountedCents = Math.round(originalCents * (1 - (discountPercent / 100)));
+
+    const subtotalElem = document.getElementById('BoatPdpSubtotal');
+    const compareElem = document.getElementById('BoatPdpSubtotalCompare');
+    const discountTag = document.getElementById('BoatPdpSubtotalDiscountTag');
+
+    // Sticky bar elements
+    const stickyPrice = document.getElementById('BoatPdpStickyPrice');
+    const stickyCompare = document.getElementById('BoatPdpStickyCompare');
+    const stickyDisc = document.getElementById('BoatPdpStickyDiscount');
+    const stickyDealStrip = document.getElementById('BoatPdpStickyDealStrip');
+    const deskStickyPrice = document.getElementById('BoatDesktopStickyPrice');
+    const deskStickyCompare = document.getElementById('BoatDesktopStickyCompare');
+
+    if (discountPercent > 0) {
+      if (subtotalElem) subtotalElem.textContent = formatMoneyWithoutDecimals(discountedCents);
+      if (compareElem) {
+        compareElem.textContent = formatMoneyWithoutDecimals(originalCents);
+        compareElem.style.display = 'inline';
+      }
+      if (discountTag) {
+        discountTag.textContent = discountPercent + '% OFF (' + activeCode + ')';
+        discountTag.style.display = 'inline-flex';
+      }
+
+      // Sticky bar shows discounted subtotal & crossed original amount
+      if (stickyPrice) stickyPrice.textContent = formatMoneyWithoutDecimals(discountedCents);
+      if (stickyCompare) {
+        stickyCompare.textContent = formatMoneyWithoutDecimals(originalCents);
+        stickyCompare.style.display = 'inline';
+      }
+      if (stickyDisc) {
+        stickyDisc.textContent = discountPercent + '% Off';
+        stickyDisc.style.display = 'inline';
+      }
+
+      // Desktop Sticky Pill
+      if (deskStickyPrice) deskStickyPrice.textContent = formatMoneyWithoutDecimals(discountedCents);
+      if (deskStickyCompare) {
+        deskStickyCompare.textContent = formatMoneyWithoutDecimals(originalCents);
+        deskStickyCompare.style.display = 'inline';
+      }
+      
+      // Update top green strip dynamically when deal is applied
+      if (stickyDealStrip) {
+        const unitDiscounted = Math.round(currentVariantPrice * (1 - (discountPercent / 100)));
+        stickyDealStrip.innerHTML = 'Applied <strong>' + activeCode + '</strong> (' + discountPercent + '% Off) • ' + formatMoneyWithoutDecimals(unitDiscounted) + '/each';
+      }
+    } else {
+      if (subtotalElem) subtotalElem.textContent = formatMoneyWithoutDecimals(originalCents);
+      if (compareElem) compareElem.style.display = 'none';
+      if (discountTag) discountTag.style.display = 'none';
+
+      if (stickyPrice) stickyPrice.textContent = formatMoneyWithoutDecimals(currentVariantPrice);
+      if (stickyCompare && currentVariantComparePrice > currentVariantPrice) {
+        stickyCompare.textContent = formatMoneyWithoutDecimals(currentVariantComparePrice);
+        stickyCompare.style.display = 'inline';
+      } else if (stickyCompare) {
+        stickyCompare.style.display = 'none';
+      }
+      if (stickyDisc && currentVariantDiscountPercent > 0) {
+        stickyDisc.textContent = currentVariantDiscountPercent + '% Off';
+        stickyDisc.style.display = 'inline';
+      } else if (stickyDisc) {
+        stickyDisc.style.display = 'none';
+      }
+
+      // Desktop Sticky Pill
+      if (deskStickyPrice) deskStickyPrice.textContent = formatMoneyWithoutDecimals(originalCents);
+      if (deskStickyCompare && currentVariantComparePrice > currentVariantPrice) {
+        deskStickyCompare.textContent = formatMoneyWithoutDecimals(currentVariantComparePrice * qty);
+        deskStickyCompare.style.display = 'inline';
+      } else if (deskStickyCompare) {
+        deskStickyCompare.style.display = 'none';
+      }
+
+      // Default prompt before deal is clicked
+      if (stickyDealStrip) {
+        if (isDealsEnabledOnProduct) {
+          stickyDealStrip.innerHTML = 'Get at ' + formatMoneyWithoutDecimals(currentVariantPrice) + ' by using <strong>' + tierConfig.t1_code + '</strong>';
+        } else if (currentVariantDiscountPercent > 0) {
+          stickyDealStrip.innerHTML = '🔥 Special Sale Price: ' + formatMoneyWithoutDecimals(currentVariantPrice) + ' (Save ' + currentVariantDiscountPercent + '%)';
+        } else {
+          stickyDealStrip.innerHTML = '⚡ Best Price: ' + formatMoneyWithoutDecimals(currentVariantPrice);
+        }
+      }
+    }
+
+    // Highlight active card
+    document.querySelectorAll('.boat-pdp-offer-card').forEach(c => c.classList.remove('active'));
+    if (qty >= tierConfig.t3_qty) {
+      document.getElementById('BoatDealCard-' + tierConfig.t3_qty)?.classList.add('active');
+    } else if (qty >= tierConfig.t2_qty) {
+      document.getElementById('BoatDealCard-' + tierConfig.t2_qty)?.classList.add('active');
+    } else if (qty >= tierConfig.t1_qty) {
+      document.getElementById('BoatDealCard-' + tierConfig.t1_qty)?.classList.add('active');
+    }
+  }
+
+  // Click on Deal Card -> Auto-Set Quantity + Copy Coupon + Recalculate Subtotal
+  function applyBoatDeal(qty, discount, code, cardElem) {
+    const qtyInput = document.getElementById('BoatPdpQuantity');
+    if (qtyInput) {
+      qtyInput.value = qty;
+    }
+
+    window.activePdpDiscountCode = code;
+
+    try {
+      navigator.clipboard.writeText(code);
+    } catch(e) {}
+
+    const codeElem = cardElem.querySelector('.boat-pdp-offer-code');
+    if (codeElem) {
+      const originalHtml = codeElem.innerHTML;
+      codeElem.innerHTML = '✓ ' + code + ' (Qty ' + qty + ')';
+      setTimeout(() => {
+        codeElem.innerHTML = 'Code: <strong>' + code + '</strong>';
+      }, 1500);
+    }
+
+    updateBoatSubtotal();
+  }
+
+  // Quantity Stepper Handler
+  function changePdpQty(delta) {
+    const input = document.getElementById('BoatPdpQuantity');
+    if (!input) return;
+    let val = parseInt(input.value, 10) || 1;
+    val = Math.max(1, val + delta);
+    input.value = val;
+    updateBoatSubtotal();
+  }
+
+  function handleOptionSelect(btn) {
+    const optIndex = parseInt(btn.dataset.optionIndex, 10);
+    const optValue = btn.dataset.optionValue;
+
+    selectedOptions[optIndex] = optValue;
+
+    // Update active class
+    const parentGrid = btn.closest('.boat-pdp-swatches-grid');
+    if (parentGrid) {
+      parentGrid.querySelectorAll('.boat-pdp-opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Update option title label
+    const labelElem = document.getElementById('BoatPdpOptVal-' + optIndex);
+    if (labelElem) labelElem.textContent = optValue;
+
+    // Find matching variant from master variantsData
+    const matchedVariant = variantsData.find(v => {
+      if (selectedOptions.length === 1) return v.option1 === selectedOptions[0];
+      if (selectedOptions.length === 2) return v.option1 === selectedOptions[0] && v.option2 === selectedOptions[1];
+      if (selectedOptions.length === 3) return v.option1 === selectedOptions[0] && v.option2 === selectedOptions[1] && v.option3 === selectedOptions[2];
+      return false;
+    });
+
+    if (matchedVariant) {
+      // Update hidden input
+      const idInput = document.getElementById('BoatPdpSelectedVariantId');
+      if (idInput) idInput.value = matchedVariant.id;
+
+      // Update Price & Current Unit Price
+      currentVariantPrice = matchedVariant.price;
+      currentVariantComparePrice = matchedVariant.compare_at_price || 0;
+      if (matchedVariant.compare_at_price > matchedVariant.price) {
+        currentVariantDiscountPercent = Math.round(((matchedVariant.compare_at_price - matchedVariant.price) * 100) / matchedVariant.compare_at_price);
+      } else {
+        currentVariantDiscountPercent = 0;
+      }
+
+      const priceElem = document.getElementById('BoatPdpPrice');
+      if (priceElem) priceElem.textContent = formatMoneyWithoutDecimals(matchedVariant.price);
+
+      // Recalculate Subtotal & Sticky Bar
+      updateBoatSubtotal();
+
+      // Update Compare Price & Discount
+      const compElem = document.getElementById('BoatPdpCompare');
+      const discElem = document.getElementById('BoatPdpDiscount');
+      if (matchedVariant.compare_at_price > matchedVariant.price) {
+        const discPercent = Math.round(((matchedVariant.compare_at_price - matchedVariant.price) * 100) / matchedVariant.compare_at_price);
+        if (compElem) {
+          compElem.textContent = formatMoneyWithoutDecimals(matchedVariant.compare_at_price);
+          compElem.style.display = 'inline';
+        }
+        if (discElem) {
+          discElem.textContent = discPercent + '% Off';
+          discElem.style.display = 'inline';
+        }
+      } else {
+        if (compElem) compElem.style.display = 'none';
+        if (discElem) discElem.style.display = 'none';
+      }
+
+      // Update Main Image if variant has image
+      if (matchedVariant.featured_image) {
+        const mainImg = document.getElementById('BoatPdpMainImage');
+        if (mainImg) mainImg.src = matchedVariant.featured_image;
+        const deskStickyImg = document.getElementById('BoatDesktopStickyImg');
+        if (deskStickyImg) deskStickyImg.src = matchedVariant.featured_image;
+      }
+
+      // Update Buttons
+      const atcBtn = document.getElementById('BoatPdpAtcBtn');
+      const buyBtn = document.getElementById('BoatPdpBuyBtn');
+      if (atcBtn) {
+        atcBtn.disabled = !matchedVariant.available;
+        atcBtn.innerHTML = matchedVariant.available ? '<span>Add to Cart</span>' : '<span>Sold Out</span>';
+      }
+      if (buyBtn) buyBtn.disabled = !matchedVariant.available;
+    } else {
+      // Combination unavailable
+      const atcBtn = document.getElementById('BoatPdpAtcBtn');
+      const buyBtn = document.getElementById('BoatPdpBuyBtn');
+      if (atcBtn) {
+        atcBtn.disabled = true;
+        atcBtn.innerHTML = '<span>Unavailable</span>';
+      }
+      if (buyBtn) buyBtn.disabled = true;
+    }
+  }
+
+  // Smooth Submit Handler supporting auto coupon session sync
+  async function handleBoatPdpSubmit(event, form) {
+    if (activeCouponCode) {
+      try {
+        fetch('/discount/' + encodeURIComponent(activeCouponCode));
+      } catch(e) {}
+    }
+    handleBoatAddToCart(event, form);
+  }
+
+  // Direct Checkout for Buy Now Button with Active Coupon Applied
+  async function buyNowBoatPdp(formId) {
+    const variantId = document.getElementById('BoatPdpSelectedVariantId').value;
+    if (!variantId) return;
+
+    const qtyInput = document.getElementById('BoatPdpQuantity');
+    const quantity = qtyInput ? parseInt(qtyInput.value, 10) || 1 : 1;
+
+    const buyBtn = document.getElementById('BoatPdpBuyBtn');
+    if (buyBtn) {
+      buyBtn.disabled = true;
+      buyBtn.innerHTML = '<span>Proceeding to Checkout...</span>';
+    }
+
+    let checkoutUrl = '/checkout';
+    if (activeCouponCode) {
+      checkoutUrl += '?discount=' + encodeURIComponent(activeCouponCode);
+    }
+
+    try {
+      await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ id: variantId, quantity: quantity })
+      });
+      window.location.href = checkoutUrl;
+    } catch(e) {
+      window.location.href = checkoutUrl;
+    }
+  }
+
+  // Global Delegated Click Listener to Ensure Cart Drawer (X) Close & Backdrop Always Works 100%
+  document.addEventListener('click', function(e) {
+    const closeBtn = e.target.closest('.theme-drawer__close-button, [on\\:click*="close"], .cart-drawer__close-button--empty');
+    if (closeBtn && closeBtn.closest('#cart-drawer, .theme-drawer, cart-drawer-component')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const drawer = document.getElementById('cart-drawer');
+      if (drawer) {
+        if (typeof drawer.close === 'function') {
+          drawer.close();
+        }
+        const dialog = drawer.querySelector('dialog');
+        if (dialog && typeof dialog.close === 'function') {
+          dialog.close();
+        }
+        drawer.removeAttribute('open');
+      }
+    }
+  });
+
+  // Switch PDP Content Tab on Click (Overview, Specs, FAQs, Reviews)
+  function switchBoatTab(tabId, btnElem) {
+    // 1. Update active class on pill buttons
+    document.querySelectorAll('.boat-nav-pill').forEach(b => b.classList.remove('active'));
+    if (btnElem) btnElem.classList.add('active');
+
+    // 2. Hide all tab sections, show selected one
+    document.querySelectorAll('.boat-tab-section').forEach(sec => sec.classList.remove('active'));
+    const targetSection = document.getElementById('boat-tab-' + tabId);
+    if (targetSection) {
+      targetSection.classList.add('active');
+    }
+
+    // 3. Smooth scroll to tabs area if user was scrolled below it
+    const wrapper = document.getElementById('BoatPdpNavStickyWrapper');
+    if (wrapper) {
+      const rect = wrapper.getBoundingClientRect();
+      if (rect.top < 0) {
+        window.scrollTo({
+          top: window.pageYOffset + rect.top - 80,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }
+
+  // Toggle FAQ Accordion Item
+  function toggleBoatFaq(item) {
+    const isActive = item.classList.contains('active');
+    // Close other FAQs
+    document.querySelectorAll('.boat-faq-item').forEach(f => f.classList.remove('active'));
+    if (!isActive) {
+      item.classList.add('active');
+    }
+  }
+
+  // Toggle Write a Review Form
+  function toggleBoatReviewForm() {
+    const formWrapper = document.getElementById('BoatReviewFormWrapper');
+    if (!formWrapper) return;
+    if (formWrapper.style.display === 'none' || formWrapper.style.display === '') {
+      formWrapper.style.display = 'block';
+      formWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      formWrapper.style.display = 'none';
+    }
+  }
+
+  // Set Star Rating on Review Form
+  function setBoatFormRating(stars, clickedStar) {
+    const ratingInput = document.getElementById('BoatFormRatingVal');
+    if (ratingInput) ratingInput.value = stars;
+    const allStars = document.querySelectorAll('.boat-star-option');
+    allStars.forEach((star, idx) => {
+      if (idx < stars) {
+        star.classList.add('active');
+      } else {
+        star.classList.remove('active');
+      }
+    });
+  }
+
+  // Handle Review Submission
+  function handleBoatReviewSubmit(e, form) {
+    e.preventDefault();
+    const successMsg = document.getElementById('BoatReviewSuccessMsg');
+    if (successMsg) {
+      successMsg.style.display = 'block';
+      form.reset();
+      setTimeout(() => {
+        toggleBoatReviewForm();
+        successMsg.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  // Desktop Floating Sticky Bar Add to Cart Action
+  function triggerBoatDesktopAtc() {
+    const atc = document.getElementById('BoatPdpAtcBtn');
+    if (atc) {
+      atc.click();
+    } else {
+      const form = document.getElementById('BoatProductPageForm-{{ product.id }}');
+      if (form) form.submit();
+    }
+  }
+
+  // Desktop Floating Sticky Pill Bar Scroll Trigger Observer
+  function initBoatDesktopSticky() {
+    const desktopSticky = document.getElementById('BoatPdpDesktopStickyBar');
+    if (!desktopSticky) return;
+
+    function checkStickyVisibility() {
+      // Only show on desktop screens (> 768px)
+      if (window.innerWidth <= 768) {
+        desktopSticky.classList.remove('visible');
+        return;
+      }
+
+      const atcBtn = document.getElementById('BoatPdpAtcBtn') || document.querySelector('.boat-pdp-cta-group');
+      const scrollY = window.pageYOffset || window.scrollY || document.documentElement.scrollTop || (document.body ? document.body.scrollTop : 0) || 0;
+
+      if (!atcBtn) {
+        if (scrollY > 150) {
+          desktopSticky.classList.add('visible');
+        } else {
+          desktopSticky.classList.remove('visible');
+        }
+        return;
+      }
+
+      const rect = atcBtn.getBoundingClientRect();
+      // Show when user scrolls past the top add to cart button or scrolls down >= 250px
+      if (rect.bottom <= 200 || scrollY > 250) {
+        desktopSticky.classList.add('visible');
+      } else {
+        desktopSticky.classList.remove('visible');
+      }
+    }
+
+    window.addEventListener('scroll', checkStickyVisibility, { passive: true });
+    window.addEventListener('touchmove', checkStickyVisibility, { passive: true });
+    document.addEventListener('scroll', checkStickyVisibility, { passive: true });
+    window.addEventListener('resize', checkStickyVisibility, { passive: true });
+    
+    // Initial check
+    checkStickyVisibility();
+    setTimeout(checkStickyVisibility, 150);
+    setTimeout(checkStickyVisibility, 500);
+    setTimeout(checkStickyVisibility, 1200);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBoatDesktopSticky);
+  } else {
+    initBoatDesktopSticky();
+  }
+  document.addEventListener('shopify:section:load', initBoatDesktopSticky);
+  document.addEventListener('shopify:section:select', initBoatDesktopSticky);
+  document.addEventListener('shopify:section:reorder', initBoatDesktopSticky);
+
+  // Initial subtotal calculation on page load
+  document.addEventListener('DOMContentLoaded', updateBoatSubtotal);
+</script>
+
+{% schema %}
+{
+  "name": "Deal Bazaar Product Page",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Desktop Floating Sticky Bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_desktop_sticky",
+      "label": "Enable Desktop Sticky Bar",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Product Tabs Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_pdp_tabs",
+      "label": "Enable Tabs Section",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tab_overview",
+      "label": "Show Overview Tab",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tab_specs",
+      "label": "Show Specs Tab",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tab_faqs",
+      "label": "Show FAQ Tab",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_tab_reviews",
+      "label": "Show Reviews Tab",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Product Rating Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "Show Rating Badge",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Flash Sale Timer"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_timer",
+      "label": "Show Flash Sale Countdown Timer",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "timer_label",
+      "label": "Timer Label Text",
+      "default": "Flash Sale Ends In:"
+    },
+    {
+      "type": "number",
+      "id": "timer_hours",
+      "label": "Timer Hours",
+      "default": 4
+    },
+    {
+      "type": "number",
+      "id": "timer_minutes",
+      "label": "Timer Minutes",
+      "default": 2
+    },
+    {
+      "type": "header",
+      "content": "Mobile Buttons & Sticky Bar Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_inline_buttons_mobile",
+      "label": "Hide In-Page (Top) Add to Cart & Buy Now on Mobile",
+      "info": "Prevents duplicate buttons on mobile since Sticky Bar is active at bottom",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_mobile_sticky",
+      "label": "Enable Mobile Sticky Bottom Bar",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sticky_deal_strip",
+      "label": "Show Top Deal / Sale Strip on Sticky Bar",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "sticky_atc_text",
+      "label": "Sticky Add to Cart Button Text",
+      "default": "Add To Cart"
+    },
+    {
+      "type": "text",
+      "id": "sticky_buy_text",
+      "label": "Sticky Buy Now Button Text",
+      "default": "Buy Now"
+    },
+    {
+      "type": "color",
+      "id": "sticky_strip_bg",
+      "label": "Sticky Deal Strip Background Color",
+      "default": "#00875a"
+    },
+    {
+      "type": "color",
+      "id": "sticky_strip_text",
+      "label": "Sticky Deal Strip Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "sticky_atc_bg",
+      "label": "Sticky Add to Cart Button Background",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "sticky_atc_text_color",
+      "label": "Sticky Add to Cart Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "sticky_buy_bg",
+      "label": "Sticky Buy Now Button Background",
+      "default": "#00b853"
+    },
+    {
+      "type": "color",
+      "id": "sticky_buy_text_color",
+      "label": "Sticky Buy Now Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Colors & Typography Settings"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "min": 18,
+      "max": 42,
+      "step": 1,
+      "unit": "px",
+      "label": "Product Title Font Size",
+      "default": 28
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Product Title Color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "price_color",
+      "label": "Price Color",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "discount_color",
+      "label": "Discount % Text Color",
+      "default": "#00b853"
+    },
+    {
+      "type": "color",
+      "id": "atc_btn_bg",
+      "label": "Add to Cart Button Background",
+      "default": "#0f172a"
+    },
+    {
+      "type": "color",
+      "id": "atc_btn_text",
+      "label": "Add to Cart Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "buy_btn_bg",
+      "label": "Buy Now Button Background",
+      "default": "#00b853"
+    },
+    {
+      "type": "color",
+      "id": "buy_btn_text",
+      "label": "Buy Now Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "DEAL Section Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_deals",
+      "label": "Enable DEAL Section",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "deal_title",
+      "label": "Deal Section Heading",
+      "default": "DEAL"
+    },
+    {
+      "type": "text",
+      "id": "deals_tag_filter",
+      "label": "Show only on products with tag (Optional)",
+      "info": "Leave blank to show on all products. Example: deal"
+    },
+    {
+      "type": "collection",
+      "id": "deals_collection_filter",
+      "label": "Show only on collection (Optional)",
+      "info": "Leave empty to show on all collections"
+    },
+    {
+      "type": "header",
+      "content": "Tier 1 Offer"
+    },
+    {
+      "type": "number",
+      "id": "tier_1_qty",
+      "label": "Tier 1 Min Quantity",
+      "default": 2
+    },
+    {
+      "type": "number",
+      "id": "tier_1_discount",
+      "label": "Tier 1 Discount %",
+      "default": 6
+    },
+    {
+      "type": "text",
+      "id": "tier_1_code",
+      "label": "Tier 1 Coupon Code",
+      "default": "DEAL6"
+    },
+    {
+      "type": "text",
+      "id": "tier_1_badge",
+      "label": "Tier 1 Badge Text",
+      "default": "MOST POPULAR"
+    },
+    {
+      "type": "header",
+      "content": "Tier 2 Offer"
+    },
+    {
+      "type": "number",
+      "id": "tier_2_qty",
+      "label": "Tier 2 Min Quantity",
+      "default": 5
+    },
+    {
+      "type": "number",
+      "id": "tier_2_discount",
+      "label": "Tier 2 Discount %",
+      "default": 7
+    },
+    {
+      "type": "text",
+      "id": "tier_2_code",
+      "label": "Tier 2 Coupon Code",
+      "default": "DEAL7"
+    },
+    {
+      "type": "text",
+      "id": "tier_2_badge",
+      "label": "Tier 2 Badge Text",
+      "default": "BEST VALUE"
+    },
+    {
+      "type": "header",
+      "content": "Tier 3 Offer"
+    },
+    {
+      "type": "number",
+      "id": "tier_3_qty",
+      "label": "Tier 3 Min Quantity",
+      "default": 10
+    },
+    {
+      "type": "number",
+      "id": "tier_3_discount",
+      "label": "Tier 3 Discount %",
+      "default": 10
+    },
+    {
+      "type": "text",
+      "id": "tier_3_code",
+      "label": "Tier 3 Coupon Code",
+      "default": "DEAL10"
+    },
+    {
+      "type": "text",
+      "id": "tier_3_badge",
+      "label": "Tier 3 Badge Text",
+      "default": "MOST SAVINGS"
+    },
+    {
+      "type": "header",
+      "content": "WhatsApp Order Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_whatsapp_order",
+      "label": "Show WhatsApp Order Button",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_phone",
+      "label": "WhatsApp Phone Number (without + or spaces)",
+      "default": "923102492119"
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_btn_label",
+      "label": "WhatsApp Button Label",
+      "default": "Order via WhatsApp"
+    },
+    {
+      "type": "color",
+      "id": "whatsapp_btn_bg",
+      "label": "WhatsApp Button Background Color",
+      "default": "#25d366"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "FAQ Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "What is the estimated delivery time for my order?"
+        },
+        {
+          "type": "textarea",
+          "id": "answer",
+          "label": "Answer",
+          "default": "Orders are dispatched within 24 hours. Delivery typically takes 2 to 4 business days across all major cities in Pakistan with active tracking updates."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Deal Bazaar Product Page",
+      "blocks": [
+        {
+          "type": "faq",
+          "settings": {
+            "question": "What is the estimated delivery time for my order?",
+            "answer": "Orders are dispatched within 24 hours. Delivery typically takes 2 to 4 business days across all major cities in Pakistan with active tracking updates."
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "Is Cash on Delivery (COD) available?",
+            "answer": "Yes! We offer 100% Cash on Delivery across Pakistan. You can pay conveniently when the parcel arrives at your doorstep."
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "What if I receive a damaged or wrong product?",
+            "answer": "We provide a hassle-free 7-day replacement guarantee. Simply contact our support on WhatsApp at +92 310 2492119 and we will swiftly arrange a replacement for you."
+          }
+        },
+        {
+          "type": "faq",
+          "settings": {
+            "question": "How can I place an order directly on WhatsApp?",
+            "answer": "You can click the green 'Order via WhatsApp' button on this product page. It will automatically generate a message with the product name and price for instant confirmation."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+

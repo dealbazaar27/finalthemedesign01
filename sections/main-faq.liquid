@@ -1,0 +1,653 @@
+{{ 'boat-header-megamenu.css' | asset_url | stylesheet_tag }}
+
+<div class="db-page-wrapper section-{{ section.id }}">
+  <div class="db-faq-container">
+    
+    {% comment %} --- SEO Breadcrumbs --- {% endcomment %}
+    <nav class="db-breadcrumbs" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <span class="db-breadcrumb-sep">/</span>
+      <span class="db-breadcrumb-current">{{ page.title | default: 'FAQs' }}</span>
+    </nav>
+
+    {% comment %} --- Hero Header --- {% endcomment %}
+    <div class="db-faq-header">
+      <span class="db-badge">{{ section.settings.badge_text | default: 'DEALBAZAAR HELP CENTER' }}</span>
+      <h1 class="db-faq-title">{{ section.settings.heading | default: 'Frequently Asked Questions' }}</h1>
+      <p class="db-faq-subtitle">
+        {{ section.settings.subheading | default: 'Find quick answers to common questions about ordering, Cash on Delivery, shipping, 7-day replacement warranty, and product quality at DealBazaar.' }}
+      </p>
+
+      {% comment %} Live Search Box {% endcomment %}
+      <div class="db-faq-search-wrap">
+        <svg class="db-faq-search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="dbFaqSearchInput" placeholder="Search any question or keyword (e.g. delivery, COD, warranty)..." oninput="filterFaqsLive(this.value)">
+      </div>
+    </div>
+
+    {% comment %} --- Category Filter Tabs --- {% endcomment %}
+    <div class="db-faq-filter-bar">
+      <button type="button" class="db-faq-filter-pill active" onclick="filterFaqCategory('all', this)">All Questions</button>
+      <button type="button" class="db-faq-filter-pill" onclick="filterFaqCategory('shipping', this)">Delivery & Shipping</button>
+      <button type="button" class="db-faq-filter-pill" onclick="filterFaqCategory('payment', this)">Payment & COD</button>
+      <button type="button" class="db-faq-filter-pill" onclick="filterFaqCategory('returns', this)">Returns & 7-Day Warranty</button>
+      <button type="button" class="db-faq-filter-pill" onclick="filterFaqCategory('orders', this)">Orders & WhatsApp</button>
+    </div>
+
+    {% comment %} --- FAQs Accordion List --- {% endcomment %}
+    <div class="db-faqs-list" id="dbFaqsList">
+      {% assign total_blocks = 0 %}
+      {% for block in section.blocks %}
+        {% if block.type == 'faq' %}
+          {% assign total_blocks = total_blocks | plus: 1 %}
+          <div class="db-faq-accordion-item" data-category="{{ block.settings.category | default: 'all' }}" {{ block.shopify_attributes }}>
+            <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+              <span class="db-faq-question-text">{{ block.settings.question }}</span>
+              <span class="db-faq-chevron">▾</span>
+            </button>
+            <div class="db-faq-answer-body">
+              <div class="db-faq-answer-inner">
+                <p>{{ block.settings.answer }}</p>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      {% comment %} Default Pre-populated FAQs for High SEO if no blocks added {% endcomment %}
+      {% if total_blocks == 0 %}
+        
+        <div class="db-faq-accordion-item" data-category="shipping">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">How long does delivery take across Pakistan?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Orders are dispatched from our warehouse within 24 hours. Delivery typically takes <strong>2 to 3 business days</strong> for major cities (Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad) and <strong>3 to 4 business days</strong> for other nationwide areas.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="payment">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">Is 100% Cash on Delivery (COD) available?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Yes! DealBazaar offers <strong>100% Cash on Delivery (COD)</strong> all over Pakistan. You only pay when the parcel is handed over to you by the courier rider at your doorstep.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="returns">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">What is DealBazaar's 7-Day Replacement Policy?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Every product purchased from DealBazaar comes with a <strong>7-Day Replacement Guarantee</strong>. If your product is defective, damaged in transit, or not working as described, simply message our support team on WhatsApp at <strong>+92 310 2492119</strong> with a short unboxing video or photo, and we will immediately arrange a hassle-free replacement.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="orders">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">Can I place an order directly on WhatsApp?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Yes! You can click the <strong>"Order via WhatsApp"</strong> button on any product page. It will automatically create a pre-filled WhatsApp message with the product name and price for instant confirmation without filling long checkout forms.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="shipping">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">Which courier services does DealBazaar use?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>We partner with premier logistics carriers including <strong>Trax Logistics, PostEx Express, TCS, Leopards, and Call Courier</strong> to ensure fast and secure parcel delivery with real-time tracking SMS.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="shipping">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">Are there any hidden delivery or handling charges?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>No, there are zero hidden fees. All prices displayed on DealBazaar include taxes, and the final invoice shown at checkout is the exact amount payable to the courier.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="returns">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">What if I receive a broken or wrong item?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>In the rare event of damage or receiving the wrong item, please notify us within 48 hours of parcel delivery via WhatsApp at <strong>+92 310 2492119</strong>. We will send a brand-new replacement parcel at zero extra cost.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="payment">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">Can I open and check the parcel before payment?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Per standard courier operating regulations in Pakistan, couriers collect payment before handing over the parcel. However, you are 100% protected under our <strong>DealBazaar 7-Day Guarantee</strong>. If there is any issue after opening, we take full responsibility and arrange a replacement.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="db-faq-accordion-item" data-category="orders">
+          <button type="button" class="db-faq-question-btn" onclick="toggleFaqAccordion(this)">
+            <span class="db-faq-question-text">How can I track my DealBazaar parcel?</span>
+            <span class="db-faq-chevron">▾</span>
+          </button>
+          <div class="db-faq-answer-body">
+            <div class="db-faq-answer-inner">
+              <p>Visit our dedicated <a href="/pages/track-order" style="color: #00875a; font-weight: 700; text-decoration: underline;">Track Order Page</a> and enter your Order ID or Courier Tracking Number to view real-time transit status.</p>
+            </div>
+          </div>
+        </div>
+
+      {% endif %}
+    </div>
+
+    {% comment %} No search result message {% endcomment %}
+    <div id="dbFaqNoResults" class="db-faq-no-results" style="display: none;">
+      <span style="font-size: 2rem;">🔍</span>
+      <h3>No matching questions found</h3>
+      <p>Try searching for a different keyword or contact our support team directly on WhatsApp.</p>
+    </div>
+
+    {% comment %} --- Bottom WhatsApp Support Card --- {% endcomment %}
+    <div class="db-faq-contact-card">
+      <div class="db-faq-contact-info">
+        <span class="db-faq-wa-badge">💬 24/7 CUSTOMER SUPPORT</span>
+        <h2>Still Have Questions?</h2>
+        <p>Our dedicated customer support team is always ready to assist you on WhatsApp.</p>
+      </div>
+      <a href="https://wa.me/{{ section.settings.whatsapp_number | default: '923102492119' }}?text=Hello%20DealBazaar%20Support,%20I%20have%20a%20question%20regarding%20my%20order." target="_blank" class="db-faq-wa-cta">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.586 1.761.881 2.796.881 3.179 0 5.766-2.587 5.767-5.766.001-3.181-2.585-5.768-5.767-5.768zm0-2.172c4.418 0 8 3.582 8 8 0 4.418-3.582 8-8 8-1.408 0-2.73-.367-3.875-1.009l-4.156 1.009 1.109-3.992c-.696-1.164-1.078-2.525-1.078-4.008 0-4.418 3.582-8 8-8z"/>
+        </svg>
+        <span>Chat on WhatsApp (+92 310 2492119)</span>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<style>
+  .db-page-wrapper {
+    background: #f8fafc;
+    min-height: 80vh;
+    padding: 30px 16px 60px 16px;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a;
+    box-sizing: border-box;
+  }
+
+  .db-faq-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .db-breadcrumbs {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .db-breadcrumbs a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .db-breadcrumbs a:hover {
+    color: #0f172a;
+    text-decoration: underline;
+  }
+
+  .db-breadcrumb-sep {
+    color: #cbd5e1;
+  }
+
+  .db-breadcrumb-current {
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .db-faq-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .db-badge {
+    display: inline-block;
+    background: #e6fcf5;
+    color: #00875a;
+    border: 1px solid #b2f2bb;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 4px 14px;
+    border-radius: 9999px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .db-faq-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.6px;
+    line-height: 1.2;
+  }
+
+  .db-faq-subtitle {
+    font-size: 0.96rem;
+    color: #475569;
+    max-width: 640px;
+    margin: 0 auto 24px auto;
+    line-height: 1.55;
+  }
+
+  /* Live Search */
+  .db-faq-search-wrap {
+    position: relative;
+    max-width: 580px;
+    margin: 0 auto;
+  }
+
+  .db-faq-search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .db-faq-search-wrap input {
+    width: 100%;
+    padding: 14px 16px 14px 50px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9999px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #0f172a;
+    background: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .db-faq-search-wrap input:focus {
+    outline: none;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
+  }
+
+  /* Category Filter Bar */
+  .db-faq-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+
+  .db-faq-filter-pill {
+    padding: 8px 18px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+
+  .db-faq-filter-pill:hover {
+    border-color: #0f172a;
+    color: #0f172a;
+  }
+
+  .db-faq-filter-pill.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.15);
+  }
+
+  /* FAQs List */
+  .db-faqs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .db-faq-accordion-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .db-faq-accordion-item.active {
+    border-color: #0f172a;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  }
+
+  .db-faq-question-btn {
+    width: 100%;
+    padding: 18px 22px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .db-faq-question-text {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.35;
+  }
+
+  .db-faq-chevron {
+    font-size: 1.1rem;
+    color: #64748b;
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+  }
+
+  .db-faq-accordion-item.active .db-faq-chevron {
+    transform: rotate(180deg);
+    color: #0f172a;
+  }
+
+  .db-faq-answer-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+  }
+
+  .db-faq-accordion-item.active .db-faq-answer-body {
+    max-height: 500px;
+  }
+
+  .db-faq-answer-inner {
+    padding: 0 22px 20px 22px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #475569;
+  }
+
+  .db-faq-answer-inner p {
+    margin: 0;
+  }
+
+  .db-faq-no-results {
+    text-align: center;
+    padding: 40px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px dashed #cbd5e1;
+    margin-bottom: 40px;
+  }
+
+  .db-faq-no-results h3 {
+    margin: 10px 0 6px 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  .db-faq-no-results p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #64748b;
+  }
+
+  /* Bottom WhatsApp Support Card */
+  .db-faq-contact-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 20px;
+    padding: 32px;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+    flex-wrap: wrap;
+  }
+
+  .db-faq-wa-badge {
+    display: inline-block;
+    background: rgba(37, 211, 102, 0.2);
+    color: #25d366;
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+  }
+
+  .db-faq-contact-info h2 {
+    margin: 0 0 6px 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #ffffff;
+  }
+
+  .db-faq-contact-info p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #94a3b8;
+  }
+
+  .db-faq-wa-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #25d366;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 14px 26px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
+  }
+
+  .db-faq-wa-cta:hover {
+    background: #20ba59;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
+  }
+
+  @media screen and (max-width: 768px) {
+    .db-faq-title {
+      font-size: 1.6rem;
+    }
+
+    .db-faq-contact-card {
+      padding: 22px 18px;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .db-faq-wa-cta {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+</style>
+
+<script>
+  function toggleFaqAccordion(btn) {
+    const item = btn.closest('.db-faq-accordion-item');
+    const wasActive = item.classList.contains('active');
+
+    // Close others for clean accordion feel
+    document.querySelectorAll('.db-faq-accordion-item').forEach(i => {
+      if (i !== item) i.classList.remove('active');
+    });
+
+    if (!wasActive) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  }
+
+  let currentCategory = 'all';
+
+  function filterFaqCategory(cat, btn) {
+    currentCategory = cat;
+    document.querySelectorAll('.db-faq-filter-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+
+    applyFilters();
+  }
+
+  function filterFaqsLive() {
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const query = document.getElementById('dbFaqSearchInput').value.toLowerCase().trim();
+    const items = document.querySelectorAll('.db-faq-accordion-item');
+    let visibleCount = 0;
+
+    items.forEach(item => {
+      const cat = item.dataset.category || 'all';
+      const question = item.querySelector('.db-faq-question-text')?.textContent.toLowerCase() || '';
+      const answer = item.querySelector('.db-faq-answer-inner')?.textContent.toLowerCase() || '';
+
+      const matchesCategory = (currentCategory === 'all' || cat === currentCategory);
+      const matchesSearch = (!query || question.includes(query) || answer.includes(query));
+
+      if (matchesCategory && matchesSearch) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+        item.classList.remove('active');
+      }
+    });
+
+    const noResults = document.getElementById('dbFaqNoResults');
+    if (noResults) {
+      noResults.style.display = (visibleCount === 0) ? 'block' : 'none';
+    }
+  }
+</script>
+
+{% schema %}
+{
+  "name": "DealBazaar FAQ Page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Top Badge Text",
+      "default": "DEALBAZAAR HELP CENTER"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Find quick answers to common questions about ordering, Cash on Delivery, shipping, 7-day replacement warranty, and product quality at DealBazaar."
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_number",
+      "label": "Support WhatsApp Number (no + or spaces)",
+      "default": "923102492119"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq",
+      "name": "FAQ Item",
+      "settings": [
+        {
+          "type": "select",
+          "id": "category",
+          "label": "FAQ Category",
+          "options": [
+            { "value": "shipping", "label": "Delivery & Shipping" },
+            { "value": "payment", "label": "Payment & COD" },
+            { "value": "returns", "label": "Returns & 7-Day Warranty" },
+            { "value": "orders", "label": "Orders & WhatsApp" }
+          ],
+          "default": "shipping"
+        },
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "How long does delivery take across Pakistan?"
+        },
+        {
+          "type": "textarea",
+          "id": "answer",
+          "label": "Answer",
+          "default": "Orders are dispatched within 24 hours. Delivery typically takes 2 to 4 business days across Pakistan."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "DealBazaar FAQ Page"
+    }
+  ]
+}
+{% endschema %}
