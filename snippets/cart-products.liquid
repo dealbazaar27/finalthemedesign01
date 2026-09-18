@@ -331,7 +331,8 @@
                       product: item.product,
                       variant: item.variant,
                       in_cart_quantity: item.quantity,
-                      line_index: item.index,
+                      line_index: forloop.index,
+                      item_key: item.key,
                       class: 'cart-primary-typography',
                       can_update_quantity: can_update_quantity
                     %}
@@ -339,10 +340,11 @@
                     <button
                       class="button cart-items__remove"
                       type="button"
-                      data-line="{{ item.index }}"
+                      data-line="{{ forloop.index }}"
                       data-line-key="{{ item.key }}"
+                      data-key="{{ item.key }}"
                       aria-label="{{ 'accessibility.remove_item' | t: title: item.title | escape }}"
-                      on:click="/onLineItemRemove/{{ item.index }}"
+                      onclick="handleDirectCartItemAction(event, '{{ item.key }}', 0)"
                       {% assign can_remove = item.instructions.can_remove | default: true, allow_false: true %}
                       {% if can_remove == false %}
                         hidden

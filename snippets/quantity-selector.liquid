@@ -38,6 +38,9 @@
   <{{ component_name }}
     class="quantity-selector{% if class %} {{ class }}{% endif %}"
     data-variant-id="{{ variant.id }}"
+    {% if item_key %}
+      data-item-key="{{ item_key }}"
+    {% endif %}
     {% if line_index == null %}
       {{- block.shopify_attributes -}}
       ref="quantitySelector"
@@ -49,7 +52,11 @@
       class="button quantity-minus button-unstyled"
       type="button"
       name="minus"
-      on:click="/decreaseQuantity"
+      {% if item_key %}
+        onclick="handleDirectCartItemChange(event, '{{ item_key }}', -1)"
+      {% else %}
+        on:click="/decreaseQuantity"
+      {% endif %}
       ref="minusButton"
       {% if can_update_quantity == false %}
         disabled
@@ -67,7 +74,12 @@
       data-cart-quantity="{{ cart | item_count_for_variant: variant.id }}"
       min="{{ min_quantity }}"
       data-min="{{ variant.quantity_rule.min | default: 1 }}"
-      on:blur="/setQuantity"
+      {% if item_key %}
+        data-item-key="{{ item_key }}"
+        onchange="handleDirectCartItemInput(event, '{{ item_key }}')"
+      {% else %}
+        on:blur="/setQuantity"
+      {% endif %}
       on:focus="/selectInputValue"
       ref="quantityInput"
       aria-live="polite"
@@ -87,7 +99,11 @@
       class="button quantity-plus button-unstyled"
       type="button"
       name="plus"
-      on:click="/increaseQuantity"
+      {% if item_key %}
+        onclick="handleDirectCartItemChange(event, '{{ item_key }}', 1)"
+      {% else %}
+        on:click="/increaseQuantity"
+      {% endif %}
       ref="plusButton"
       {% if can_update_quantity == false %}
         disabled
