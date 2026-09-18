@@ -38,11 +38,7 @@
       aria-labelledby="cart-drawer-heading"
       cart-summary-sticky="true"
     >
-      <cart-drawer-component
-        {% if template.name != 'cart' %}
-          auto-open
-        {% endif %}
-      >
+      <cart-drawer-component>
         <template id="empty-cart-template">
           {{ empty_cart_drawer_content }}
         </template>
