@@ -183,7 +183,7 @@
         "tab_inactive_text": "#64748b",
         "card_strip_bg": "#ffc700",
         "card_strip_text": "#000000",
-        "title": "Top Picks For You",
+        "title": "",
         "underline_word": "You",
         "collection": "sale",
         "enable_desktop_slider": true,
