@@ -122,8 +122,8 @@
         "tab_1": {
           "type": "tab_block",
           "settings": {
-            "tab_title": "New Launches",
-            "collection": "all"
+            "tab_title": "Flash Deals",
+            "collection": "sale"
           }
         }
       },
@@ -164,8 +164,8 @@
         "tab_block_epNzka": {
           "type": "tab_block",
           "settings": {
-            "tab_title": "New Launches",
-            "collection": "sale"
+            "tab_title": "West Point",
+            "collection": "westpoint"
           }
         }
       },
@@ -183,8 +183,58 @@
         "tab_inactive_text": "#64748b",
         "card_strip_bg": "#ffc700",
         "card_strip_text": "#000000",
-        "title": "",
-        "underline_word": "You",
+        "title": "Shop BY",
+        "underline_word": "Brands",
+        "collection": "sale",
+        "enable_desktop_slider": true,
+        "max_products": 16,
+        "columns_desktop": 6,
+        "card_gap": 12,
+        "card_radius": 16,
+        "view_all_text": "View All",
+        "view_all_link": "shopify://collections/all",
+        "max_products_mobile": 4,
+        "columns_mobile": "2",
+        "enable_mobile_slider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "boat_top_picks_BatWkt": {
+      "type": "boat-top-picks",
+      "blocks": {
+        "tab_block_xGUEaU": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "Audio Device",
+            "collection": "lenovo"
+          }
+        },
+        "tab_block_dqEyDp": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "Audio Device",
+            "collection": "audio-devices"
+          }
+        }
+      },
+      "block_order": [
+        "tab_block_xGUEaU",
+        "tab_block_dqEyDp"
+      ],
+      "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "accent_color": "#d8232a",
+        "view_all_color": "#1e293b",
+        "tab_active_bg": "#000000",
+        "tab_active_text": "#ffffff",
+        "tab_inactive_bg": "#f1f5f9",
+        "tab_inactive_text": "#64748b",
+        "card_strip_bg": "#ffc700",
+        "card_strip_text": "#000000",
+        "title": "Mobile",
+        "underline_word": "Accessories",
         "collection": "sale",
         "enable_desktop_slider": true,
         "max_products": 16,
@@ -204,6 +254,7 @@
   "order": [
     "category_hero_banner_main",
     "boat_top_picks_main",
-    "boat_top_picks_rUKVUj"
+    "boat_top_picks_rUKVUj",
+    "boat_top_picks_BatWkt"
   ]
 }
