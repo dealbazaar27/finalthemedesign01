@@ -1,11 +1,58 @@
 {% liquid
   assign products_per_page = section.settings.products_per_page | default: 48
-  assign raw_terms = search.terms | default: '' | downcase
+  assign raw_terms = search.terms | default: '' | downcase | strip
+  assign clean_query = raw_terms | remove: ' ' | remove: '-' | remove: '_'
+  
   assign is_sale_search = false
-  if raw_terms contains 'sale' or raw_terms contains 'discount' or raw_terms contains 'deal' or raw_terms contains 'off'
+  if raw_terms contains 'sale' or raw_terms contains 'discount' or raw_terms contains 'deal' or raw_terms contains 'off' or raw_terms contains 'cheap' or raw_terms contains 'clearance'
     assign is_sale_search = true
   endif
-  assign results_count = search.results_count | default: search.results.size
+
+  # Collect all matching product IDs
+  assign matched_ids = ''
+  assign matched_count = 0
+
+  if search.performed and raw_terms != blank
+    if is_sale_search
+      for product in collections.all.products
+        if product.compare_at_price > product.price or product.tags contains 'sale' or product.tags contains 'Sale' or product.tags contains 'SALE' or product.title contains 'Sale' or product.title contains 'sale'
+          assign prod_id_str = product.id | append: ''
+          unless matched_ids contains prod_id_str
+            assign matched_ids = matched_ids | append: prod_id_str | append: ','
+            assign matched_count = matched_count | plus: 1
+          endunless
+        endif
+      endfor
+    else
+      # 1. Standard search results from Shopify
+      for item in search.results
+        if item.object_type == 'product'
+          assign prod_id_str = item.id | append: ''
+          unless matched_ids contains prod_id_str
+            assign matched_ids = matched_ids | append: prod_id_str | append: ','
+            assign matched_count = matched_count | plus: 1
+          endunless
+        endif
+      endfor
+
+      # 2. Fuzzy fallback across store products for spaced/unspaced brand words, single letters, etc.
+      if clean_query != blank
+        for product in collections.all.products
+          assign prod_id_str = product.id | append: ''
+          unless matched_ids contains prod_id_str
+            assign prod_title_clean = product.title | downcase | remove: ' ' | remove: '-' | remove: '_'
+            assign prod_vendor_clean = product.vendor | downcase | remove: ' ' | remove: '-' | remove: '_'
+            assign prod_type_clean = product.type | downcase | remove: ' ' | remove: '-' | remove: '_'
+            
+            if prod_title_clean contains clean_query or prod_vendor_clean contains clean_query or prod_type_clean contains clean_query
+              assign matched_ids = matched_ids | append: prod_id_str | append: ','
+              assign matched_count = matched_count | plus: 1
+            endif
+          endunless
+        endfor
+      endif
+    endif
+  endif
 %}
 
 <style>
@@ -328,7 +375,7 @@
   <div class="boat-search-header-container">
     <div class="boat-search-title-row">
       <h1 class="boat-search-main-heading" id="BoatSearchHeading">
-        {% if search.performed and search.terms != blank %}
+        {% if search.performed and raw_terms != blank %}
           Search <span class="boat-search-highlight">Results</span>
         {% else %}
           Search <span class="boat-search-highlight">Products</span>
@@ -382,9 +429,9 @@
     </div>
 
     <div class="boat-search-meta-info" id="BoatSearchMetaInfo">
-      {% if search.performed and search.terms != blank %}
-        {% if results_count > 0 %}
-          Showing <strong>{{ results_count }}</strong> {% if results_count == 1 %}product{% else %}products{% endif %} for "<strong>{{ search.terms | escape }}</strong>"
+      {% if search.performed and raw_terms != blank %}
+        {% if matched_count > 0 %}
+          Showing <strong>{{ matched_count }}</strong> {% if matched_count == 1 %}product{% else %}products{% endif %} for "<strong>{{ search.terms | escape }}</strong>"
         {% else %}
           No results found for "<strong>{{ search.terms | escape }}</strong>"
         {% endif %}
@@ -394,71 +441,42 @@
 
   {% comment %} Live Results Grid / Empty State Area {% endcomment %}
   <div class="boat-search-results-area" id="BoatSearchResultsArea">
-    {% paginate search.results by products_per_page %}
-      {% if search.performed and search.terms != blank and results_count > 0 %}
-        <div class="boat-search-section-header">
-          <h2 class="boat-search-grid-heading">Matching Products ({{ results_count }})</h2>
-        </div>
-        
-        <div class="boat-search-grid">
-          {% for item in search.results %}
-            {% if item.object_type == 'product' %}
-              <div class="boat-search-grid-item">
-                {% render 'boat-product-card-item', product: item %}
-              </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-
-        {% if paginate.pages > 1 %}
-          <div class="boat-search-pagination">
-            {{ paginate | default_pagination: next: 'Next ›', previous: '‹ Prev' }}
-          </div>
-        {% endif %}
-
-      {% elsif search.performed and search.terms != blank and is_sale_search %}
-        <div class="boat-search-section-header">
-          <h2 class="boat-search-grid-heading">🔥 All Sale & Discounted Deals</h2>
-        </div>
-        
-        <div class="boat-search-grid">
-          {% for product in collections.all.products limit: 48 %}
-            {% if product.compare_at_price > product.price %}
-              <div class="boat-search-grid-item">
-                {% render 'boat-product-card-item', product: product %}
-              </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-
-      {% elsif search.performed and search.terms != blank and results_count == 0 %}
-        <div class="boat-search-empty-state">
-          <div class="boat-search-empty-icon">🔍</div>
-          <h2 class="boat-search-empty-title">We couldn't find any matches</h2>
-          <p class="boat-search-empty-desc">Please check the spelling or try searching for something else.</p>
-          
-          {% assign fallback_collection = section.settings.fallback_collection | default: collections.all %}
-          {% if fallback_collection != blank and fallback_collection.products.size > 0 %}
-            <div class="boat-search-trending-section">
-              <h3 class="boat-search-trending-title">Popular Products You Might Like</h3>
-              <div class="boat-search-grid">
-                {% for product in fallback_collection.products limit: 12 %}
-                  <div class="boat-search-grid-item">
-                    {% render 'boat-product-card-item', product: product %}
-                  </div>
-                {% endfor %}
-              </div>
-            </div>
+    {% if search.performed and raw_terms != blank and matched_count > 0 %}
+      <div class="boat-search-section-header">
+        <h2 class="boat-search-grid-heading">
+          {% if is_sale_search %}🔥 All Sale & Discounted Deals ({{ matched_count }}){% else %}Matching Products ({{ matched_count }}){% endif %}
+        </h2>
+      </div>
+      
+      <div class="boat-search-grid">
+        {% assign id_list = matched_ids | split: ',' %}
+        {% for pid in id_list %}
+          {% if pid != blank %}
+            {% assign prod_num = pid | plus: 0 %}
+            {% for product in collections.all.products %}
+              {% if product.id == prod_num %}
+                <div class="boat-search-grid-item">
+                  {% render 'boat-product-card-item', product: product %}
+                </div>
+                {% break %}
+              {% endif %}
+            {% endfor %}
           {% endif %}
-        </div>
+        {% endfor %}
+      </div>
 
-      {% else %}
-        {% assign default_col = section.settings.fallback_collection | default: collections.all %}
-        {% if default_col != blank and default_col.products.size > 0 %}
+    {% elsif search.performed and raw_terms != blank and matched_count == 0 %}
+      <div class="boat-search-empty-state">
+        <div class="boat-search-empty-icon">🔍</div>
+        <h2 class="boat-search-empty-title">We couldn't find any matches</h2>
+        <p class="boat-search-empty-desc">Please check the spelling or try searching for another keyword or category.</p>
+        
+        {% assign fallback_collection = section.settings.fallback_collection | default: collections.all %}
+        {% if fallback_collection != blank and fallback_collection.products.size > 0 %}
           <div class="boat-search-trending-section">
-            <h3 class="boat-search-trending-title">Explore Trending Products</h3>
+            <h3 class="boat-search-trending-title">Popular Products You Might Like</h3>
             <div class="boat-search-grid">
-              {% for product in default_col.products limit: 16 %}
+              {% for product in fallback_collection.products limit: 12 %}
                 <div class="boat-search-grid-item">
                   {% render 'boat-product-card-item', product: product %}
                 </div>
@@ -466,8 +484,23 @@
             </div>
           </div>
         {% endif %}
+      </div>
+
+    {% else %}
+      {% assign default_col = section.settings.fallback_collection | default: collections.all %}
+      {% if default_col != blank and default_col.products.size > 0 %}
+        <div class="boat-search-trending-section">
+          <h3 class="boat-search-trending-title">Explore Trending Products</h3>
+          <div class="boat-search-grid">
+            {% for product in default_col.products limit: 16 %}
+              <div class="boat-search-grid-item">
+                {% render 'boat-product-card-item', product: product %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
       {% endif %}
-    {% endpaginate %}
+    {% endif %}
   </div>
 
 </div>
