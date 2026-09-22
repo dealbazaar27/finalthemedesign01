@@ -233,6 +233,10 @@ class PredictiveSearchComponent extends Component {
         } else {
           const searchUrl = new URL(Theme.routes.search_url, location.origin);
           searchUrl.searchParams.set('q', this.refs.searchInput.value);
+          searchUrl.searchParams.set('type', 'product');
+          searchUrl.searchParams.set('options[prefix]', 'last');
+          searchUrl.searchParams.set('options[fields]', 'title,vendor,product_type,variants.title,tag,body');
+          searchUrl.searchParams.set('options[unavailable_products]', 'last');
           window.location.href = searchUrl.toString();
         }
         break;
@@ -317,7 +321,7 @@ class PredictiveSearchComponent extends Component {
     const url = new URL(Theme.routes.predictive_search_url, location.origin);
     url.searchParams.set('q', searchTerm);
     url.searchParams.set('resources[type]', 'product,collection,query');
-    url.searchParams.set('resources[limit]', '12');
+    url.searchParams.set('resources[limit]', '24');
     url.searchParams.set('resources[limit_scope]', 'each');
     url.searchParams.set('resources[options][prefix]', 'last');
     url.searchParams.set('resources[options][fields]', 'title,product_type,variants.title,vendor,tag,body');

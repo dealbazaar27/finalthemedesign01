@@ -82,7 +82,22 @@
               on:keydown="/onSearchKeyDown"
             >
             <input
+              name="type"
+              type="hidden"
+              value="product"
+            >
+            <input
               name="options[prefix]"
+              type="hidden"
+              value="last"
+            >
+            <input
+              name="options[fields]"
+              type="hidden"
+              value="title,vendor,product_type,variants.title,tag,body"
+            >
+            <input
+              name="options[unavailable_products]"
               type="hidden"
               value="last"
             >

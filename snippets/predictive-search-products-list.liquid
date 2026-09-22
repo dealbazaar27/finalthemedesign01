@@ -68,7 +68,7 @@
       class="predictive-search-results__list predictive-search-results__wrapper-products list-unstyled"
     >
       {% liquid
-        assign limit = limit | default: 8
+        assign limit = limit | default: 24
       %}
       {% for product in products limit: limit %}
         <li
