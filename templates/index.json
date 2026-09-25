@@ -214,14 +214,14 @@
         "tab_block_xGUEaU": {
           "type": "tab_block",
           "settings": {
-            "tab_title": "Audio Device",
+            "tab_title": "Ear Buds",
             "collection": "lenovo"
           }
         },
         "tab_block_dqEyDp": {
           "type": "tab_block",
           "settings": {
-            "tab_title": "Audio Device",
+            "tab_title": "Speaker",
             "collection": "audio-devices"
           }
         }
