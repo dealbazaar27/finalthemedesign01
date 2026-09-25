@@ -1,206 +1,129 @@
 
 
+{% if section.blocks.size > 1 %}
+  <script
+    src="{{ 'announcement-bar.js' | asset_url }}"
+    type="module"
+    fetchpriority="low"
+  ></script>
+{% endif %}
+
 {% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
 
 <div class="section-background color-custom-{{ section.id }}"></div>
 <aside
-  id="BoatAnnouncementBar-{{ section.id }}"
-  class="boat-announcement-bar color-custom-{{ section.id }}"
-  style="--announcement-bg: {{ section.settings.background_color | default: '#000000' }}; --announcement-border: {{ section.settings.divider_color | default: '#333333' }}; --border-bottom-width: {{ section.settings.divider_width | default: 0 }}px;"
+  class="announcement-bar spacing-style section section--{{ section.settings.section_width }} color-custom-{{ section.id }}"
+  style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}"
 >
-  <div class="boat-marquee-wrapper">
-    <div class="boat-marquee-track">
-      {% for repeat in (1..6) %}
-        <div class="boat-marquee-content" aria-hidden="{% if forloop.first %}false{% else %}true{% endif %}">
-          {% for block in section.blocks %}
-            <div class="boat-marquee-item" {{ block.shopify_attributes }}>
-              {% if block.settings.link != blank %}
-                <a href="{{ block.settings.link }}" class="boat-marquee-link">
-                  <span>{{ block.settings.text }}</span>
-                </a>
-              {% else %}
-                <span class="boat-marquee-text">{{ block.settings.text }}</span>
-              {% endif %}
-              <span class="boat-marquee-separator">⚡</span>
-            </div>
-          {% endfor %}
-        </div>
-      {% endfor %}
-    </div>
+  {% liquid
+    assign autoplay = false
+    assign show_arrows = false
+    if section.blocks.size > 1
+      assign autoplay = true
+      assign show_arrows = true
+    endif
+  %}
 
-    {% comment %} Close / Dismiss Button {% endcomment %}
-    <button
-      type="button"
-      class="boat-announcement-close"
-      aria-label="Close Announcement Bar"
-      title="Close Announcement"
-      onclick="closeBoatAnnouncementBar('{{ section.id }}')"
-    >
-      ✕
-    </button>
-  </div>
+  <announcement-bar-component
+    class="announcement-bar__slider"
+    {% if autoplay == true %}
+      autoplay="{{ section.settings.speed }}" aria-live="polite"
+    {% endif %}
+  >
+    {% if show_arrows %}
+      {% render 'slideshow-arrows', icon_style: 'chevron' %}
+    {% endif %}
+
+    <div class="announcement-bar__slides">
+      {% content_for 'blocks' %}
+    </div>
+  </announcement-bar-component>
 </aside>
 
-<style>
-  .boat-announcement-bar {
-    width: 100%;
-    background-color: var(--announcement-bg, #000000);
-    border-block-end: var(--border-bottom-width, 0px) solid var(--announcement-border, #333333);
-    position: relative;
-    overflow: hidden;
-    z-index: 9999999;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.35s ease;
-    max-height: 48px;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+{% stylesheet %}
+  .announcement-bar {
+    border-block-end: var(--border-bottom-width) solid var(--color-border);
   }
 
-  .boat-announcement-bar.is-closed {
-    max-height: 0 !important;
-    opacity: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    margin: 0 !important;
-    pointer-events: none !important;
-    border: none !important;
-  }
-
-  .boat-marquee-wrapper {
+  .announcement-bar__slider {
     display: flex;
+    flex-direction: row;
     align-items: center;
     position: relative;
-    width: 100%;
-    overflow: hidden;
-    padding: 7px 36px 7px 12px;
-    box-sizing: border-box;
+
+    @media screen and (max-width: 749px) {
+      grid-column: 1 / -1;
+    }
   }
 
-  .boat-marquee-track {
+  .announcement-bar__slides {
+    display: grid;
+    grid: [stack] auto / [stack] auto;
+    width: calc(100% - var(--button-size) * 2);
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  .announcement-bar__slides > * {
+    grid-area: stack;
+  }
+
+  .announcement-bar__slide {
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    content-visibility: visible;
+
+    &[aria-hidden='true'] {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  .announcement-bar__slider slideshow-arrows {
+    padding: 0;
+    mix-blend-mode: normal;
+  }
+
+  .announcement-bar__slider slideshow-arrows .slideshow-control {
+    color: var(--color-foreground);
+  }
+
+  .announcement-bar__slider .slideshow-control {
     display: flex;
-    white-space: nowrap;
-    width: max-content;
-    will-change: transform;
-    animation: boatMarqueeScroll 28s linear infinite;
-  }
-
-  .boat-marquee-track:hover {
-    animation-play-state: paused;
-  }
-
-  .boat-marquee-content {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-  }
-
-  .boat-marquee-item {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    color: #ffffff;
-    padding: 0 16px;
-  }
-
-  .boat-marquee-link {
-    color: #ffffff;
-    text-decoration: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .boat-marquee-link:hover {
-    opacity: 0.85;
-    text-decoration: underline;
-  }
-
-  .boat-marquee-text {
-    color: #ffffff;
-  }
-
-  .boat-marquee-separator {
-    margin-left: 24px;
-    color: #ffd700;
-    font-size: 0.75rem;
-    opacity: 0.9;
-  }
-
-  .boat-announcement-close {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
-    color: #ffffff;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: flex;
+    padding: 0;
+    width: var(--button-size);
+    height: var(--button-size);
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 800;
-    transition: background 0.2s ease, transform 0.2s ease;
-    z-index: 10;
-    padding: 0;
-    line-height: 1;
-  }
+    opacity: 1;
+    animation: none;
 
-  .boat-announcement-close:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: translateY(-50%) scale(1.1);
-  }
+    @media screen and (min-width: 750px) {
+      --slideshow-control-offset: calc((var(--button-size) - var(--icon-size-xs)) / 2);
 
-  @keyframes boatMarqueeScroll {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
-  }
-
-  @media screen and (max-width: 749px) {
-    .boat-announcement-bar {
-      max-height: 42px;
-    }
-
-    .boat-marquee-wrapper {
-      padding: 6px 32px 6px 8px;
-    }
-
-    .boat-marquee-item {
-      font-size: 0.74rem;
-      padding: 0 12px;
-    }
-
-    .boat-marquee-separator {
-      margin-left: 18px;
-    }
-  }
-</style>
-
-<script>
-  function closeBoatAnnouncementBar(sectionId) {
-    const bar = document.getElementById('BoatAnnouncementBar-' + sectionId);
-    if (bar) {
-      bar.classList.add('is-closed');
-      try {
-        sessionStorage.setItem('boat_announcement_closed', '1');
-      } catch(e) {}
-    }
-  }
-
-  (function initBoatAnnouncementState() {
-    try {
-      if (sessionStorage.getItem('boat_announcement_closed') === '1') {
-        const bars = document.querySelectorAll('.boat-announcement-bar');
-        bars.forEach(b => b.classList.add('is-closed'));
+      .section--page-width &.slideshow-control--previous {
+        transform: translateX(var(--slideshow-control-offset));
       }
-    } catch(e) {}
-  })();
-</script>
+    }
+  }
+
+  .announcement-bar__slider .slideshow-control .svg-wrapper {
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+  }
+
+  .announcement-bar__slide {
+    place-content: center;
+  }
+
+  .announcement-bar__text:first-child {
+    margin: 0;
+  }
+
+  .announcement-bar__link {
+    position: absolute;
+    inset: 0;
+  }
+{% endstylesheet %}
 
 {% schema %}
 {

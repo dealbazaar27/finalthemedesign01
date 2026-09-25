@@ -2236,168 +2236,49 @@ a.boat-megamenu-card,
     gap: 14px 8px !important;
   }
 }
-/* -------------------------------------------------------------------------
-   Mobile Responsive Header, Heading Scaling & Home Polish
-   ------------------------------------------------------------------------- */
+/* 1 */
 @media screen and (max-width: 749px) {
-  /* 1. Header Compact Top/Bottom Spacing */
-  header.header,
-  .header,
-  .section-header,
-  .header__inner,
-  .header-row--top,
-  .header-row {
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-    min-height: 52px !important;
-    height: auto !important;
-  }
-
-  .header__logo-image,
-  .header__logo-link img {
-    max-height: 38px !important;
-    width: auto !important;
-  }
-
-  .header__actions,
-  .header-actions {
-    gap: 4px !important;
-  }
-
-  .header-actions__action {
-    padding: 4px !important;
-  }
-
-  /* 2. Scaled Down Section Headings & Title Rows on Mobile */
-  .boat-top-picks__heading,
-  .section-boat-top-picks .boat-top-picks__heading {
-    font-size: 1.25rem !important;
-    letter-spacing: -0.3px !important;
-    line-height: 1.25 !important;
-  }
-
-  .boat-top-picks__heading span.underline-red::after {
-    height: 2.5px !important;
-    bottom: -1px !important;
-  }
-
-  .boat-top-picks__view-all {
-    font-size: 0.78rem !important;
-    gap: 4px !important;
-  }
-
-  .boat-top-picks__view-all-arrow {
-    width: 15px !important;
-    height: 15px !important;
-    font-size: 8px !important;
-  }
-
-  /* 3. Sleek Mobile Filter Tabs */
-  .boat-top-picks__tabs {
-    gap: 6px !important;
-    padding: 2px 0 6px 0 !important;
-  }
-
-  .boat-top-picks__tab-btn {
-    font-size: 0.78rem !important;
-    padding: 5px 13px !important;
-    border-radius: 18px !important;
-  }
-
-  /* 4. Compact Section Vertical Spacing */
-  .section-boat-top-picks,
-  [class*="section-boat_top_picks"] {
-    padding-top: 18px !important;
-    padding-bottom: 18px !important;
-  }
-
-  .boat-top-picks {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-  }
-
-  /* 5. Clean 2-Column Product Grid on Mobile */
   .template-collection .product-grid,
   .template-search .product-grid,
   .main-collection-grid .product-grid,
   .collection-wrapper .product-grid {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+    grid-template-columns: repeat(1, 1fr) !important;
+    gap: 10px 6px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
   }
 
   .template-collection .product-grid[product-grid-view='mobile-single'],
   .template-search .product-grid[product-grid-view='mobile-single'] {
     grid-template-columns: 1fr !important;
   }
+}
 
-  /* 6. Card Details Mobile Typography */
-  .boat-pick-card__details {
-    padding: 6px 6px 8px 6px !important;
-  }
-
-  .boat-pick-card__title {
-    font-size: 0.78rem !important;
-    line-height: 1.25 !important;
-    height: 2.5em !important;
-    min-height: 2.5em !important;
-  }
-
-  .boat-pick-card__price {
-    font-size: 0.85rem !important;
-  }
-
-  .boat-pick-card__compare-price {
-    font-size: 0.65rem !important;
-  }
-
-  .boat-pick-card__discount {
-    font-size: 0.65rem !important;
-    padding: 1px 4px !important;
-  }
-
-  .boat-pick-card__yellow-bar {
-    height: 24px !important;
-    min-height: 24px !important;
-    padding: 2px 6px !important;
-    font-size: 0.7rem !important;
-  }
-
-  .boat-pick-card__rating {
-    font-size: 0.66rem !important;
-    padding: 1px 5px !important;
-  }
-
-  /* 7. Category Hero Banner on Mobile */
+/* Compact Mobile Hero Spacing Fix */
+@media (max-width: 768px) {
   .category-hero-section {
-    padding: 4px 0 10px 0 !important;
+    padding: 6px 0 12px 0 !important;
   }
-
   .category-hero__container {
-    padding: 0 8px !important;
+    padding: 0 10px !important;
     gap: 6px !important;
   }
-
   .category-hero__mobile-bar {
-    padding: 5px 8px !important;
-    margin-bottom: 4px !important;
-    border-radius: 8px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 6px !important;
+    border-radius: 10px !important;
   }
-
   .category-hero__mobile-list {
+    gap: 6px !important;
+  }
+  .category-hero__mobile-link {
+    padding: 5px 10px !important;
+    font-size: 0.76rem !important;
     gap: 5px !important;
   }
-
-  .category-hero__mobile-link {
-    padding: 4px 9px !important;
-    font-size: 0.74rem !important;
-    gap: 4px !important;
-  }
-
   .category-hero__mobile-icon {
-    width: 14px !important;
-    height: 14px !important;
+    width: 15px !important;
+    height: 15px !important;
   }
 }
