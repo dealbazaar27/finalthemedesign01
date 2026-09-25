@@ -2804,25 +2804,29 @@
     window.open(waUrl, '_blank');
   }
 
-  // Image Thumbnail Switcher with Smooth Center Scrolling
+  // Image Thumbnail Switcher with Smooth Center Scrolling & Srcset Clearing
   function switchBoatPdpImage(btn, imgSrc) {
+    if (!imgSrc && btn) {
+      imgSrc = btn.getAttribute('data-image-src') || btn.querySelector('img')?.src;
+    }
     const mainImg = document.getElementById('BoatPdpMainImage');
     if (mainImg && imgSrc) {
       mainImg.style.opacity = '0.35';
       mainImg.style.transform = 'scale(0.98)';
       setTimeout(() => {
+        mainImg.removeAttribute('srcset');
         mainImg.src = imgSrc;
         mainImg.style.opacity = '1';
         mainImg.style.transform = 'scale(1)';
-      }, 120);
+      }, 80);
     }
 
     const allThumbs = document.querySelectorAll('.boat-pdp-thumb-btn');
     allThumbs.forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 
     // Smooth scroll thumbnail into center of slider
-    if (typeof btn.scrollIntoView === 'function') {
+    if (btn && typeof btn.scrollIntoView === 'function') {
       btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }
@@ -2831,17 +2835,23 @@
   function prevBoatPdpImage() {
     const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
     if (allThumbs.length <= 1) return;
-    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    let activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    if (activeIdx < 0) activeIdx = 0;
     const nextIdx = (activeIdx - 1 + allThumbs.length) % allThumbs.length;
-    allThumbs[nextIdx].click();
+    const targetThumb = allThumbs[nextIdx];
+    const imgSrc = targetThumb.getAttribute('data-image-src');
+    switchBoatPdpImage(targetThumb, imgSrc);
   }
 
   function nextBoatPdpImage() {
     const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
     if (allThumbs.length <= 1) return;
-    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    let activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    if (activeIdx < 0) activeIdx = 0;
     const nextIdx = (activeIdx + 1) % allThumbs.length;
-    allThumbs[nextIdx].click();
+    const targetThumb = allThumbs[nextIdx];
+    const imgSrc = targetThumb.getAttribute('data-image-src');
+    switchBoatPdpImage(targetThumb, imgSrc);
   }
 
   // Touch Swipe on Main Image Box for Mobile
@@ -2849,21 +2859,30 @@
     const box = document.getElementById('BoatPdpMainImageBox');
     if (!box) return;
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchEndX = 0;
+    let touchEndY = 0;
 
     box.addEventListener('touchstart', function(e) {
-      touchStartX = e.changedTouches[0].screenX;
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].screenX;
+        touchStartY = e.touches[0].screenY;
+      }
     }, { passive: true });
 
     box.addEventListener('touchend', function(e) {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
+      if (e.changedTouches && e.changedTouches[0]) {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+      }
     }, { passive: true });
 
     function handleSwipe() {
-      const swipeDistance = touchEndX - touchStartX;
-      if (Math.abs(swipeDistance) > 40) {
-        if (swipeDistance < 0) {
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+      if (Math.abs(diffX) > 30 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX < 0) {
           nextBoatPdpImage(); // Swiped left -> next
         } else {
           prevBoatPdpImage(); // Swiped right -> prev
