@@ -143,7 +143,7 @@
         "card_strip_text": "#000000",
         "title": "Top Picks For You",
         "underline_word": "You",
-        "collection": "",
+        "collection": "sale",
         "enable_desktop_slider": true,
         "max_products": 16,
         "columns_desktop": 6,
@@ -167,10 +167,18 @@
             "tab_title": "West Point",
             "collection": "westpoint"
           }
+        },
+        "tab_block_JiWrJW": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "Lenovo",
+            "collection": "lenovo"
+          }
         }
       },
       "block_order": [
-        "tab_block_epNzka"
+        "tab_block_epNzka",
+        "tab_block_JiWrJW"
       ],
       "settings": {
         "background_color": "#ffffff",
