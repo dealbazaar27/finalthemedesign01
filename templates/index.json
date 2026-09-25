@@ -214,11 +214,95 @@
         "tab_block_xGUEaU": {
           "type": "tab_block",
           "settings": {
+            "tab_title": "Health & Beauty",
+            "collection": "health-beauty"
+          }
+        }
+      },
+      "block_order": [
+        "tab_block_xGUEaU"
+      ],
+      "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "accent_color": "#d8232a",
+        "view_all_color": "#1e293b",
+        "tab_active_bg": "#000000",
+        "tab_active_text": "#ffffff",
+        "tab_inactive_bg": "#f1f5f9",
+        "tab_inactive_text": "#64748b",
+        "card_strip_bg": "#ffc700",
+        "card_strip_text": "#000000",
+        "title": "Health",
+        "underline_word": "Care",
+        "collection": "sale",
+        "enable_desktop_slider": true,
+        "max_products": 16,
+        "columns_desktop": 6,
+        "card_gap": 12,
+        "card_radius": 16,
+        "view_all_text": "View All",
+        "view_all_link": "shopify://collections/all",
+        "max_products_mobile": 4,
+        "columns_mobile": "2",
+        "enable_mobile_slider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "boat_top_picks_7JrNiK": {
+      "type": "boat-top-picks",
+      "blocks": {
+        "tab_block_YAdLhz": {
+          "type": "tab_block",
+          "settings": {
+            "tab_title": "Lifestyle",
+            "collection": "home-lifestyles"
+          }
+        }
+      },
+      "block_order": [
+        "tab_block_YAdLhz"
+      ],
+      "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "accent_color": "#d8232a",
+        "view_all_color": "#1e293b",
+        "tab_active_bg": "#000000",
+        "tab_active_text": "#ffffff",
+        "tab_inactive_bg": "#f1f5f9",
+        "tab_inactive_text": "#64748b",
+        "card_strip_bg": "#ffc700",
+        "card_strip_text": "#000000",
+        "title": "Home &",
+        "underline_word": "Lifestyle",
+        "collection": "fashion-beauty",
+        "enable_desktop_slider": true,
+        "max_products": 16,
+        "columns_desktop": 6,
+        "card_gap": 12,
+        "card_radius": 16,
+        "view_all_text": "View All",
+        "view_all_link": "shopify://collections/all",
+        "max_products_mobile": 4,
+        "columns_mobile": "2",
+        "enable_mobile_slider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "boat_top_picks_3hQtd3": {
+      "type": "boat-top-picks",
+      "blocks": {
+        "tab_block_89WYFB": {
+          "type": "tab_block",
+          "settings": {
             "tab_title": "Ear Buds",
             "collection": "lenovo"
           }
         },
-        "tab_block_dqEyDp": {
+        "tab_block_bzCfXT": {
           "type": "tab_block",
           "settings": {
             "tab_title": "Speaker",
@@ -227,8 +311,8 @@
         }
       },
       "block_order": [
-        "tab_block_xGUEaU",
-        "tab_block_dqEyDp"
+        "tab_block_89WYFB",
+        "tab_block_bzCfXT"
       ],
       "settings": {
         "background_color": "#ffffff",
@@ -263,6 +347,8 @@
     "category_hero_banner_main",
     "boat_top_picks_main",
     "boat_top_picks_rUKVUj",
-    "boat_top_picks_BatWkt"
+    "boat_top_picks_BatWkt",
+    "boat_top_picks_7JrNiK",
+    "boat_top_picks_3hQtd3"
   ]
 }
