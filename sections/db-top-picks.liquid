@@ -577,7 +577,22 @@
       </h2>
 
       {% if view_all_text != blank %}
-        <a href="{{ view_all_link }}" class="boat-top-picks__view-all">
+        {% assign initial_view_all_link = view_all_link %}
+        {% assign blocks_tabs = section.blocks | where: 'type', 'tab_block' %}
+        {% if blocks_tabs.size > 0 %}
+          {% assign first_tab_col = collections[blocks_tabs.first.settings.collection] %}
+          {% if first_tab_col != blank and first_tab_col.url != blank %}
+            {% assign initial_view_all_link = first_tab_col.url %}
+          {% elsif blocks_tabs.first.settings.collection != blank %}
+            {% assign initial_view_all_link = '/collections/' | append: blocks_tabs.first.settings.collection %}
+          {% endif %}
+        {% elsif section.settings.collection != blank %}
+          {% assign default_col = collections[section.settings.collection] %}
+          {% if default_col != blank and default_col.url != blank %}
+            {% assign initial_view_all_link = default_col.url %}
+          {% endif %}
+        {% endif %}
+        <a href="{{ initial_view_all_link }}" class="boat-top-picks__view-all" id="BoatViewAll-{{ section.id }}">
           <span>{{ view_all_text }}</span>
           <span class="boat-top-picks__view-all-arrow">➔</span>
         </a>
@@ -588,9 +603,17 @@
     {% if blocks_tabs.size > 0 %}
       <div class="boat-top-picks__tabs">
         {% for block in blocks_tabs %}
+          {% assign tab_col = collections[block.settings.collection] %}
+          {% assign tab_url = view_all_link %}
+          {% if tab_col != blank and tab_col.url != blank %}
+            {% assign tab_url = tab_col.url %}
+          {% elsif block.settings.collection != blank %}
+            {% assign tab_url = '/collections/' | append: block.settings.collection %}
+          {% endif %}
           <button 
             type="button" 
             class="boat-top-picks__tab-btn{% if forloop.first %} active{% endif %}"
+            data-collection-url="{{ tab_url }}"
             onclick="switchBoatTab('{{ section.id }}', 'tab-{{ block.id }}', this)"
             {{ block.shopify_attributes }}
           >
@@ -673,6 +696,13 @@
     const targetContent = document.getElementById('boat-tab-' + sectionId + '-' + tabId);
     if (targetContent) targetContent.style.display = 'block';
     btnElement.classList.add('active');
+
+    // Dynamic View All Link Update: points to current active tab collection!
+    const colUrl = btnElement.getAttribute('data-collection-url');
+    const viewAllBtn = container.querySelector('.boat-top-picks__view-all') || document.getElementById('BoatViewAll-' + sectionId);
+    if (viewAllBtn && colUrl) {
+      viewAllBtn.setAttribute('href', colUrl);
+    }
 
     // Smoothly scroll active tab into view on mobile tabs slider
     try {
