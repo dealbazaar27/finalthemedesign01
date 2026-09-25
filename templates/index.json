@@ -113,7 +113,7 @@
         "enable_mobile_category_autoplay": true,
         "mobile_category_autoplay_speed": 3,
         "sidebar_heading": "TOP CATEGORIES",
-        "sidebar_menu": "main-menu"
+        "sidebar_menu": "collection"
       }
     },
     "boat_top_picks_main": {
