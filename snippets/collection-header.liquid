@@ -3,22 +3,53 @@
   @param {object} collection - The collection object
 {%- enddoc -%}
 
-<div class="boat-collection-header">
-  <nav class="boat-collection-breadcrumb" aria-label="Breadcrumb">
-    <a href="{{ routes.root_url }}" class="boat-collection-breadcrumb__link">Home</a>
-    <span class="boat-collection-breadcrumb__separator">›</span>
-    <span class="boat-collection-breadcrumb__current">{{ collection.title | escape }}</span>
-  </nav>
+<div class="boat-collection-header-wrapper">
+  <div class="boat-collection-header">
+    <nav class="boat-collection-breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}" class="boat-collection-breadcrumb__link">Home</a>
+      <span class="boat-collection-breadcrumb__separator">›</span>
+      <a href="{{ routes.collections_url }}" class="boat-collection-breadcrumb__link">Collections</a>
+      <span class="boat-collection-breadcrumb__separator">›</span>
+      <span class="boat-collection-breadcrumb__current">{{ collection.title | escape }}</span>
+    </nav>
 
-  <h1 class="boat-collection-title">{{ collection.title | escape }}</h1>
+    <div class="boat-collection-title-row">
+      <div class="boat-collection-title-wrap">
+        <h1 class="boat-collection-title">
+          {{ collection.title | escape }}
+        </h1>
+        <div class="boat-collection-title-bar"></div>
+      </div>
+      
+      {% if collection.products_count > 0 %}
+        <div class="boat-collection-count-pill">
+          <span class="boat-collection-count-icon">⚡</span>
+          <span><strong>{{ collection.products_count }}</strong> {% if collection.products_count == 1 %}Product{% else %}Products{% endif %}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if collection.description != blank %}
+      <div class="boat-collection-description">
+        {{ collection.description }}
+      </div>
+    {% endif %}
+  </div>
 </div>
 
 <style>
+  .boat-collection-header-wrapper {
+    width: 100%;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    margin-bottom: 12px;
+  }
+
   .boat-collection-header {
     width: 100%;
     max-width: 1440px;
     margin: 0 auto;
-    padding: 16px 16px 8px 16px;
+    padding: 16px 20px 18px 20px;
     box-sizing: border-box;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
@@ -27,9 +58,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #64748b;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     flex-wrap: wrap;
     line-height: 1.4;
   }
@@ -37,38 +68,87 @@
   .boat-collection-breadcrumb__link {
     color: #64748b;
     text-decoration: none;
+    font-weight: 500;
     transition: color 0.2s ease;
   }
 
   .boat-collection-breadcrumb__link:hover {
-    color: #0f172a;
+    color: #d8232a;
     text-decoration: underline;
   }
 
   .boat-collection-breadcrumb__separator {
-    color: #94a3b8;
-    font-size: 0.9rem;
+    color: #cbd5e1;
+    font-size: 0.95rem;
     line-height: 1;
   }
 
   .boat-collection-breadcrumb__current {
-    color: #1e293b;
-    font-weight: 600;
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .boat-collection-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .boat-collection-title-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .boat-collection-title {
-    font-size: 1.85rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #0f172a;
     margin: 0;
-    line-height: 1.2;
-    letter-spacing: -0.5px;
+    line-height: 1.15;
+    letter-spacing: -0.6px;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .boat-collection-title-bar {
+    width: 48px;
+    height: 3.5px;
+    background: #d8232a;
+    border-radius: 2px;
+    margin-top: 6px;
+  }
+
+  .boat-collection-count-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+  }
+
+  .boat-collection-count-icon {
+    font-size: 0.95rem;
+  }
+
+  .boat-collection-description {
+    margin-top: 10px;
+    font-size: 0.92rem;
+    color: #475569;
+    line-height: 1.55;
+    max-width: 900px;
   }
 
   @media screen and (max-width: 749px) {
     .boat-collection-header {
-      padding: 12px 10px 4px 10px;
+      padding: 12px 14px 14px 14px;
     }
 
     .boat-collection-breadcrumb {
@@ -78,8 +158,19 @@
     }
 
     .boat-collection-title {
-      font-size: 1.4rem;
-      letter-spacing: -0.3px;
+      font-size: 1.45rem;
+      letter-spacing: -0.4px;
+    }
+
+    .boat-collection-title-bar {
+      width: 36px;
+      height: 3px;
+      margin-top: 4px;
+    }
+
+    .boat-collection-count-pill {
+      font-size: 0.78rem;
+      padding: 4px 10px;
     }
   }
 </style>

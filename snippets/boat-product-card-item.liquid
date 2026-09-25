@@ -9,13 +9,21 @@
     assign discount_percent = discount_amount | times: 100 | divided_by: compare_price
   endif
 
-  # 1. Collection / Product Category Name Display (Only show if real collection exists)
-  assign display_tag = product.collections.first.title
-  if display_tag == 'All' or display_tag == 'Home page' or display_tag == blank
+  # 1. Collection / Product Category Name Display (Only show if real category exists, skip generic 'Sale', 'All', 'Home page')
+  assign display_tag = ''
+  if product.type != blank and product.type != 'Default'
     assign display_tag = product.type
   endif
   if display_tag == blank
-    assign display_tag = 'Home & Living'
+    for c in product.collections
+      unless c.handle == 'all' or c.handle == 'frontpage' or c.handle == 'sale' or c.handle == 'deals'
+        assign display_tag = c.title
+        break
+      endunless
+    endfor
+  endif
+  if display_tag == blank
+    assign display_tag = product.vendor | default: 'Top Product'
   endif
 
   # 2. Consistent Deterministic Product Rating (3.7 to 5.0) per product
@@ -288,16 +296,16 @@ assign form_id = 'BoatProductCardForm-' | append: product.id | append: '-' | app
   }
 
   .boat-pick-card__price {
-    font-size: 0.82rem !important;
+    font-size: 0.92rem !important;
     font-weight: 800 !important;
-    color: #000000 !important;
+    color: #0f172a !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     white-space: nowrap !important;
-    letter-spacing: -0.2px !important;
+    letter-spacing: -0.3px !important;
   }
 
   .boat-pick-card__compare-price {
-    font-size: 0.65rem !important;
+    font-size: 0.72rem !important;
     text-decoration: line-through !important;
     color: #94a3b8 !important;
     font-weight: 500 !important;
@@ -306,9 +314,12 @@ assign form_id = 'BoatProductCardForm-' | append: product.id | append: '-' | app
   }
 
   .boat-pick-card__discount {
-    font-size: 0.68rem !important;
+    font-size: 0.72rem !important;
     font-weight: 800 !important;
-    color: #00b853 !important;
+    color: #059669 !important;
+    background: #ecfdf5 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
     font-family: 'Plus Jakarta Sans', sans-serif !important;
     white-space: nowrap !important;
     margin-left: auto !important;
