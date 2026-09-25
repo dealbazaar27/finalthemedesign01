@@ -205,9 +205,7 @@
             {% assign initial_img = selected_variant.featured_image | default: product.featured_image %}
             <img 
               id="BoatPdpMainImage"
-              src="{{ initial_img | image_url: width: 800, format: 'webp' }}" 
-              srcset="{{ initial_img | image_url: width: 500, format: 'webp' }} 500w, {{ initial_img | image_url: width: 800, format: 'webp' }} 800w, {{ initial_img | image_url: width: 1200, format: 'webp' }} 1200w"
-              sizes="(max-width: 768px) 100vw, 550px"
+              src="{{ initial_img | image_url: width: 900 }}" 
               alt="{{ product.title | escape }}"
               class="boat-pdp-main-image"
               loading="eager"
@@ -218,8 +216,16 @@
             >
 
             {% if product.media.size > 1 %}
-              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--prev" onclick="prevBoatPdpImage()" aria-label="Previous image">‹</button>
-              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--next" onclick="nextBoatPdpImage()" aria-label="Next image">›</button>
+              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--prev" onclick="prevBoatPdpImage(event)" aria-label="Previous image">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="boat-pdp-arrow-btn boat-pdp-arrow-btn--next" onclick="nextBoatPdpImage(event)" aria-label="Next image">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
             {% endif %}
           </div>
 
@@ -1082,30 +1088,35 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
-    background: #0f172a;
-    color: #ffffff;
-    border: none;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f172a;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    font-weight: 700;
     cursor: pointer;
-    opacity: 0.85;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    z-index: 5;
+    z-index: 10;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .boat-pdp-arrow-btn:hover {
-    opacity: 1;
+    background: #0f172a;
+    color: #ffffff;
     transform: translateY(-50%) scale(1.08);
   }
 
-  .boat-pdp-arrow-btn--prev { left: 10px; }
-  .boat-pdp-arrow-btn--next { right: 10px; }
+  .boat-pdp-arrow-btn:active {
+    transform: translateY(-50%) scale(0.92);
+  }
+
+  .boat-pdp-arrow-btn--prev { left: 8px; }
+  .boat-pdp-arrow-btn--next { right: 8px; }
 
   /* Flash Sale Countdown Timer Bar */
   .boat-pdp-timer-bar {
@@ -2700,40 +2711,50 @@
   function switchBoatPdpImage(btn, imgSrc) {
     const mainImg = document.getElementById('BoatPdpMainImage');
     if (mainImg && imgSrc) {
+      mainImg.removeAttribute('srcset');
       mainImg.style.opacity = '0.35';
       mainImg.style.transform = 'scale(0.98)';
       setTimeout(() => {
+        mainImg.removeAttribute('srcset');
         mainImg.src = imgSrc;
         mainImg.style.opacity = '1';
         mainImg.style.transform = 'scale(1)';
-      }, 120);
+      }, 100);
     }
 
     const allThumbs = document.querySelectorAll('.boat-pdp-thumb-btn');
     allThumbs.forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 
     // Smooth scroll thumbnail into center of slider
-    if (typeof btn.scrollIntoView === 'function') {
+    if (btn && typeof btn.scrollIntoView === 'function') {
       btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   }
 
   // Infinite Loop Previous & Next Arrow Handlers
-  function prevBoatPdpImage() {
+  function prevBoatPdpImage(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
     if (allThumbs.length <= 1) return;
-    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    let activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    if (activeIdx === -1) activeIdx = 0;
     const nextIdx = (activeIdx - 1 + allThumbs.length) % allThumbs.length;
-    allThumbs[nextIdx].click();
+    const targetThumb = allThumbs[nextIdx];
+    const imgSrc = targetThumb.getAttribute('data-image-src');
+    switchBoatPdpImage(targetThumb, imgSrc);
   }
 
-  function nextBoatPdpImage() {
+  function nextBoatPdpImage(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     const allThumbs = Array.from(document.querySelectorAll('.boat-pdp-thumb-btn'));
     if (allThumbs.length <= 1) return;
-    const activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    let activeIdx = allThumbs.findIndex(t => t.classList.contains('active'));
+    if (activeIdx === -1) activeIdx = 0;
     const nextIdx = (activeIdx + 1) % allThumbs.length;
-    allThumbs[nextIdx].click();
+    const targetThumb = allThumbs[nextIdx];
+    const imgSrc = targetThumb.getAttribute('data-image-src');
+    switchBoatPdpImage(targetThumb, imgSrc);
   }
 
   // Touch Swipe on Main Image Box for Mobile
@@ -2741,21 +2762,30 @@
     const box = document.getElementById('BoatPdpMainImageBox');
     if (!box) return;
     let touchStartX = 0;
+    let touchStartY = 0;
     let touchEndX = 0;
+    let touchEndY = 0;
 
     box.addEventListener('touchstart', function(e) {
-      touchStartX = e.changedTouches[0].screenX;
+      if (e.touches && e.touches[0]) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
     }, { passive: true });
 
     box.addEventListener('touchend', function(e) {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
+      if (e.changedTouches && e.changedTouches[0]) {
+        touchEndX = e.changedTouches[0].clientX;
+        touchEndY = e.changedTouches[0].clientY;
+        handleSwipe();
+      }
     }, { passive: true });
 
     function handleSwipe() {
-      const swipeDistance = touchEndX - touchStartX;
-      if (Math.abs(swipeDistance) > 40) {
-        if (swipeDistance < 0) {
+      const swipeDistanceX = touchEndX - touchStartX;
+      const swipeDistanceY = touchEndY - touchStartY;
+      if (Math.abs(swipeDistanceX) > 35 && Math.abs(swipeDistanceX) > Math.abs(swipeDistanceY) * 1.2) {
+        if (swipeDistanceX < 0) {
           nextBoatPdpImage(); // Swiped left -> next
         } else {
           prevBoatPdpImage(); // Swiped right -> prev
@@ -3045,9 +3075,24 @@
       // Update Main Image if variant has image
       if (matchedVariant.featured_image) {
         const mainImg = document.getElementById('BoatPdpMainImage');
-        if (mainImg) mainImg.src = matchedVariant.featured_image;
+        if (mainImg) {
+          mainImg.removeAttribute('srcset');
+          mainImg.src = matchedVariant.featured_image;
+        }
         const deskStickyImg = document.getElementById('BoatDesktopStickyImg');
         if (deskStickyImg) deskStickyImg.src = matchedVariant.featured_image;
+
+        // Also activate matching thumbnail if found
+        const allThumbs = document.querySelectorAll('.boat-pdp-thumb-btn');
+        allThumbs.forEach(t => {
+          const tSrc = t.getAttribute('data-image-src') || '';
+          if (tSrc && matchedVariant.featured_image.includes(tSrc.split('?')[0])) {
+            t.classList.add('active');
+            if (typeof t.scrollIntoView === 'function') {
+              t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+          }
+        });
       }
 
       // Update Buttons
