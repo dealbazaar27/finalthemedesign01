@@ -19,7 +19,7 @@
         "show_tab_faqs": true,
         "show_tab_reviews": true,
         "show_rating": true,
-        "show_timer": true,
+        "show_timer": false,
         "timer_label": "Flash Sale Ends In:",
         "timer_hours": 100,
         "timer_minutes": 2,
@@ -67,6 +67,10 @@
     "related_products": {
       "type": "boat-related-products",
       "settings": {
+        "background_color": "#ffffff",
+        "heading_color": "#0f172a",
+        "subheading_color": "#64748b",
+        "view_all_color": "#0f172a",
         "heading": "Related Products",
         "subheading": "",
         "collection": "",
