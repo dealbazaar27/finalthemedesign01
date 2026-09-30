@@ -1251,6 +1251,37 @@ a.boat-megamenu-card,
 }
 
 .menu-drawer,
+header-drawer details[open] .menu-drawer,
+details#Details-menu-drawer-container .menu-drawer {
+  z-index: 99999 !important;
+  background-color: #ffffff !important;
+}
+
+.menu-drawer__backdrop,
+details#Details-menu-drawer-container .menu-drawer__backdrop {
+  z-index: 99998 !important;
+}
+
+/* Hide floating elements whenever mobile drawer or any modal/dialog is open */
+details#Details-menu-drawer-container.menu-open ~ * .boat-pdp-sticky-bar,
+details#Details-menu-drawer-container.menu-open ~ * .boat-pdp-nav-sticky-wrapper,
+details#Details-menu-drawer-container.menu-open ~ * .db-mobile-dock,
+details#Details-menu-drawer-container[open] ~ * .boat-pdp-sticky-bar,
+details#Details-menu-drawer-container[open] ~ * .boat-pdp-nav-sticky-wrapper,
+details#Details-menu-drawer-container[open] ~ * .db-mobile-dock,
+body.menu-open .boat-pdp-sticky-bar,
+body.menu-open .boat-pdp-nav-sticky-wrapper,
+body.menu-open .db-mobile-dock,
+.page-wrapper--drawer-open .boat-pdp-sticky-bar,
+.page-wrapper--drawer-open .boat-pdp-nav-sticky-wrapper,
+.page-wrapper--drawer-open .db-mobile-dock {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.menu-drawer,
 .menu-drawer__navigation {
   padding-bottom: 40px !important;
   padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
