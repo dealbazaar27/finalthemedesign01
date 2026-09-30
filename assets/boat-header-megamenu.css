@@ -2267,17 +2267,17 @@ body.menu-open .db-mobile-dock,
     gap: 14px 8px !important;
   }
 }
-/* 1 */
 @media screen and (max-width: 749px) {
   .template-collection .product-grid,
   .template-search .product-grid,
   .main-collection-grid .product-grid,
   .collection-wrapper .product-grid {
     display: grid !important;
-    grid-template-columns: repeat(1, 1fr) !important;
-    gap: 10px 6px !important;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px 8px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    padding-bottom: 85px !important;
   }
 
   .template-collection .product-grid[product-grid-view='mobile-single'],

@@ -179,6 +179,8 @@
     height: 28px !important;
     min-height: 28px !important;
     flex-shrink: 0 !important;
+    overflow: hidden !important;
+    gap: 4px !important;
   }
 
   .boat-pick-card__collection-name {
@@ -187,6 +189,8 @@
     text-overflow: ellipsis !important;
     font-weight: 800 !important;
     color: #000000 !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
 
   .boat-pick-card__rating {
@@ -201,6 +205,7 @@
     gap: 3px !important;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
     white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
 
   .boat-pick-card__details {
@@ -379,15 +384,74 @@
     align-items: center !important;
   }
 
-  @media screen and (max-width: 400px) {
+  @media screen and (max-width: 640px) {
+    .boat-pick-card__yellow-bar {
+      height: 25px !important;
+      min-height: 25px !important;
+      padding: 3px 6px !important;
+    }
+    .boat-pick-card__collection-name {
+      font-size: 0.68rem !important;
+    }
+    .boat-pick-card__rating {
+      font-size: 0.66rem !important;
+      padding: 1.5px 5px !important;
+    }
+    .boat-pick-card__badge {
+      top: 6px !important;
+      left: 6px !important;
+      font-size: 0.58rem !important;
+      padding: 3px 6px !important;
+      max-width: 80% !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    .boat-pick-card__details {
+      padding: 6px 6px 8px 6px !important;
+      gap: 3px !important;
+    }
+    .boat-pick-card__title {
+      font-size: 0.78rem !important;
+      line-height: 1.25 !important;
+    }
     .boat-pick-card__price {
-      font-size: 0.76rem !important;
+      font-size: 0.85rem !important;
+    }
+    .boat-pick-card__compare-price {
+      font-size: 0.68rem !important;
+    }
+    .boat-pick-card__discount {
+      font-size: 0.64rem !important;
+      padding: 1px 4px !important;
+    }
+  }
+
+  @media screen and (max-width: 360px) {
+    .boat-pick-card__yellow-bar {
+      padding: 2px 4px !important;
+    }
+    .boat-pick-card__collection-name {
+      font-size: 0.62rem !important;
+    }
+    .boat-pick-card__rating {
+      font-size: 0.62rem !important;
+      padding: 1px 4px !important;
+    }
+    .boat-pick-card__details {
+      padding: 4px 4px 6px 4px !important;
+    }
+    .boat-pick-card__title {
+      font-size: 0.74rem !important;
+    }
+    .boat-pick-card__price {
+      font-size: 0.78rem !important;
     }
     .boat-pick-card__compare-price {
       font-size: 0.62rem !important;
     }
     .boat-pick-card__discount {
-      font-size: 0.64rem !important;
+      font-size: 0.6rem !important;
     }
   }
 </style>
