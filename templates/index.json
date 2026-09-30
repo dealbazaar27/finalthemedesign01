@@ -294,6 +294,7 @@
     },
     "hero_YkFMbw": {
       "type": "hero",
+      "custom_css": [],
       "name": "t:names.hero",
       "settings": {
         "media_type_1": "image",
