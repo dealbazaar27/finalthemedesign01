@@ -59,7 +59,7 @@
           "type": "_header-menu",
           "static": true,
           "settings": {
-            "menu": "collection-mobile",
+            "menu": "main-menu",
             "background_color": "{{ settings.color_palette.background }}",
             "text_color": "",
             "type_font_primary_size": "0.875rem",
