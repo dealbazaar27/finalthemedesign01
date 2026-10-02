@@ -19,8 +19,14 @@
       data-hydration-key="header-drawer-mobile"
       {{ block.shopify_attributes }}
     >
+      {% liquid
+        assign active_mobile_menu = block_settings.menu
+        if block_settings.mobile_menu != blank
+          assign active_mobile_menu = block_settings.mobile_menu
+        endif
+      %}
       {% render 'header-drawer',
-        linklist: block_settings.menu,
+        linklist: active_mobile_menu,
         data_header_drawer_type: 'mobile-drawer',
         block: block,
         section: section
@@ -44,7 +50,13 @@
             class="menu-list__list list-unstyled"
             role="list"
           >
-            {% for link in block_settings.menu.links %}
+            {% liquid
+              assign active_mobile_menu = block_settings.menu
+              if block_settings.mobile_menu != blank
+                assign active_mobile_menu = block_settings.mobile_menu
+              endif
+            %}
+            {% for link in active_mobile_menu.links %}
               <li>
                 <a
                   href="{{ link.url }}"
@@ -723,6 +735,12 @@
       "id": "menu",
       "label": "t:settings.menu",
       "default": "main-menu"
+    },
+    {
+      "type": "link_list",
+      "id": "mobile_menu",
+      "label": "Mobile menu (Separate)",
+      "info": "Select a separate menu for mobile devices. Leave empty to use Desktop menu."
     },
     {
       "type": "header",
