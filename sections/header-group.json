@@ -76,7 +76,7 @@
             "drawer_accordion": false,
             "drawer_accordion_expand_first": true,
             "drawer_dividers": false,
-            "mobile_drawer_collection": "appliances",
+            "mobile_drawer_collection": "sale",
             "mobile_drawer_collection_title": "Trending Deals"
           },
           "blocks": {}
