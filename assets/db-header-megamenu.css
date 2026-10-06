@@ -2060,24 +2060,22 @@ a.boat-megamenu-card,
 }
 
 /* Collection Page & Search Page Grid Layout - Dynamic Icon Toggling (4 vs 6 Columns) */
-.product-grid-container,
-.collection-wrapper,
-.main-collection-grid,
-.boat-featured-container,
-.boat-top-picks-container,
-.boat-related-container,
-.template-collection .product-grid-container,
-.template-search .product-grid-container {
-  max-width: 1440px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 24px !important;
-  padding-right: 24px !important;
-  box-sizing: border-box !important;
-}
-
-/* Default / Unset state on Desktop -> 4 Columns */
 @media screen and (min-width: 990px) {
+  .product-grid-container,
+  .collection-wrapper,
+  .main-collection-grid,
+  .boat-featured-container,
+  .boat-top-picks-container,
+  .boat-related-container,
+  .template-collection .product-grid-container,
+  .template-search .product-grid-container {
+    max-width: 1440px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+  }
   .collection-wrapper:not(:has(.facets--vertical:not(.facets--drawer))) {
     display: block !important;
     width: 100% !important;

@@ -137,11 +137,18 @@
       box-sizing: border-box !important;
     }
 
-    .product-grid,
-    .product-grid--grid {
+    .product-grid:not([product-grid-view='default']),
+    .product-grid[product-grid-view='zoom-out'] {
+      display: grid !important;
+      grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+      gap: 14px 10px !important;
+      width: 100% !important;
+    }
+
+    .product-grid[product-grid-view='default'] {
       display: grid !important;
       grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-      gap: 20px 16px !important;
+      gap: 20px 14px !important;
       width: 100% !important;
     }
 
@@ -152,48 +159,51 @@
     }
   }
 
-  @media screen and (min-width: 1200px) {
-    .product-grid,
-    .product-grid--grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-      gap: 18px !important;
-    }
-  }
-
   @media screen and (max-width: 749px) {
     .collection-wrapper,
     .main-collection-grid,
     .product-grid-container {
       display: block !important;
       width: 100% !important;
+      max-width: 100% !important;
       margin: 0 !important;
-      padding-inline: 8px !important;
+      padding-inline: 6px !important;
       grid-column: 1 / -1 !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
     }
 
     .product-grid,
     .product-grid--grid,
     .product-grid-mobile--large,
-    [product-grid-view='default'] {
+    [product-grid-view='default'],
+    [product-grid-view='zoom-out'] {
       display: grid !important;
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      gap: 10px !important;
+      gap: 8px !important;
       width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
+      box-sizing: border-box !important;
     }
 
     [product-grid-view='mobile-single'] {
       display: grid !important;
       grid-template-columns: 1fr !important;
-      gap: 14px !important;
+      gap: 12px !important;
       width: 100% !important;
       margin: 0 !important;
       padding: 0 !important;
+      box-sizing: border-box !important;
     }
 
-    .product-grid__item {
+    .product-grid__item,
+    .boat-pick-card {
       width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
       border: none !important;
       margin: 0 !important;
     }
