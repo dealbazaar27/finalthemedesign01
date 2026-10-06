@@ -111,6 +111,23 @@
   }
 
   @media screen and (min-width: 750px) {
+    .collection-wrapper:not(:has(.facets--vertical:not(.facets--drawer))) {
+      display: block !important;
+      width: 100% !important;
+      max-width: 1440px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    .collection-wrapper:not(:has(.facets--vertical:not(.facets--drawer))) .main-collection-grid,
+    .main-collection-grid {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+      max-width: 1440px !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
     .main-collection-grid,
     .product-grid-container {
       max-width: 1440px;

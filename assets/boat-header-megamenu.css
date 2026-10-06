@@ -2213,8 +2213,25 @@ body.menu-open .db-mobile-dock,
   box-sizing: border-box !important;
 }
 
-/* Default / Unset state on Desktop -> 6 Columns */
+/* Default / Unset state on Desktop -> 4 Columns */
 @media screen and (min-width: 990px) {
+  .collection-wrapper:not(:has(.facets--vertical:not(.facets--drawer))) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .main-collection-grid,
+  .template-collection .main-collection-grid,
+  .template-search .main-collection-grid {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
   .template-collection .product-grid:not([product-grid-view]),
   .template-search .product-grid:not([product-grid-view]),
   .main-collection-grid .product-grid:not([product-grid-view]),

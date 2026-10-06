@@ -2471,7 +2471,25 @@ main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
 }
 
 @media screen and (min-width: 990px) {
-  /* Default / Unset state -> 6 Columns */
+  .collection-wrapper:not(:has(.facets--vertical:not(.facets--drawer))) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .main-collection-grid,
+  .template-collection .main-collection-grid,
+  .template-search .main-collection-grid {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    max-width: 1440px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Default / Unset state -> 4 Columns */
   .template-collection .product-grid:not([product-grid-view]),
   .template-search .product-grid:not([product-grid-view]),
   .main-collection-grid .product-grid:not([product-grid-view]),
