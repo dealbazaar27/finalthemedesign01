@@ -10,6 +10,18 @@ export default class ResultsList extends PaginatedList {
 
     mediaQueryLarge.addEventListener('change', this.#handleMediaQueryChange);
     this.setAttribute('initialized', '');
+
+    const viewport = mediaQueryLarge.matches ? 'desktop' : 'mobile';
+    const storedValue = sessionStorage.getItem(`product-grid-view-${viewport}`);
+    const defaultValue = viewport === 'desktop' ? 'zoom-out' : 'default';
+    const activeValue = storedValue || defaultValue;
+
+    this.#setLayout(activeValue);
+
+    const defaultInput = this.querySelector(`input[name="grid"][value="${activeValue}"]`);
+    if (defaultInput instanceof HTMLInputElement) {
+      defaultInput.checked = true;
+    }
   }
 
   disconnectedCallback() {
@@ -62,14 +74,17 @@ export default class ResultsList extends PaginatedList {
    * @param {MediaQueryListEvent} event
    */
   #handleMediaQueryChange = (event) => {
-    const targetElement = event.matches
-      ? this.querySelector('[data-grid-layout="desktop-default-option"]')
-      : this.querySelector('[data-grid-layout="mobile-option"]');
+    const viewport = event.matches ? 'desktop' : 'mobile';
+    const storedValue = sessionStorage.getItem(`product-grid-view-${viewport}`);
+    const defaultValue = viewport === 'desktop' ? 'zoom-out' : 'default';
+    const activeValue = storedValue || defaultValue;
 
-    if (!(targetElement instanceof HTMLInputElement)) return;
+    const targetElement = this.querySelector(`input[name="grid"][value="${activeValue}"]`);
+    if (targetElement instanceof HTMLInputElement) {
+      targetElement.checked = true;
+    }
 
-    targetElement.checked = true;
-    this.#setLayout('default');
+    this.#setLayout(activeValue);
   };
 }
 

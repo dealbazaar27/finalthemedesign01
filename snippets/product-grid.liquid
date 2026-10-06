@@ -161,7 +161,7 @@
       <ul
         class="product-grid product-grid--{{ section.id }} product-grid--{{ section.settings.layout_type }} {% if section.settings.mobile_product_card_size == 'large' %} product-grid-mobile--large{% endif %}"
         data-testid="product-grid"
-        product-grid-view="default"
+        product-grid-view="zoom-out"
         ref="grid"
         role="list"
         data-last-page="{{ paginate.pages }}"
@@ -178,13 +178,12 @@
               if (!grid) return;
 
               const storedLayoutMobile = sessionStorage.getItem('product-grid-view-mobile') || 'default';
-              const storedLayoutDesktop = sessionStorage.getItem('product-grid-view-desktop') || 'default';
+              const storedLayoutDesktop = sessionStorage.getItem('product-grid-view-desktop') || 'zoom-out';
 
               // No need to read the window width if no custom layouts were saved.
-              if (storedLayoutMobile === 'default' && storedLayoutDesktop === 'default') return;
+              if (storedLayoutMobile === 'default' && storedLayoutDesktop === 'zoom-out') return;
 
               const storedLayout = window.innerWidth >= 750 ? storedLayoutDesktop : storedLayoutMobile;
-              if (storedLayout === 'default') return;
 
               grid.setAttribute('product-grid-view', storedLayout);
 
