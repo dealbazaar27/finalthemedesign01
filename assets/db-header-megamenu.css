@@ -2063,11 +2063,16 @@ a.boat-megamenu-card,
 .product-grid-container,
 .collection-wrapper,
 .main-collection-grid,
+.boat-featured-container,
+.boat-top-picks-container,
+.boat-related-container,
 .template-collection .product-grid-container,
 .template-search .product-grid-container {
   max-width: 1440px !important;
   margin-left: auto !important;
   margin-right: auto !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
   box-sizing: border-box !important;
 }
 
@@ -2095,8 +2100,8 @@ a.boat-megamenu-card,
   .main-collection-grid .product-grid:not([product-grid-view]),
   .collection-wrapper .product-grid:not([product-grid-view]) {
     display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
-    gap: 16px 10px !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 20px 14px !important;
     list-style: none !important;
     padding: 0 !important;
     margin: 0 auto !important;
