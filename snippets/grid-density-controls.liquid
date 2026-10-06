@@ -51,9 +51,8 @@
           name="grid"
           value="default"
           class="column-options__option-input"
-          checked
           aria-label="{{ 'content.grid_view.default_view' | t }}"
-          data-grid-layout="desktop-default-option"
+          data-grid-layout="desktop-option"
           on:change="results-list/updateLayout"
           data-skip-node-update
         >
@@ -68,7 +67,9 @@
           name="grid"
           value="zoom-out"
           class="column-options__option-input"
+          checked
           aria-label="{{ 'content.grid_view.zoom_out' | t }}"
+          data-grid-layout="desktop-default-option"
           on:change="results-list/updateLayout"
           data-skip-node-update
         >

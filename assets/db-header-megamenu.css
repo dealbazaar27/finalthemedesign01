@@ -2095,13 +2095,14 @@ a.boat-megamenu-card,
     margin-left: auto !important;
     margin-right: auto !important;
   }
+  /* Default / Unset state on Desktop -> 6 Columns */
   .template-collection .product-grid:not([product-grid-view]),
   .template-search .product-grid:not([product-grid-view]),
   .main-collection-grid .product-grid:not([product-grid-view]),
   .collection-wrapper .product-grid:not([product-grid-view]) {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 20px 14px !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 16px 10px !important;
     list-style: none !important;
     padding: 0 !important;
     margin: 0 auto !important;
